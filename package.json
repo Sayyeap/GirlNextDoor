@@ -1,9 +1,10 @@
 {
-    "name": "your-game",
+    "name": "strawberry-visual-novel",
     "version": "1.0.0",
+    "description": "Visual novel game",
     "scripts": {
-        "start": "live-server --port=8080"
-        
+        "start": "live-server --port=8080",
+        "build": "echo 'No build step required'"
     },
     "devDependencies": {
         "live-server": "^1.2.2",
