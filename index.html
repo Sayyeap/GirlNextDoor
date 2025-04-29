@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Novel</title>
+
+    <style>
+        /* Локальные шрифты */
+        @font-face {
+            font-family: 'IBM Plex Sans';
+            src: url('assets/fonts/IBMPlexSans-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Dela Gothic One';
+            src: url('assets/fonts/DelaGothicOne-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Скрипты Phaser -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+    <!-- Твои сцены -->
+    <script src="js/scenes/MainMenu.js"></script>
+    <script src="js/scenes/GameScene.js"></script>
+    <script src="js/scenes/SettingsScene.js"></script>
+    <script src="js/scenes/FullscreenScene.js"></script>
+    <script src="js/scenes/InteractiveScene.js"></script>
+
+    <!-- Данные -->
+    <script src="js/data/story1.js"></script>
+    <script src="js/data/progress.js"></script>
+    <script src="js/data/stories.js"></script>
+    
+    
+
+    <!-- Логика -->
+    <script src="js/main.js"></script>
+    <script src="js/bootstrap.js"></script>
+
+</body>
+</html>
