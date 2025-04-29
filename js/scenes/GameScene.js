@@ -12,30 +12,22 @@ class GameScene extends Phaser.Scene {
     }
 
     init(data) {
-        this.storyId = data.storyId || 1;
+        this.storyId = data.storyId || 'story1';
         this.story = stories.find(s => s.id === this.storyId);
         if (!this.story) {
             console.error('Story not found:', this.storyId);
             this.scene.restart({ storyId: this.storyId });
             return;
         }
-
-        // Stop all sounds (including menu music)
+    
         this.sound.stopAll();
         console.log('All sounds stopped');
-
-        // Load progress
-        const progress = loadProgress(this.storyId);
-        this.currentScene = this.story.dialogues.find(scene => scene.id === progress.sceneId) || this.story.dialogues[0];
-        this.dialogueIndexInScene = progress.dialogueIndexInScene || 0;
-        this.energy = progress.energy || 100;
-
-        // Log scene info
-        console.log('Init - Story:', this.story, 'Scene:', this.currentScene);
+    
+        // Загружаем прогресс
+        this.loadGame();
     }
 
     preload() {
-        // Load backgrounds
         this.load.image('elevator', 'assets/story1/images/backgrounds/elevator.jpg');
         this.load.image('home', 'assets/story1/images/backgrounds/home.jpg');
         this.load.image('miapc', 'assets/story1/images/backgrounds/miaPC.jpg');
@@ -43,7 +35,6 @@ class GameScene extends Phaser.Scene {
         this.load.image('assshot', 'assets/story1/images/backgrounds/assshot.jpg');
         this.load.image('loch', 'assets/story1/images/backgrounds/loch.jpg');
 
-        // Load character sprites
         this.load.image('mia_tshirt_shy', 'assets/story1/images/characters/mia_tshirt_shy.png');
         this.load.image('mia_tshirt_angry', 'assets/story1/images/characters/mia_tshirt_angry.png');
         this.load.image('mia_tshirt_happy', 'assets/story1/images/characters/mia_tshirt_happy.png');
@@ -51,12 +42,10 @@ class GameScene extends Phaser.Scene {
         this.load.image('mia_skirtoffice_shy', 'assets/story1/images/characters/mia_skirtoffice_shy.png');
         this.load.image('mia_skirt_back', 'assets/story1/images/characters/mia_skirt_back.png');
 
-        // Load ui sprites
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('next', 'assets/common/images/next.png');
 
-        // Load audio
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
         this.load.audio('map_memory', 'assets/story1/audio/map_memory.mp3');
@@ -66,7 +55,6 @@ class GameScene extends Phaser.Scene {
         this.load.audio('click', 'assets/common/audio/click.wav');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
 
-        // Loader events
         this.load.on('filecomplete', (key) => console.log('File loaded:', key));
         this.load.on('fileerror', (file) => console.error('File failed to load:', file.key, file.src));
         this.load.on('complete', () => {
@@ -76,34 +64,33 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Set scale mode
-        this.scale.setGameSize(860, 1864);
-        this.scale.mode = Phaser.Scale.FIT;
-        this.scale.autoCenter = Phaser.Scale.NO_CENTER; // Отключаем автоматическое центрирование
-        this.scale.setParentSize(window.innerWidth, window.innerHeight);
-        this.scale.on('resize', this.resize, this);
+        // Устанавливаем размер игры
+        this.scale.setGameSize(window.innerWidth, window.innerHeight);
+        this.scale.mode = Phaser.Scale.RESIZE;
+        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
 
-        // Ensure canvas fills the parent container
-        this.scale.displaySize.setAspectRatio(860 / 1864);
-        this.scale.refresh();
+        // Настраиваем камеру
+        this.cameras.main.setViewport(0, 0, this.game.config.width, this.game.config.height);
+        this.cameras.main.setBounds(0, 0, this.game.config.width, this.game.config.height);
 
-        // Log scale and camera info
-        console.log('Scale mode:', this.scale.mode);
+        // Логируем размер
         console.log('Scene size:', this.cameras.main.width, this.cameras.main.height);
         console.log('Camera:', this.cameras.main);
 
-        // Set background color as fallback
+        // Фон по умолчанию
         this.cameras.main.setBackgroundColor('#000000');
 
-        // Show loading screen
-        const { width, height } = this.cameras.main;
-        this.cameras.main.setViewport(0, 0, width, height);
+        // Экран загрузки
+        const width = this.game.config.width;
+        const height = this.game.config.height;
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-        this.add.text(width / 2, height / 2, 'Loading...', { fontSize: '32px', color: '#ffffff', fontFamily: 'IBM Plex Sans' })
-            .setOrigin(0.5)
-            .setDepth(101);
+        this.add.text(width / 2, height / 2, 'Loading...', {
+            fontSize: `${height * 0.035}px`,
+            color: '#ffffff',
+            fontFamily: 'IBM Plex Sans'
+        }).setOrigin(0.5).setDepth(101);
 
-        // Handle loading
+        // Обработка загрузки
         console.log('Load started');
         if (this.isLoaded) {
             this.children.removeAll();
@@ -117,24 +104,21 @@ class GameScene extends Phaser.Scene {
             });
             this.load.start();
         }
+
+        // Регистрируем обработчик resize
+        this.scale.on('resize', this.resize, this);
     }
 
     resize(size) {
-        const { width, height } = size || this.cameras.main;
+        const width = size.width || this.game.config.width;
+        const height = size.height || this.game.config.height;
         console.log('Resize - Scene size:', width, height);
 
-        // Calculate scale factor to maintain aspect ratio
-        const baseWidth = 860;
-        const baseHeight = 1864;
-        const scaleX = width / baseWidth;
-        const scaleY = height / baseHeight;
-        const scale = Math.min(scaleX, scaleY);
-
-        // Update game size to match window
-        this.scale.setGameSize(width, height);
+        // Обновляем камеру
         this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setBounds(0, 0, width, height);
 
-        // Update background
+        // Обновляем фон
         if (this.bg) {
             this.bg.setPosition(width / 2, height / 2)
                 .setDisplaySize(width, height)
@@ -142,30 +126,30 @@ class GameScene extends Phaser.Scene {
             console.log('Background size:', this.bg.displayWidth, this.bg.displayHeight);
         }
 
-        // Update character
+        // Обновляем персонажа
         if (this.char) {
             this.char.setPosition(width / 2, height)
-                .setScale(scale * (baseWidth * 0.79 / 600));
+                .setScale(width * 0.79 / 600); // Уменьшен масштаб для синхронизации с MainMenu
         }
 
-        // Update energy UI
+        // Обновляем UI энергии
         if (this.energyRect) {
             this.energyRect.setPosition(width * 0.1, height * 0.1)
                 .setSize(width * 0.25, height * 0.04);
         }
         if (this.energyText) {
             this.energyText.setPosition(width * 0.11, height * 0.083)
-                .setFontSize(height * 0.03);
+                .setFontSize(height * 0.0258);
         }
         if (this.energyIcon) {
             this.energyIcon.setPosition(width * 0.05, height * 0.1)
                 .setDisplaySize(height * 0.04, height * 0.04);
         }
 
-        // Update dialogue UI
+        // Обновляем UI диалогов
         if (this.dialogueBox) {
             this.dialogueBox.setPosition(width / 2, height * 0.83)
-                .setSize(width * 1, height * 0.35);
+                .setSize(width, height * 0.35);
         }
         if (this.speakerText) {
             this.speakerText.setPosition(width * 0.07, height * 0.72)
@@ -177,13 +161,13 @@ class GameScene extends Phaser.Scene {
                 .setWordWrapWidth(width * 0.8);
         }
 
-        // Update next button
+        // Обновляем кнопку "Далее"
         if (this.nextButton) {
             this.nextButton.setPosition(width * 0.92, height * 0.91)
                 .setDisplaySize(height * 0.06, height * 0.06);
         }
 
-        // Update settings button
+        // Обновляем кнопку настроек
         if (this.settingsButtonBg) {
             this.settingsButtonBg.setPosition(width / 1.1, height * 0.1)
                 .setSize(width * 0.15, height * 0.04);
@@ -193,13 +177,13 @@ class GameScene extends Phaser.Scene {
                 .setDisplaySize(height * 0.032, height * 0.032);
         }
 
-        // Update choices
+        // Обновляем выборы
         this.choicesGroup.getChildren().forEach((container, index) => {
             const y = (height - (this.choicesGroup.getChildren().length * (height * 0.08))) / 2 + index * (height * 0.08);
             container.setPosition(width / 2, y);
             container.getAll().forEach(child => {
                 if (child.type === 'Text') {
-                    child.setFontSize(height * 0.03);
+                    child.setFontSize(height * 0.0258);
                     if (child.text.startsWith('-')) {
                         child.setPosition(width * 0.35, 0);
                     } else {
@@ -217,27 +201,25 @@ class GameScene extends Phaser.Scene {
 
     setupScene() {
         console.log('SetupScene started');
-        const { width, height } = this.cameras.main;
+        const width = this.game.config.width;
+        const height = this.game.config.height;
 
-        // Background
         this.bg = this.add.image(width / 2, height / 2, 'home')
             .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setDepth(1);
         console.log('Background size:', this.bg.displayWidth, this.bg.displayHeight);
 
-        // Character
         this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
             .setScale(width * 0.79 / 600)
             .setOrigin(0.5, 1)
             .setAlpha(0)
             .setDepth(5);
 
-        // Energy UI
         this.energyRect = this.add.rectangle(width * 0.1, height * 0.1, width * 0.25, height * 0.04, 0x000000, 0.5)
             .setDepth(10);
         this.energyText = this.add.text(width * 0.11, height * 0.083, this.energy, {
-            fontSize: `${height * 0.03}px`,
+            fontSize: `${height * 0.0258}px`,
             color: '#61bdff',
             fontFamily: 'Dela Gothic One'
         }).setDepth(10);
@@ -245,8 +227,7 @@ class GameScene extends Phaser.Scene {
             .setDisplaySize(height * 0.04, height * 0.04)
             .setDepth(10);
 
-        // Dialogue UI
-        this.dialogueBox = this.add.rectangle(width / 2, height * 0.83, width * 1, height * 0.35, 0x000000, 0.7)
+        this.dialogueBox = this.add.rectangle(width / 2, height * 0.83, width, height * 0.35, 0x000000, 0.7)
             .setOrigin(0.5)
             .setDepth(10);
         this.speakerText = this.add.text(width * 0.07, height * 0.72, '', {
@@ -261,7 +242,6 @@ class GameScene extends Phaser.Scene {
         }).setWordWrapWidth(width * 0.8)
             .setDepth(10);
 
-        // Next button
         this.nextButton = this.add.image(width * 0.92, height * 0.91, 'next')
             .setDisplaySize(height * 0.06, height * 0.06)
             .setOrigin(0.5)
@@ -269,7 +249,6 @@ class GameScene extends Phaser.Scene {
             .on('pointerdown', () => this.showNextDialogue())
             .setDepth(10);
 
-        // Settings button
         this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.1, width * 0.15, height * 0.04, 0x000000, 0)
             .setOrigin(0.5)
             .setDepth(10);
@@ -283,23 +262,19 @@ class GameScene extends Phaser.Scene {
             })
             .setDepth(10);
 
-        // Choices group
         this.choicesGroup = this.add.group();
 
-        // Show first dialogue
         console.log('ShowDialogue called');
         this.showDialogue();
         console.log('SetupScene completed');
     }
 
     updateScene() {
-        // Update background
         const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch'];
         const bgKey = validBackgrounds.includes(this.currentScene.bg) ? this.currentScene.bg : 'home';
         console.log('Setting background to:', bgKey);
         this.bg.setTexture(bgKey);
 
-        // Update music
         if (this.currentScene.music !== this.currentMusic) {
             if (this.currentMusic) {
                 this.sound.stopByKey(this.currentMusic);
@@ -329,21 +304,13 @@ class GameScene extends Phaser.Scene {
         const dialogues = this.currentScene.dialogues;
 
         if (this.dialogueIndexInScene >= dialogues.length) {
-            // Диалоги сцены закончились, проверяем nextScene
             if (this.currentScene.nextScene) {
                 console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
                 this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
                 this.dialogueIndexInScene = 0;
-                // Сохраняем прогресс
-                saveProgress(this.storyId, {
-                    sceneId: this.currentScene.id,
-                    dialogueIndexInScene: this.dialogueIndexInScene,
-                    energy: this.energy
-                });
-                // Обновляем сцену
+                this.saveProgress(); // Сохраняем при переходе на новую сцену
                 this.updateScene();
             } else {
-                // Если nextScene не указано, переходим в главное меню
                 console.log('End of story, returning to MainMenu');
                 this.sound.stopAll();
                 this.scene.start('MainMenu');
@@ -354,14 +321,11 @@ class GameScene extends Phaser.Scene {
         const dialogue = dialogues[this.dialogueIndexInScene];
         console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
 
-        // Clear choices
         this.choicesGroup.clear(true, true);
         console.log('Choices cleared');
 
-        // Update scene assets (background and music)
         this.updateScene();
 
-        // Sound effect
         if (dialogue.sfx) {
             try {
                 const sfx = this.sound.add(dialogue.sfx);
@@ -372,7 +336,6 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // Character
         const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
         if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
             this.char.setTexture(dialogue.charSprite).setAlpha(1);
@@ -380,7 +343,6 @@ class GameScene extends Phaser.Scene {
             this.char.setAlpha(0);
         }
 
-        // Shake effect
         if (this.charShakeTween) {
             this.charShakeTween.stop();
         }
@@ -392,8 +354,8 @@ class GameScene extends Phaser.Scene {
             });
         }
 
-        // Dialogue UI
-        const { width, height } = this.cameras.main;
+        const width = this.game.config.width;
+        const height = this.game.config.height;
         if (dialogue.text && dialogue.speaker) {
             this.dialogueBox.setVisible(true);
             this.speakerText.setVisible(true).setText(dialogue.speaker || '');
@@ -409,72 +371,45 @@ class GameScene extends Phaser.Scene {
             console.log('Dialogue UI hidden');
         }
 
-        // Choices
         if (dialogue.choices) {
-            // Add "Save Game" option to choices
-            const modifiedChoices = [...dialogue.choices, {
-                text: 'Сохранить игру',
-                energyCost: 0,
-                saveGame: true
-            }];
-            this.showChoices(modifiedChoices);
+            this.showChoices(dialogue.choices);
             this.nextButton.setVisible(false);
         }
 
-        // Save progress
-        saveProgress(this.storyId, {
-            sceneId: this.currentScene.id,
-            dialogueIndexInScene: this.dialogueIndexInScene,
-            energy: this.energy
-        });
+        // Автосохранение прогресса
+        this.saveProgress();
     }
 
     showChoices(choices) {
-        const { width, height } = this.cameras.main;
+        const width = this.game.config.width;
+        const height = this.game.config.height;
         this.choicesGroup.clear(true, true);
         console.log('Choices cleared');
 
-        // Вычисляем начальную Y-позицию, чтобы блок был по центру вертикально
         const totalHeight = choices.length * (height * 0.08);
         const startY = (height - totalHeight) / 2;
 
         choices.forEach((choice, index) => {
             const y = startY + index * (height * 0.08);
-
-            // Создаём контейнер для выбора
             const container = this.add.container(width / 2, y).setDepth(10);
 
-            // Фон (на всю ширину)
             const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7)
                 .setOrigin(0.5);
 
-            // Текст выбора (слева, интерактивный)
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
-                fontSize: `${height * 0.03}px`,
+                fontSize: `${height * 0.0258}px`,
                 color: '#ffffff',
                 fontFamily: 'IBM Plex Sans',
                 padding: { x: 10, y: 5 }
             }).setOrigin(0, 0.5)
                 .setInteractive()
                 .on('pointerdown', () => {
-                    if (choice.saveGame) {
-                        // Сохранить игру
-                        this.saveGame();
-                        console.log('Game saved');
-                        this.choicesGroup.clear(true, true);
-                        this.showDialogue();
-                        return;
-                    }
-
                     if (this.energy >= choice.energyCost) {
                         this.energy -= choice.energyCost;
                         this.energyText.setText(this.energy);
-
-                        // Clear choices
                         this.choicesGroup.clear(true, true);
                         console.log('Choices cleared');
 
-                        // Transition
                         if (choice.nextScene) {
                             this.currentScene = this.story.dialogues.find(scene => scene.id === choice.nextScene) || this.currentScene;
                             this.dialogueIndexInScene = choice.nextDialogue || 0;
@@ -482,37 +417,24 @@ class GameScene extends Phaser.Scene {
                             this.dialogueIndexInScene++;
                         }
 
-                        // Save progress
-                        saveProgress(this.storyId, {
-                            sceneId: this.currentScene.id,
-                            dialogueIndexInScene: this.dialogueIndexInScene,
-                            energy: this.energy
-                        });
-
+                        this.saveProgress();
                         this.showDialogue();
                     } else {
                         console.log('Not enough energy');
                     }
                 });
 
-            // Иконка энергии (справа)
-            let energyIcon, energyText;
-            if (!choice.saveGame) {
-                energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
-                    .setDisplaySize(height * 0.03, height * 0.03)
-                    .setOrigin(0.5);
+            const energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
+                .setDisplaySize(height * 0.03, height * 0.03)
+                .setOrigin(0.5);
 
-                // Число энергии (справа, после иконки)
-                energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
-                    fontSize: `${height * 0.03}px`,
-                    color: '#61bdff',
-                    fontFamily: 'Dela Gothic One'
-                }).setOrigin(0.3, 0.5);
-            }
+            const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
+                fontSize: `${height * 0.0258}px`,
+                color: '#61bdff',
+                fontFamily: 'Dela Gothic One'
+            }).setOrigin(0.3, 0.5);
 
-            // Добавляем элементы в контейнер
-            container.add([bg, choiceText, ...(choice.saveGame ? [] : [energyIcon, energyText])]);
-
+            container.add([bg, choiceText, energyIcon, energyText]);
             this.choicesGroup.add(container);
         });
         console.log('ShowChoices:', choices, 'Choices visible:', this.choicesGroup.getChildren().length);
@@ -522,10 +444,11 @@ class GameScene extends Phaser.Scene {
         this.choicesGroup.clear(true, true);
         console.log('Choices cleared');
         this.dialogueIndexInScene++;
+        this.saveProgress();
         this.showDialogue();
     }
 
-    saveGame() {
+    saveProgress() {
         const saveData = {
             storyId: this.storyId,
             sceneId: this.currentScene.id,
@@ -533,30 +456,18 @@ class GameScene extends Phaser.Scene {
             energy: this.energy,
             timestamp: Date.now()
         };
-        // Сохраняем в localStorage (или Telegram Cloud, если доступно)
         localStorage.setItem(`save_${this.storyId}`, JSON.stringify(saveData));
         if (window.Telegram?.WebApp?.CloudStorage) {
             window.Telegram.WebApp.CloudStorage.setItem(`save_${this.storyId}`, JSON.stringify(saveData));
         }
-        console.log('Game saved:', saveData);
+        console.log('Progress saved:', saveData);
     }
 
     loadGame() {
-        const saveData = JSON.parse(localStorage.getItem(`save_${this.storyId}`)) ||
-            (window.Telegram?.WebApp?.CloudStorage &&
-                JSON.parse(window.Telegram.WebApp.CloudStorage.getItem(`save_${this.storyId}`)));
-        if (saveData) {
-            this.storyId = saveData.storyId;
-            this.story = stories.find(s => s.id === saveData.storyId);
-            this.currentScene = this.story.dialogues.find(scene => scene.id === saveData.sceneId) || this.story.dialogues[0];
-            this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
-            this.energy = saveData.energy || 100;
-            this.energyText.setText(this.energy);
-            this.updateScene();
-            this.showDialogue();
-            console.log('Game loaded:', saveData);
-        } else {
-            console.log('No save data found');
-        }
+        const saveData = loadProgress(this.storyId);
+        this.currentScene = this.story.dialogues.find(scene => scene.id === saveData.sceneId) || this.story.dialogues[0];
+        this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
+        this.energy = saveData.energy || 100;
+        console.log('Game loaded:', saveData);
     }
 }

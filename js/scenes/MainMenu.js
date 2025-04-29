@@ -8,7 +8,6 @@ class MainMenu extends Phaser.Scene {
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
 
-        // Форсированная подгрузка шрифтов
         this.createFontPreload();
     }
 
@@ -17,8 +16,8 @@ class MainMenu extends Phaser.Scene {
 
         const music = this.sound.add('menu_music', { loop: true });
         music.play();
- 
-        await document.fonts.ready; // Ждём загрузки шрифтов!
+
+        await document.fonts.ready;
 
         this.add.text(215, 100, '', {
             fontFamily: 'Dela Gothic One',
@@ -26,34 +25,48 @@ class MainMenu extends Phaser.Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        // Story Selection Button
-      const storyButton = this.add.rectangle(215, 670, 200, 60, 0x000000, 0.8)
-    .setInteractive()
-    .on('pointerdown', () => {
-        this.scene.start('GameScene', { storyId: 'story1' });  // Передаем storyId в GameScene
-    });
-        this.add.text(215, 670, 'Начать', {
+        // Новая игра
+        const newGameButton = this.add.rectangle(215, 670, 200, 60, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => {
+                localStorage.removeItem(`progress_${'story1'}`);
+                this.scene.start('GameScene', { storyId: 'story1' });
+            });
+        this.add.text(215, 670, 'Новая игра', {
             fontFamily: 'IBM Plex Sans',
             fontSize: '24px',
             color: '#ffffff',
-            textTransform:'uppercase',
+            textTransform: 'uppercase'
         }).setOrigin(0.5);
 
-        // Gallery Button
-        const galleryButton = this.add.rectangle(215, 735, 200, 60, 0x000000, 0.8)
+        // Продолжить
+        const continueButton = this.add.rectangle(215, 735, 200, 60, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', () => console.log('Gallery TBD'));
-        this.add.text(215, 735, 'Галерея', {
+            .on('pointerdown', () => {
+                this.scene.start('GameScene', { storyId: 'story1' });
+            });
+        this.add.text(215, 735, 'Продолжить', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: '24px',
+            color: '#ffffff',
+            textTransform: 'uppercase'
+        }).setOrigin(0.5);
+
+        // Настройки
+        const settingsButton = this.add.rectangle(215, 800, 200, 60, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => this.scene.launch('SettingsScene'));
+        this.add.text(215, 800, 'Настройки', {
             fontFamily: 'IBM Plex Sans',
             fontSize: '24px',
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        // Settings Button
-        const settingsButton = this.add.rectangle(215, 800, 200, 60, 0x000000, 0.8)
+        // Галерея
+        const galleryButton = this.add.rectangle(215, 865, 200, 60, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', () => this.scene.launch('SettingsScene'));
-        this.add.text(215, 800, 'Хуй', {
+            .on('pointerdown', () => console.log('Gallery TBD'));
+        this.add.text(215, 865, 'Галерея', {
             fontFamily: 'IBM Plex Sans',
             fontSize: '24px',
             color: '#ffffff'

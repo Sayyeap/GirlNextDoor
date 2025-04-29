@@ -2,9 +2,11 @@
     "name": "your-game",
     "version": "1.0.0",
     "scripts": {
-        "start": "http-server -p 8080 -o --cache -1"
+        "start": "live-server --port=8080"
+        
     },
     "devDependencies": {
-        "http-server": "^14.1.1"
+        "live-server": "^1.2.2",
+        "phaser": "^3.55.2"
     }
 }

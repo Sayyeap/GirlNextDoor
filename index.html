@@ -6,6 +6,20 @@
     <title>Visual Novel</title>
 
     <style>
+ body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            
+        }
+        canvas {
+            display: block;
+           
+            transform: none !important;
+            scale: 1 !important;
+            will-change: transform;
+        }
+
         /* Локальные шрифты */
         @font-face {
             font-family: 'IBM Plex Sans';
@@ -55,6 +69,7 @@
     <!-- Логика -->
     <script src="js/main.js"></script>
     <script src="js/bootstrap.js"></script>
+    
 
 </body>
 </html>
