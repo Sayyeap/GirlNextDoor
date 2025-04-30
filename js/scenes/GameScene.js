@@ -6,9 +6,11 @@ class GameScene extends Phaser.Scene {
         this.dialogueIndexInScene = 0;
         this.currentMusic = null;
         this.energy = 100;
-        this.choicesGroup = null;
+        this.choicesGroup = null; // Будет инициализировано в create
         this.charShakeTween = null;
         this.isLoaded = false;
+        this.isTyping = false;
+        this.currentDialogueText = '';
     }
 
     init(data) {
@@ -19,11 +21,8 @@ class GameScene extends Phaser.Scene {
             this.scene.restart({ storyId: this.storyId });
             return;
         }
-    
         this.sound.stopAll();
         console.log('All sounds stopped');
-    
-        // Загружаем прогресс
         this.loadGame();
     }
 
@@ -45,6 +44,7 @@ class GameScene extends Phaser.Scene {
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('next', 'assets/common/images/next.png');
+        this.load.image('darkbg', 'assets/common/images/darkbg.png');
 
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
@@ -64,23 +64,17 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Устанавливаем размер игры
         this.scale.setGameSize(window.innerWidth, window.innerHeight);
         this.scale.mode = Phaser.Scale.RESIZE;
         this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
 
-        // Настраиваем камеру
         this.cameras.main.setViewport(0, 0, this.game.config.width, this.game.config.height);
         this.cameras.main.setBounds(0, 0, this.game.config.width, this.game.config.height);
 
-        // Логируем размер
         console.log('Scene size:', this.cameras.main.width, this.cameras.main.height);
-        console.log('Camera:', this.cameras.main);
 
-        // Фон по умолчанию
         this.cameras.main.setBackgroundColor('#000000');
 
-        // Экран загрузки
         const width = this.game.config.width;
         const height = this.game.config.height;
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
@@ -90,22 +84,22 @@ class GameScene extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5).setDepth(101);
 
-        // Обработка загрузки
         console.log('Load started');
         if (this.isLoaded) {
             this.children.removeAll();
             this.setupScene();
+            this.showDialogue(); // Перенесено сюда
             console.log('Create completed');
         } else {
             this.load.once('complete', () => {
                 this.children.removeAll();
                 this.setupScene();
+                this.showDialogue(); // Перенесено сюда
                 console.log('Create completed');
             });
             this.load.start();
         }
 
-        // Регистрируем обработчик resize
         this.scale.on('resize', this.resize, this);
     }
 
@@ -114,25 +108,20 @@ class GameScene extends Phaser.Scene {
         const height = size.height || this.game.config.height;
         console.log('Resize - Scene size:', width, height);
 
-        // Обновляем камеру
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
 
-        // Обновляем фон
         if (this.bg) {
             this.bg.setPosition(width / 2, height / 2)
                 .setDisplaySize(width, height)
                 .setOrigin(0.5);
-            console.log('Background size:', this.bg.displayWidth, this.bg.displayHeight);
         }
 
-        // Обновляем персонажа
         if (this.char) {
             this.char.setPosition(width / 2, height)
-                .setScale(width * 0.79 / 600); // Уменьшен масштаб для синхронизации с MainMenu
+                .setScale(width * 0.79 / 600);
         }
 
-        // Обновляем UI энергии
         if (this.energyRect) {
             this.energyRect.setPosition(width * 0.1, height * 0.1)
                 .setSize(width * 0.25, height * 0.04);
@@ -146,28 +135,31 @@ class GameScene extends Phaser.Scene {
                 .setDisplaySize(height * 0.04, height * 0.04);
         }
 
-        // Обновляем UI диалогов
         if (this.dialogueBox) {
             this.dialogueBox.setPosition(width / 2, height * 0.83)
-                .setSize(width, height * 0.35);
+                .setDisplaySize(width, height * 0.35);
         }
         if (this.speakerText) {
-            this.speakerText.setPosition(width * 0.07, height * 0.72)
+            this.speakerText.setPosition(width * 0.1, height * 0.72)
                 .setFontSize(height * 0.027);
         }
         if (this.dialogueText) {
-            this.dialogueText.setPosition(width * 0.07, height * 0.76)
+            this.dialogueText.setPosition(width * 0.1, height * 0.76)
                 .setFontSize(height * 0.024)
                 .setWordWrapWidth(width * 0.8);
         }
 
-        // Обновляем кнопку "Далее"
-        if (this.nextButton) {
-            this.nextButton.setPosition(width * 0.92, height * 0.91)
-                .setDisplaySize(height * 0.06, height * 0.06);
+        if (this.nextButtonContainer) {
+            this.nextButtonContainer.setPosition(width / 2, height * 0.91);
+            this.nextButtonContainer.getAll().forEach(child => {
+                if (child.type === 'Text') {
+                    child.setFontSize(height * 0.0258);
+                } else if (child.type === 'Image') {
+                    child.setDisplaySize(height * 0.04, height * 0.04);
+                }
+            });
         }
 
-        // Обновляем кнопку настроек
         if (this.settingsButtonBg) {
             this.settingsButtonBg.setPosition(width / 1.1, height * 0.1)
                 .setSize(width * 0.15, height * 0.04);
@@ -177,7 +169,6 @@ class GameScene extends Phaser.Scene {
                 .setDisplaySize(height * 0.032, height * 0.032);
         }
 
-        // Обновляем выборы
         this.choicesGroup.getChildren().forEach((container, index) => {
             const y = (height - (this.choicesGroup.getChildren().length * (height * 0.08))) / 2 + index * (height * 0.08);
             container.setPosition(width / 2, y);
@@ -208,13 +199,23 @@ class GameScene extends Phaser.Scene {
             .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setDepth(1);
-        console.log('Background size:', this.bg.displayWidth, this.bg.displayHeight);
 
         this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
             .setScale(width * 0.79 / 600)
             .setOrigin(0.5, 1)
             .setAlpha(0)
             .setDepth(5);
+
+        this.charBreathTween = this.tweens.add({
+            targets: this.char,
+            scaleX: { from: 0.530, to: 0.531 },
+            scaleY: { from: 0.530, to: 0.533 },
+            duration: 800, // 1.5 секунды на цикл
+            ease: 'Sine.easeInOut',
+            yoyo: true, // Возврат к начальному значению
+            repeat: -1, // Бесконечный цикл
+            paused: true // Твин не активен, пока персонаж невидим
+        });
 
         this.energyRect = this.add.rectangle(width * 0.1, height * 0.1, width * 0.25, height * 0.04, 0x000000, 0.5)
             .setDepth(10);
@@ -227,27 +228,52 @@ class GameScene extends Phaser.Scene {
             .setDisplaySize(height * 0.04, height * 0.04)
             .setDepth(10);
 
-        this.dialogueBox = this.add.rectangle(width / 2, height * 0.83, width, height * 0.35, 0x000000, 0.7)
-            .setOrigin(0.5)
-            .setDepth(10);
-        this.speakerText = this.add.text(width * 0.07, height * 0.72, '', {
-            fontSize: `${height * 0.027}px`,
-            color: '#61bdff',
-            fontFamily: 'Dela Gothic One'
-        }).setDepth(10);
-        this.dialogueText = this.add.text(width * 0.07, height * 0.76, '', {
-            fontSize: `${height * 0.024}px`,
-            color: '#ffffff',
-            fontFamily: 'IBM Plex Sans'
-        }).setWordWrapWidth(width * 0.8)
+        this.dialogueBox = this.add.image(width / 2, height , 'darkbg')
+            .setDisplaySize(width, height * 0.6)
+            .setOrigin(0.5, 1)
             .setDepth(10);
 
-        this.nextButton = this.add.image(width * 0.92, height * 0.91, 'next')
-            .setDisplaySize(height * 0.06, height * 0.06)
-            .setOrigin(0.5)
-            .setInteractive()
-            .on('pointerdown', () => this.showNextDialogue())
+        this.speakerText = this.add.text(width / 2, height * 0.72, '', {
+            fontSize: `${height * 0.027}px`,
+            color: '#61bdff',
+            fontFamily: 'Dela Gothic One',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5)
             .setDepth(10);
+
+        this.dialogueText = this.add.text(width * 0.1, height * 0.76, '', {
+            fontSize: `${height * 0.024}px`,
+            color: '#ffffff',
+            fontFamily: 'IBM Plex Sans',
+            stroke: '#000000',
+            strokeThickness: 2,
+            align: 'left'
+        }).setWordWrapWidth(width * 0.8)
+            .setOrigin(0.0)
+            .setDepth(10);
+
+        this.nextButtonContainer = this.add.container(width / 2, height * 0.91).setDepth(10);
+        const nextText = this.add.text(0, 0, 'Далее', {
+            fontSize: `${height * 0.0258}px`,
+            color: '#ffffff',
+            fontFamily: 'IBM Plex Sans'
+        }).setOrigin(0.5);
+        
+        const rightArrow = this.add.image(width * 0.12, 0, 'next')
+            .setDisplaySize(height * 0.023, height * 0.023)
+            .setOrigin(0.5);
+        this.nextButtonContainer.add([ nextText, rightArrow]);
+        this.nextButtonContainer.setInteractive(new Phaser.Geom.Rectangle(-width * 0.15, -height * 0.03, width * 0.3, height * 0.06), Phaser.Geom.Rectangle.Contains)
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                if (this.isTyping) {
+                    this.isTyping = false;
+                    this.dialogueText.setText(this.currentDialogueText);
+                } else {
+                    this.showNextDialogue();
+                }
+            });
 
         this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.1, width * 0.15, height * 0.04, 0x000000, 0)
             .setOrigin(0.5)
@@ -262,10 +288,7 @@ class GameScene extends Phaser.Scene {
             })
             .setDepth(10);
 
-        this.choicesGroup = this.add.group();
-
-        console.log('ShowDialogue called');
-        this.showDialogue();
+        this.choicesGroup = this.add.group(); // Инициализация здесь
         console.log('SetupScene completed');
     }
 
@@ -298,6 +321,7 @@ class GameScene extends Phaser.Scene {
         console.log('ShowDialogue started');
         if (!this.currentScene || !this.currentScene.dialogues) {
             console.log('No current scene or dialogues');
+            this.scene.start('MainMenu');
             return;
         }
 
@@ -308,7 +332,7 @@ class GameScene extends Phaser.Scene {
                 console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
                 this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
                 this.dialogueIndexInScene = 0;
-                this.saveProgress(); // Сохраняем при переходе на новую сцену
+                this.saveProgress();
                 this.updateScene();
             } else {
                 console.log('End of story, returning to MainMenu');
@@ -321,8 +345,9 @@ class GameScene extends Phaser.Scene {
         const dialogue = dialogues[this.dialogueIndexInScene];
         console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
 
-        this.choicesGroup.clear(true, true);
-        console.log('Choices cleared');
+        if (this.choicesGroup) {
+            this.choicesGroup.clear(true, true);
+        }
 
         this.updateScene();
 
@@ -336,12 +361,14 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
-        if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
-            this.char.setTexture(dialogue.charSprite).setAlpha(1);
-        } else {
-            this.char.setAlpha(0);
-        }
+    const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
+if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
+    this.char.setTexture(dialogue.charSprite).setAlpha(1);
+    this.charBreathTween.play(); // Запускаем анимацию дыхания
+} else {
+    this.char.setAlpha(0);
+    this.charBreathTween.pause(); // Останавливаем анимацию
+}
 
         if (this.charShakeTween) {
             this.charShakeTween.stop();
@@ -359,32 +386,49 @@ class GameScene extends Phaser.Scene {
         if (dialogue.text && dialogue.speaker) {
             this.dialogueBox.setVisible(true);
             this.speakerText.setVisible(true).setText(dialogue.speaker || '');
-            this.dialogueText.setVisible(true).setText(dialogue.text || '');
-            this.nextButton.setVisible(true);
-            console.log('Dialogue UI visible:', this.dialogueBox.visible, 'Text set:', dialogue.text);
-            console.log('UI positions:', this.dialogueText.x, this.dialogueText.y, this.dialogueText.text);
+            this.currentDialogueText = dialogue.text || '';
+            this.isTyping = true;
+            this.dialogueText.setVisible(true).setText('');
+            this.typewriterEffect(this.currentDialogueText);
+            this.nextButtonContainer.setVisible(true);
         } else {
             this.dialogueBox.setVisible(false);
             this.speakerText.setVisible(false).setText('');
             this.dialogueText.setVisible(false).setText('');
-            this.nextButton.setVisible(true);
-            console.log('Dialogue UI hidden');
+            this.nextButtonContainer.setVisible(true);
         }
 
         if (dialogue.choices) {
             this.showChoices(dialogue.choices);
-            this.nextButton.setVisible(false);
+            this.nextButtonContainer.setVisible(false);
         }
 
-        // Автосохранение прогресса
         this.saveProgress();
+    }
+
+    typewriterEffect(text) {
+        let index = 0;
+        this.dialogueText.setText('');
+        const timer = this.time.addEvent({
+            delay: 50,
+            callback: () => {
+                if (!this.isTyping || index >= text.length) {
+                    timer.remove();
+                    this.isTyping = false;
+                    this.dialogueText.setText(text);
+                    return;
+                }
+                this.dialogueText.setText(text.substring(0, ++index));
+            },
+            callbackScope: this,
+            loop: true
+        });
     }
 
     showChoices(choices) {
         const width = this.game.config.width;
         const height = this.game.config.height;
         this.choicesGroup.clear(true, true);
-        console.log('Choices cleared');
 
         const totalHeight = choices.length * (height * 0.08);
         const startY = (height - totalHeight) / 2;
@@ -393,8 +437,7 @@ class GameScene extends Phaser.Scene {
             const y = startY + index * (height * 0.08);
             const container = this.add.container(width / 2, y).setDepth(10);
 
-            const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7)
-                .setOrigin(0.5);
+            const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7);
 
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
                 fontSize: `${height * 0.0258}px`,
@@ -408,7 +451,7 @@ class GameScene extends Phaser.Scene {
                         this.energy -= choice.energyCost;
                         this.energyText.setText(this.energy);
                         this.choicesGroup.clear(true, true);
-                        console.log('Choices cleared');
+                        this.sound.play('click');
 
                         if (choice.nextScene) {
                             this.currentScene = this.story.dialogues.find(scene => scene.id === choice.nextScene) || this.currentScene;
@@ -419,8 +462,6 @@ class GameScene extends Phaser.Scene {
 
                         this.saveProgress();
                         this.showDialogue();
-                    } else {
-                        console.log('Not enough energy');
                     }
                 });
 
@@ -437,12 +478,10 @@ class GameScene extends Phaser.Scene {
             container.add([bg, choiceText, energyIcon, energyText]);
             this.choicesGroup.add(container);
         });
-        console.log('ShowChoices:', choices, 'Choices visible:', this.choicesGroup.getChildren().length);
     }
 
     showNextDialogue() {
         this.choicesGroup.clear(true, true);
-        console.log('Choices cleared');
         this.dialogueIndexInScene++;
         this.saveProgress();
         this.showDialogue();
