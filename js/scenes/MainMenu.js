@@ -23,7 +23,7 @@ class MainMenu extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, width, height);
 
         this.bg = this.add.image(width / 2, height / 2, 'menu_bg')
-            .setDisplaySize(width, height)
+            .setScale(Math.max(width / 430, height / 932)* 0.5)
             .setOrigin(0.5)
             .setDepth(1);
 
@@ -140,7 +140,7 @@ class MainMenu extends Phaser.Scene {
 
         if (this.bg) {
             this.bg.setPosition(width / 2, height / 2)
-                .setDisplaySize(width, height)
+                .setScale(Math.max(width / 430, height / 932)* 0.5)
                 .setOrigin(0.5);
         }
 
@@ -158,7 +158,7 @@ class MainMenu extends Phaser.Scene {
         if (this.continueContainer) {
             this.continueContainer.setPosition(width / 2, height * 0.79);
             this.continueContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
-            this.newGameContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+            this.continueContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
         }
 
         if (this.settingsContainer) {
