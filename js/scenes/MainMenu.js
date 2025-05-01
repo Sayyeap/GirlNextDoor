@@ -7,89 +7,172 @@ class MainMenu extends Phaser.Scene {
         this.load.image('menu_bg', 'assets/common/images/menu_bg.jpg');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
+        this.load.audio('click', 'assets/common/audio/click.wav');
 
         this.createFontPreload();
     }
 
     async create() {
-        this.add.image(215, 466, 'menu_bg').setDisplaySize(430, 932);
+        const width = this.game.config.width;
+        const height = this.game.config.height;
+        this.scale.setGameSize(window.innerWidth, window.innerHeight);
+        this.scale.mode = Phaser.Scale.RESIZE;
+        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
+
+        this.bg = this.add.image(width / 2, height / 2, 'menu_bg')
+            .setDisplaySize(width, height)
+            .setOrigin(0.5)
+            .setDepth(1);
 
         const music = this.sound.add('menu_music', { loop: true });
         music.play();
 
         await document.fonts.ready;
 
-        this.add.text(215, 100, '', {
+        this.titleText = this.add.text(width / 2, height * 0.1, '', {
             fontFamily: 'Dela Gothic One',
-            fontSize: '40px',
+            fontSize: `${height * 0.043}px`,
             color: '#ffffff'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5)
+          .setDepth(10);
 
         // Новая игра
-        const newGameButton = this.add.rectangle(215, 670, 200, 60, 0x000000, 0.8)
+        this.newGameContainer = this.add.container(width / 2, height * 0.72).setDepth(10);
+        const newGameButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
+                this.sound.play('click');
                 localStorage.removeItem(`progress_${'story1'}`);
                 this.scene.start('GameScene', { storyId: 'story1' });
             });
-        this.add.text(215, 670, 'Новая игра', {
+        const newGameText = this.add.text(0, 0, 'Новая игра', {
             fontFamily: 'IBM Plex Sans',
-            fontSize: '24px',
+            fontSize: `${height * 0.0258}px`,
             color: '#ffffff',
             textTransform: 'uppercase'
         }).setOrigin(0.5);
+        this.newGameContainer.add([newGameButton, newGameText]);
 
         // Продолжить
-        const continueButton = this.add.rectangle(215, 735, 200, 60, 0x000000, 0.8)
+        this.continueContainer = this.add.container(width / 2, height * 0.79).setDepth(10);
+        const continueButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
+                this.sound.play('click');
                 this.scene.start('GameScene', { storyId: 'story1' });
             });
-        this.add.text(215, 735, 'Продолжить', {
+        const continueText = this.add.text(0, 0, 'Продолжить', {
             fontFamily: 'IBM Plex Sans',
-            fontSize: '24px',
+            fontSize: `${height * 0.0258}px`,
             color: '#ffffff',
             textTransform: 'uppercase'
         }).setOrigin(0.5);
+        this.continueContainer.add([continueButton, continueText]);
 
         // Настройки
-        const settingsButton = this.add.rectangle(215, 800, 200, 60, 0x000000, 0.8)
+        this.settingsContainer = this.add.container(width / 2, height * 0.86).setDepth(10);
+        const settingsButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', () => this.scene.launch('SettingsScene'));
-        this.add.text(215, 800, 'Настройки', {
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                this.scene.launch('SettingsScene');
+            });
+        const settingsText = this.add.text(0, 0, 'Настройки', {
             fontFamily: 'IBM Plex Sans',
-            fontSize: '24px',
+            fontSize: `${height * 0.0258}px`,
             color: '#ffffff'
         }).setOrigin(0.5);
+        this.settingsContainer.add([settingsButton, settingsText]);
 
         // Галерея
-        const galleryButton = this.add.rectangle(215, 865, 200, 60, 0x000000, 0.8)
+        this.galleryContainer = this.add.container(width / 2, height * 0.93).setDepth(10);
+        const galleryButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', () => console.log('Gallery TBD'));
-        this.add.text(215, 865, 'Галерея', {
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                console.log('Gallery TBD');
+            });
+        const galleryText = this.add.text(0, 0, 'Галерея', {
             fontFamily: 'IBM Plex Sans',
-            fontSize: '24px',
+            fontSize: `${height * 0.0258}px`,
             color: '#ffffff'
         }).setOrigin(0.5);
+        this.galleryContainer.add([galleryButton, galleryText]);
 
         this.storyGroup = this.add.group();
+
+        this.scale.on('resize', this.resize, this);
     }
 
     showStorySelection() {
         this.storyGroup.clear(true, true);
+        const width = this.game.config.width;
+        const height = this.game.config.height;
         stories.forEach((story, i) => {
-            const btn = this.add.rectangle(215, 266 + i * 80, 300, 60, 0x333333, 0.8)
+            const storyContainer = this.add.container(width / 2, height * 0.3 + i * (height * 0.1)).setDepth(10);
+            const btn = this.add.rectangle(0, 0, width * 0.7, height * 0.06, 0x333333, 0.8)
                 .setInteractive()
                 .on('pointerdown', () => {
+                    this.sound.play('click');
                     this.scene.start('GameScene', { storyId: story.id });
                 });
-            this.add.text(215, 266 + i * 80, story.title, {
+            const storyText = this.add.text(0, 0, story.title, {
                 fontFamily: 'IBM Plex Sans',
-                fontSize: '24px',
+                fontSize: `${height * 0.0258}px`,
                 color: '#ffffff'
             }).setOrigin(0.5);
-            this.storyGroup.add(btn);
+            storyContainer.add([btn, storyText]);
+            this.storyGroup.add(storyContainer);
         });
+    }
+
+    resize(size) {
+        if (!this.scene.isActive()) return;
+
+        const width = size.width || this.game.config.width;
+        const height = size.height || this.game.config.height;
+
+        if (this.bg) {
+            this.bg.setPosition(width / 2, height / 2)
+                .setDisplaySize(width, height);
+        }
+
+        if (this.titleText) {
+            this.titleText.setPosition(width / 2, height * 0.1)
+                .setFontSize(height * 0.043);
+        }
+
+        if (this.newGameContainer) {
+            this.newGameContainer.setPosition(width / 2, height * 0.72);
+            this.newGameContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
+            this.newGameContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+        }
+
+        if (this.continueContainer) {
+            this.continueContainer.setPosition(width / 2, height * 0.79);
+            this.continueContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
+            this.continueContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+        }
+
+        if (this.settingsContainer) {
+            this.settingsContainer.setPosition(width / 2, height * 0.86);
+            this.settingsContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
+            this.settingsContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+        }
+
+        if (this.galleryContainer) {
+            this.galleryContainer.setPosition(width / 2, height * 0.93);
+            this.galleryContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
+            this.galleryContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+        }
+
+        if (this.storyGroup && this.storyGroup.getChildren().length > 0) {
+            this.storyGroup.getChildren().forEach((container, i) => {
+                container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
+                container.getAll('type', 'Rectangle')[0]?.setSize(width * 0.7, height * 0.06);
+                container.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+            });
+        }
     }
 
     createFontPreload() {
