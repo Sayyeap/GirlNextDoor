@@ -47,6 +47,13 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 
     <!-- Инициализация Telegram Web App -->
+  
+    <!-- Твои сцены -->
+    <script src="js/scenes/MainMenu.js"></script>
+    <script src="js/scenes/GameScene.js"></script>
+    <script src="js/scenes/SettingsScene.js"></script>
+    <script src="js/scenes/FullscreenScene.js"></script>
+    <script src="js/scenes/InteractiveScene.js"></script>
     <script>
         // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
@@ -87,13 +94,6 @@
         // Интеграция userId в игру
         game.registry.set('userId', userId);
     </script>
-
-    <!-- Твои сцены -->
-    <script src="js/scenes/MainMenu.js"></script>
-    <script src="js/scenes/GameScene.js"></script>
-    <script src="js/scenes/SettingsScene.js"></script>
-    <script src="js/scenes/FullscreenScene.js"></script>
-    <script src="js/scenes/InteractiveScene.js"></script>
 
     <!-- Данные -->
     <script src="js/utils.js"></script>
