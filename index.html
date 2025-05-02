@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visual Novel</title>
+    
     <base href="/">
 
     <!-- Telegram Web App SDK -->
@@ -12,11 +13,10 @@
     <style>
         body {
             margin: 0;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            padding: 0;
             overflow: hidden;
             width: 100vw;
             height: 100vh;
-            box-sizing: border-box;
             font-family: 'IBM Plex Sans', sans-serif;
         }
       
@@ -44,41 +44,49 @@
     </style>
 </head>
 <body>
-    <!-- Скрипты Phaser и сцен -->
+    <!-- Скрипты Phaser -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <!-- Инициализация Telegram Web App -->
+  <script>
+    // Инициализация Telegram Web App
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand(); // Разворачивает Web App на весь экран
+
+    // Полноэкранный режим
+    tg.requestFullscreen().then(() => {
+        console.log('Full screen enabled');
+    }).catch(err => {
+        console.error('Full screen failed:', err);
+    });
+
+    // Получение Telegram User ID
+    const userId = tg.initDataUnsafe?.user?.id || 'guest';
+    console.log('Telegram User ID:', userId);
+</script>
+   
+  
+    <!-- Твои сцены -->
     <script src="js/scenes/MainMenu.js"></script>
     <script src="js/scenes/GameScene.js"></script>
     <script src="js/scenes/SettingsScene.js"></script>
     <script src="js/scenes/FullscreenScene.js"></script>
     <script src="js/scenes/InteractiveScene.js"></script>
+    
+
+    <!-- Данные -->
     <script src="js/utils.js"></script>
     <script src="js/data/story1.js"></script>
+    
     <script src="js/data/stories.js"></script>
+
+    <!-- Логика -->
     <script src="js/main.js"></script>
     <script src="js/bootstrap.js"></script>
-
-    <!-- Инициализация Telegram Web App и Phaser -->
-    <script>
-        /* eslint-disable no-undef */
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        tg.setViewportStable();
-        console.log('Telegram Web App version:', tg.version);
-        setTimeout(() => {
-            if (tg.isVersionAtLeast('7.7')) {
-                tg.requestFullscreen().then(() => {
-                    console.log('Full screen enabled');
-                }).catch(err => {
-                    console.error('Full screen failed:', err);
-                });
-            } else {
-                console.log('Full screen not supported, Telegram Web App version:', tg.version);
-            }
-        }, 500);
-        const userId = tg.initDataUnsafe?.user?.id || 'guest';
-        console.log('Telegram User ID:', userId);
-
+    
+   
+        <script>
+        // Настройка Phaser
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
@@ -93,10 +101,12 @@
 
         const game = new Phaser.Game(config);
 
+        // Обработка ресайзинга
         window.addEventListener('resize', () => {
             game.scale.resize(window.innerWidth, window.innerHeight);
         });
 
+        // Интеграция userId в игру
         game.registry.set('userId', userId);
     </script>
 </body>
