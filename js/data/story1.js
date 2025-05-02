@@ -232,9 +232,7 @@ const story1Dialogues = [
                 shake: null,
                 sfx: null,
                 choices: null
-            },
-             
-              
+            }
         ]
     },
      

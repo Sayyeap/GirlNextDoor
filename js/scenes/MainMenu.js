@@ -23,19 +23,26 @@ class MainMenu extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, width, height);
 
         this.bg = this.add.image(width / 2, height / 2, 'menu_bg')
-            .setScale(Math.max(width / 430, height / 932)* 0.5)
+            .setScale(Math.max(width / 430, height / 932) * 0.5)
             .setOrigin(0.5)
             .setDepth(1);
 
+        // Временная заглушка для громкости
+        this.game.sound.volume = 1.0;
         const music = this.sound.add('menu_music', { loop: true });
         music.play();
+        console.log('MainMenu: Music playing', music.isPlaying);
 
         await document.fonts.ready;
+        console.log('MainMenu: Fonts loaded');
+
+        // Учитываем тему Telegram
+        
 
         this.titleText = this.add.text(width / 2, height * 0.1, '', {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height * 0.043}px`,
-            color: '#ffffff'
+            color: '#fff',
         }).setOrigin(0.5)
           .setDepth(10);
 
@@ -43,15 +50,36 @@ class MainMenu extends Phaser.Scene {
         this.newGameContainer = this.add.container(width / 2, height * 0.72).setDepth(10);
         const newGameButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', () => {
+            .on('pointerdown', async () => {
                 this.sound.play('click');
-                localStorage.removeItem(`progress_${'story1'}`);
-                this.scene.start('GameScene', { storyId: 'story1' });
+                if (window.Telegram?.WebApp) {
+                    const userId = window.gameConfig?.userId;
+                    if (userId) {
+                        try {
+                            await Telegram.WebApp.CloudStorage.removeItem(`progress_${userId}_story1`);
+                            console.log('MainMenu: Progress reset for story1 via CloudStorage');
+                        } catch (error) {
+                            console.error('MainMenu: Failed to reset progress', error);
+                            localStorage.removeItem(`progress_story1`);
+                        }
+                    } else {
+                        localStorage.removeItem(`progress_story1`);
+                    }
+                } else {
+                    localStorage.removeItem(`progress_story1`);
+                }
+                this.scene.start('GameScene', {
+                    storyId: 'story1',
+                    sceneId: 'scene1',
+                    dialogueIndexInScene: 0,
+                    energy: 100,
+                    stars: 0
+                });
             });
         const newGameText = this.add.text(0, 0, 'Новая игра', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.0258}px`,
-            color: '#ffffff',
+            color: '#fff',
             textTransform: 'uppercase'
         }).setOrigin(0.5);
         this.newGameContainer.add([newGameButton, newGameText]);
@@ -62,12 +90,20 @@ class MainMenu extends Phaser.Scene {
             .setInteractive()
             .on('pointerdown', () => {
                 this.sound.play('click');
-                this.scene.start('GameScene', { storyId: 'story1' });
+                // Временная заглушка вместо loadProgress
+                const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
+                this.scene.start('GameScene', {
+                    storyId: 'story1',
+                    sceneId: progress.sceneId,
+                    dialogueIndexInScene: progress.dialogueIndexInScene,
+                    energy: progress.energy,
+                    stars: progress.stars
+                });
             });
         const continueText = this.add.text(0, 0, 'Продолжить', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.0258}px`,
-            color: '#ffffff',
+            color: '#fff',
             textTransform: 'uppercase'
         }).setOrigin(0.5);
         this.continueContainer.add([continueButton, continueText]);
@@ -83,7 +119,7 @@ class MainMenu extends Phaser.Scene {
         const settingsText = this.add.text(0, 0, 'Настройки', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.0258}px`,
-            color: '#ffffff'
+            color: '#fff',
         }).setOrigin(0.5);
         this.settingsContainer.add([settingsButton, settingsText]);
 
@@ -98,7 +134,7 @@ class MainMenu extends Phaser.Scene {
         const galleryText = this.add.text(0, 0, 'Галерея', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.0258}px`,
-            color: '#ffffff'
+            color: '#fff',
         }).setOrigin(0.5);
         this.galleryContainer.add([galleryButton, galleryText]);
 
@@ -111,18 +147,27 @@ class MainMenu extends Phaser.Scene {
         this.storyGroup.clear(true, true);
         const width = this.game.config.width;
         const height = this.game.config.height;
+        const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
         stories.forEach((story, i) => {
             const storyContainer = this.add.container(width / 2, height * 0.3 + i * (height * 0.1)).setDepth(10);
             const btn = this.add.rectangle(0, 0, width * 0.7, height * 0.06, 0x333333, 0.8)
                 .setInteractive()
                 .on('pointerdown', () => {
                     this.sound.play('click');
-                    this.scene.start('GameScene', { storyId: story.id });
+                    // Временная заглушка вместо loadProgress
+                    const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
+                    this.scene.start('GameScene', {
+                        storyId: story.id,
+                        sceneId: progress.sceneId,
+                        dialogueIndexInScene: progress.dialogueIndexInScene,
+                        energy: progress.energy,
+                        stars: progress.stars
+                    });
                 });
             const storyText = this.add.text(0, 0, story.title, {
                 fontFamily: 'IBM Plex Sans',
                 fontSize: `${height * 0.0258}px`,
-                color: '#ffffff'
+                color: '#fff',
             }).setOrigin(0.5);
             storyContainer.add([btn, storyText]);
             this.storyGroup.add(storyContainer);
@@ -140,7 +185,7 @@ class MainMenu extends Phaser.Scene {
 
         if (this.bg) {
             this.bg.setPosition(width / 2, height / 2)
-                .setScale(Math.max(width / 430, height / 932)* 0.5)
+                .setScale(Math.max(width / 430, height / 932) * 0.5)
                 .setOrigin(0.5);
         }
 

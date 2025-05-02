@@ -6,16 +6,21 @@
     <title>Visual Novel</title>
     <base href="/">
 
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
- body {
+        body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            
+            width: 100vw;
+            height: 100vh;
+            font-family: 'IBM Plex Sans', sans-serif;
         }
+      
         canvas {
             display: block;
-           
             transform: none !important;
             scale: 1 !important;
             will-change: transform;
@@ -35,21 +40,9 @@
             font-weight: normal;
             font-style: normal;
         }
-
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #000;
-            font-family: 'IBM Plex Sans', sans-serif;
-        }
-        canvas {
-            display: block;
-        }
     </style>
 </head>
 <body>
-
     <!-- Скрипты Phaser -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 
@@ -61,16 +54,33 @@
     <script src="js/scenes/InteractiveScene.js"></script>
 
     <!-- Данные -->
+    <script src="js/utils.js"></script>
     <script src="js/data/story1.js"></script>
-    <script src="js/data/progress.js"></script>
+    
     <script src="js/data/stories.js"></script>
-    
-    
 
     <!-- Логика -->
     <script src="js/main.js"></script>
     <script src="js/bootstrap.js"></script>
-    
 
+    <!-- Инициализация Telegram Web App -->
+    <script>
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            window.gameConfig = {
+                userId: Telegram.WebApp.initDataUnsafe?.user?.id || null,
+                colorScheme: Telegram.WebApp.colorScheme || 'light'
+            };
+            document.body.className = window.gameConfig.colorScheme;
+            Telegram.WebApp.onEvent('themeChanged', () => {
+                window.gameConfig.colorScheme = Telegram.WebApp.colorScheme;
+                document.body.className = Telegram.WebApp.colorScheme;
+            });
+            console.log('Telegram WebApp initialized:', window.gameConfig);
+        } else {
+            console.error('Telegram WebApp SDK not loaded');
+        }
+    </script>
 </body>
 </html>

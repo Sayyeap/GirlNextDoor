@@ -6,11 +6,12 @@ class GameScene extends Phaser.Scene {
         this.dialogueIndexInScene = 0;
         this.currentMusic = null;
         this.energy = 100;
-        this.choicesGroup = null; // Будет инициализировано в create
+        this.choicesGroup = null;
         this.charShakeTween = null;
         this.isLoaded = false;
         this.isTyping = false;
         this.currentDialogueText = '';
+        this.typewriterTimer = null;
     }
 
     init(data) {
@@ -23,7 +24,7 @@ class GameScene extends Phaser.Scene {
         }
         this.sound.stopAll();
         console.log('All sounds stopped');
-        this.loadGame();
+        this.loadGame(data);
     }
 
     preload() {
@@ -63,38 +64,50 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    create() {
+    async create() {
         this.scale.setGameSize(window.innerWidth, window.innerHeight);
         this.scale.mode = Phaser.Scale.RESIZE;
         this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
 
-        this.cameras.main.setViewport(0, 0, this.game.config.width, this.game.config.height);
-        this.cameras.main.setBounds(0, 0, this.game.config.width, this.game.config.height);
-
-        console.log('Scene size:', this.cameras.main.width, this.cameras.main.height);
-
-        this.cameras.main.setBackgroundColor('#000000');
-
         const width = this.game.config.width;
         const height = this.game.config.height;
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-        this.add.text(width / 2, height / 2, 'Loading...', {
+        this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setBounds(0, 0, width, height);
+
+        console.log('Scene size:', width, height);
+        this.cameras.main.setBackgroundColor('#000000');
+
+        try {
+            this.game.sound.volume = await loadVolume();
+            console.log('GameScene: Volume loaded', this.game.sound.volume);
+        } catch (error) {
+            console.error('GameScene: Failed to load volume', error);
+            this.game.sound.volume = 1.0;
+        }
+
+        const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
+        const accentColor = '#61bdff';
+
+        const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
+        const loadingText = this.add.text(width / 2, height / 2, 'Loading...', {
             fontSize: `${height * 0.035}px`,
-            color: '#ffffff',
+            color: textColor,
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5).setDepth(101);
 
         console.log('Load started');
         if (this.isLoaded) {
-            this.children.removeAll();
+            this.children.remove(loadingRect);
+            this.children.remove(loadingText);
             this.setupScene();
-            this.showDialogue(); // Перенесено сюда
+            this.showDialogue();
             console.log('Create completed');
         } else {
             this.load.once('complete', () => {
-                this.children.removeAll();
+                this.children.remove(loadingRect);
+                this.children.remove(loadingText);
                 this.setupScene();
-                this.showDialogue(); // Перенесено сюда
+                this.showDialogue();
                 console.log('Create completed');
             });
             this.load.start();
@@ -104,12 +117,20 @@ class GameScene extends Phaser.Scene {
     }
 
     resize(size) {
+        // Проверка активности сцены
+        if (!this.scene.isActive()) {
+            console.log('GameScene: Resize called on inactive scene, skipping');
+            return;
+        }
+
         const width = size.width || this.game.config.width;
         const height = size.height || this.game.config.height;
         console.log('Resize - Scene size:', width, height);
 
-        this.cameras.main.setViewport(0, 0, width, height);
-        this.cameras.main.setBounds(0, 0, width, height);
+        if (this.cameras?.main) {
+            this.cameras.main.setViewport(0, 0, width, height);
+            this.cameras.main.setBounds(0, 0, width, height);
+        }
 
         if (this.bg) {
             this.bg.setPosition(width / 2, height / 2)
@@ -136,11 +157,11 @@ class GameScene extends Phaser.Scene {
         }
 
         if (this.dialogueBox) {
-            this.dialogueBox.setPosition(width / 2, height * 0.83)
-                .setDisplaySize(width, height * 0.35);
+            this.dialogueBox.setPosition(width / 2, height)
+                .setDisplaySize(width, height * 0.6);
         }
         if (this.speakerText) {
-            this.speakerText.setPosition(width * 0.1, height * 0.72)
+            this.speakerText.setPosition(width / 2, height * 0.72)
                 .setFontSize(height * 0.027);
         }
         if (this.dialogueText) {
@@ -169,7 +190,7 @@ class GameScene extends Phaser.Scene {
                 .setDisplaySize(height * 0.032, height * 0.032);
         }
 
-        this.choicesGroup.getChildren().forEach((container, index) => {
+        this.choicesGroup?.getChildren().forEach((container, index) => {
             const y = (height - (this.choicesGroup.getChildren().length * (height * 0.08))) / 2 + index * (height * 0.08);
             container.setPosition(width / 2, y);
             container.getAll().forEach(child => {
@@ -194,6 +215,8 @@ class GameScene extends Phaser.Scene {
         console.log('SetupScene started');
         const width = this.game.config.width;
         const height = this.game.config.height;
+       
+        const accentColor = '#61bdff';
 
         this.bg = this.add.image(width / 2, height / 2, 'home')
             .setDisplaySize(width, height)
@@ -210,32 +233,32 @@ class GameScene extends Phaser.Scene {
             targets: this.char,
             scaleX: { from: 0.530, to: 0.531 },
             scaleY: { from: 0.530, to: 0.533 },
-            duration: 800, // 1.5 секунды на цикл
+            duration: 800,
             ease: 'Sine.easeInOut',
-            yoyo: true, // Возврат к начальному значению
-            repeat: -1, // Бесконечный цикл
-            paused: true // Твин не активен, пока персонаж невидим
+            yoyo: true,
+            repeat: -1,
+            paused: true
         });
 
         this.energyRect = this.add.rectangle(width * 0.1, height * 0.1, width * 0.25, height * 0.04, 0x000000, 0.5)
             .setDepth(10);
         this.energyText = this.add.text(width * 0.11, height * 0.083, this.energy, {
             fontSize: `${height * 0.0258}px`,
-            color: '#61bdff',
+            color: accentColor,
             fontFamily: 'Dela Gothic One'
         }).setDepth(10);
         this.energyIcon = this.add.image(width * 0.05, height * 0.1, 'energyIcon')
             .setDisplaySize(height * 0.04, height * 0.04)
             .setDepth(10);
 
-        this.dialogueBox = this.add.image(width / 2, height , 'darkbg')
+        this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
             .setDisplaySize(width, height * 0.6)
             .setOrigin(0.5, 1)
             .setDepth(10);
 
         this.speakerText = this.add.text(width / 2, height * 0.72, '', {
             fontSize: `${height * 0.027}px`,
-            color: '#61bdff',
+            color: accentColor,
             fontFamily: 'Dela Gothic One',
             stroke: '#000000',
             strokeThickness: 2
@@ -244,7 +267,7 @@ class GameScene extends Phaser.Scene {
 
         this.dialogueText = this.add.text(width * 0.1, height * 0.76, '', {
             fontSize: `${height * 0.024}px`,
-            color: '#ffffff',
+            color: '#fff',
             fontFamily: 'IBM Plex Sans',
             stroke: '#000000',
             strokeThickness: 2,
@@ -256,14 +279,13 @@ class GameScene extends Phaser.Scene {
         this.nextButtonContainer = this.add.container(width / 2, height * 0.91).setDepth(10);
         const nextText = this.add.text(0, 0, 'Далее', {
             fontSize: `${height * 0.0258}px`,
-            color: '#ffffff',
+            color: '#fff',
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5);
-        
         const rightArrow = this.add.image(width * 0.12, 0, 'next')
             .setDisplaySize(height * 0.023, height * 0.023)
             .setOrigin(0.5);
-        this.nextButtonContainer.add([ nextText, rightArrow]);
+        this.nextButtonContainer.add([nextText, rightArrow]);
         this.nextButtonContainer.setInteractive(new Phaser.Geom.Rectangle(-width * 0.15, -height * 0.03, width * 0.3, height * 0.06), Phaser.Geom.Rectangle.Contains)
             .on('pointerdown', () => {
                 this.sound.play('click');
@@ -288,7 +310,7 @@ class GameScene extends Phaser.Scene {
             })
             .setDepth(10);
 
-        this.choicesGroup = this.add.group(); // Инициализация здесь
+        this.choicesGroup = this.add.group();
         console.log('SetupScene completed');
     }
 
@@ -304,7 +326,7 @@ class GameScene extends Phaser.Scene {
                 console.log('Stopped music:', this.currentMusic);
             }
             if (this.currentScene.music) {
-                const music = this.sound.add(this.currentScene.music, { loop: true });
+                const music = this.sound.add(this.currentScene.music, { loop: true, volume: this.game.sound.volume });
                 try {
                     music.play();
                     console.log('Playing music:', this.currentScene.music);
@@ -334,16 +356,25 @@ class GameScene extends Phaser.Scene {
                 this.dialogueIndexInScene = 0;
                 this.saveProgress();
                 this.updateScene();
+                this.showDialogue();
             } else {
-                console.log('End of story, returning to MainMenu');
-                this.sound.stopAll();
-                this.scene.start('MainMenu');
+                console.log('End of story, showing ending');
+                this.showEnding();
                 return;
             }
         }
 
         const dialogue = dialogues[this.dialogueIndexInScene];
         console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
+
+        this.currentDialogueText = '';
+        this.dialogueText.setText('');
+        this.speakerText.setText('');
+        this.isTyping = false;
+        if (this.typewriterTimer) {
+            this.typewriterTimer.remove();
+            this.typewriterTimer = null;
+        }
 
         if (this.choicesGroup) {
             this.choicesGroup.clear(true, true);
@@ -353,7 +384,7 @@ class GameScene extends Phaser.Scene {
 
         if (dialogue.sfx) {
             try {
-                const sfx = this.sound.add(dialogue.sfx);
+                const sfx = this.sound.add(dialogue.sfx, { volume: this.game.sound.volume });
                 sfx.play();
                 console.log('Playing SFX:', dialogue.sfx);
             } catch (error) {
@@ -361,14 +392,14 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-    const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
-if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
-    this.char.setTexture(dialogue.charSprite).setAlpha(1);
-    this.charBreathTween.play(); // Запускаем анимацию дыхания
-} else {
-    this.char.setAlpha(0);
-    this.charBreathTween.pause(); // Останавливаем анимацию
-}
+        const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
+        if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
+            this.char.setTexture(dialogue.charSprite).setAlpha(1);
+            this.charBreathTween.play();
+        } else {
+            this.char.setAlpha(0);
+            this.charBreathTween.pause();
+        }
 
         if (this.charShakeTween) {
             this.charShakeTween.stop();
@@ -387,8 +418,10 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
             this.dialogueBox.setVisible(true);
             this.speakerText.setVisible(true).setText(dialogue.speaker || '');
             this.currentDialogueText = dialogue.text || '';
+            this.dialogueText.setVisible(true);
+            this.speakerText.setDepth(12);
+            this.dialogueText.setDepth(12);
             this.isTyping = true;
-            this.dialogueText.setVisible(true).setText('');
             this.typewriterEffect(this.currentDialogueText);
             this.nextButtonContainer.setVisible(true);
         } else {
@@ -403,19 +436,118 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
             this.nextButtonContainer.setVisible(false);
         }
 
-        this.saveProgress();
+        if (!dialogue.choices) {
+            this.saveProgress();
+        }
+    }
+
+    showEnding() {
+        const width = this.game.config.width;
+        const height = this.game.config.height;
+        const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
+
+        // Очистка всех UI-элементов
+        this.dialogueBox.setVisible(false);
+        this.speakerText.setVisible(false).setText('');
+        this.dialogueText.setVisible(false).setText('');
+        this.nextButtonContainer.setVisible(false);
+        this.choicesGroup.clear(true, true);
+        this.char.setAlpha(0);
+        this.charBreathTween.pause();
+        if (this.bg) {
+            this.bg.setVisible(false);
+        }
+        if (this.energyRect) {
+            this.energyRect.setVisible(false);
+        }
+        if (this.energyText) {
+            this.energyText.setVisible(false);
+        }
+        if (this.energyIcon) {
+            this.energyIcon.setVisible(false);
+        }
+        if (this.settingsButtonBg) {
+            this.settingsButtonBg.setVisible(false);
+        }
+        if (this.settingsButton) {
+            this.settingsButton.setVisible(false);
+        }
+
+        // Показ финального текста
+        const endingText = this.add.text(width / 2, height / 2, 'Конец истории', {
+            fontSize: `${height * 0.043}px`,
+            color: textColor,
+            fontFamily: 'Dela Gothic One',
+            align: 'center'
+        }).setOrigin(0.5)
+            .setDepth(10);
+
+        // Затухание музыки
+        if (this.currentMusic) {
+            const music = this.sound.get(this.currentMusic);
+            if (music) {
+                this.tweens.add({
+                    targets: music,
+                    volume: 0,
+                    duration: 2000,
+                    onComplete: () => {
+                        this.sound.stopByKey(this.currentMusic);
+                        this.currentMusic = null;
+                    }
+                });
+            }
+        }
+
+        // Остановка всех твинов и таймеров
+        if (this.charShakeTween) {
+            this.charShakeTween.stop();
+        }
+        if (this.typewriterTimer) {
+            this.typewriterTimer.remove();
+            this.typewriterTimer = null;
+        }
+
+        // Переход в MainMenu через 3 секунды
+        this.time.delayedCall(3000, () => {
+            // Очистка всех звуков и удаление сцены
+            this.sound.stopAll();
+            this.scene.stop('GameScene'); // Останавливаем текущую сцену
+            this.scene.start('MainMenu'); // Запускаем MainMenu
+            console.log('GameScene: Transition to MainMenu');
+        });
+    }
+
+    shutdown() {
+        // Удаление всех обработчиков событий
+        this.scale.off('resize', this.resize, this);
+        if (this.time) {
+            this.time.removeAllEvents(); // Очистка всех таймеров
+        }
+        if (this.tweens) {
+            this.tweens.killAll(); // Остановка всех твинов
+        }
+        console.log('GameScene: Shutdown completed, all handlers and timers removed');
     }
 
     typewriterEffect(text) {
+        if (!this.scene.isActive()) {
+            console.log('Scene not active, skipping typewriterEffect');
+            return;
+        }
+
         let index = 0;
         this.dialogueText.setText('');
-        const timer = this.time.addEvent({
+        this.isTyping = true;
+        this.typewriterTimer = this.time.addEvent({
             delay: 50,
             callback: () => {
-                if (!this.isTyping || index >= text.length) {
-                    timer.remove();
+                if (!this.isTyping || index >= text.length || !this.scene.isActive()) {
                     this.isTyping = false;
                     this.dialogueText.setText(text);
+                    if (this.typewriterTimer) {
+                        this.typewriterTimer.remove();
+                        this.typewriterTimer = null;
+                    }
                     return;
                 }
                 this.dialogueText.setText(text.substring(0, ++index));
@@ -428,6 +560,7 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
     showChoices(choices) {
         const width = this.game.config.width;
         const height = this.game.config.height;
+        const accentColor = '#61bdff';
         this.choicesGroup.clear(true, true);
 
         const totalHeight = choices.length * (height * 0.08);
@@ -441,7 +574,7 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
 
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
                 fontSize: `${height * 0.0258}px`,
-                color: '#ffffff',
+                color: '#fff',
                 fontFamily: 'IBM Plex Sans',
                 padding: { x: 10, y: 5 }
             }).setOrigin(0, 0.5)
@@ -453,12 +586,22 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
                         this.choicesGroup.clear(true, true);
                         this.sound.play('click');
 
+                        console.log('Before choice:', {
+                            currentScene: this.currentScene.id,
+                            dialogueIndex: this.dialogueIndexInScene
+                        });
+
                         if (choice.nextScene) {
                             this.currentScene = this.story.dialogues.find(scene => scene.id === choice.nextScene) || this.currentScene;
-                            this.dialogueIndexInScene = choice.nextDialogue || 0;
+                            this.dialogueIndexInScene = choice.nextDialogue !== null ? choice.nextDialogue : 0;
                         } else {
                             this.dialogueIndexInScene++;
                         }
+
+                        console.log('After choice:', {
+                            currentScene: this.currentScene.id,
+                            dialogueIndex: this.dialogueIndexInScene
+                        });
 
                         this.saveProgress();
                         this.showDialogue();
@@ -471,7 +614,7 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
 
             const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
                 fontSize: `${height * 0.0258}px`,
-                color: '#61bdff',
+                color: accentColor,
                 fontFamily: 'Dela Gothic One'
             }).setOrigin(0.3, 0.5);
 
@@ -487,26 +630,34 @@ if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
         this.showDialogue();
     }
 
-    saveProgress() {
-        const saveData = {
-            storyId: this.storyId,
-            sceneId: this.currentScene.id,
-            dialogueIndexInScene: this.dialogueIndexInScene,
-            energy: this.energy,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(`save_${this.storyId}`, JSON.stringify(saveData));
-        if (window.Telegram?.WebApp?.CloudStorage) {
-            window.Telegram.WebApp.CloudStorage.setItem(`save_${this.storyId}`, JSON.stringify(saveData));
+    async saveProgress() {
+        try {
+            await saveProgress(this.storyId, this.currentScene.id, this.dialogueIndexInScene, this.energy, 0);
+            console.log('GameScene: Progress saved:', {
+                storyId: this.storyId,
+                sceneId: this.currentScene.id,
+                dialogueIndexInScene: this.dialogueIndexInScene,
+                energy: this.energy
+            });
+        } catch (error) {
+            console.error('GameScene: Failed to save progress', error);
         }
-        console.log('Progress saved:', saveData);
     }
 
-    loadGame() {
-        const saveData = loadProgress(this.storyId);
+    async loadGame(data) {
+        let saveData = data;
+        if (!saveData.sceneId) {
+            try {
+                saveData = await loadProgress(this.storyId);
+                console.log('GameScene: Progress loaded from CloudStorage:', saveData);
+            } catch (error) {
+                console.error('GameScene: Failed to load progress', error);
+                saveData = { sceneId: this.story.dialogues[0].id, dialogueIndexInScene: 0, energy: 100, stars: 0 };
+            }
+        }
         this.currentScene = this.story.dialogues.find(scene => scene.id === saveData.sceneId) || this.story.dialogues[0];
         this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
         this.energy = saveData.energy || 100;
-        console.log('Game loaded:', saveData);
+        console.log('GameScene: Game loaded:', saveData);
     }
 }
