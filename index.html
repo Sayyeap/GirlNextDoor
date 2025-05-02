@@ -65,22 +65,44 @@
 
     <!-- Инициализация Telegram Web App -->
     <script>
-        if (window.Telegram && window.Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            window.gameConfig = {
-                userId: Telegram.WebApp.initDataUnsafe?.user?.id || null,
-                colorScheme: Telegram.WebApp.colorScheme || 'light'
-            };
-            document.body.className = window.gameConfig.colorScheme;
-            Telegram.WebApp.onEvent('themeChanged', () => {
-                window.gameConfig.colorScheme = Telegram.WebApp.colorScheme;
-                document.body.className = Telegram.WebApp.colorScheme;
-            });
-            console.log('Telegram WebApp initialized:', window.gameConfig);
-        } else {
-            console.error('Telegram WebApp SDK not loaded');
-        }
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Разворачивает Web App на весь экран
+
+        // Полноэкранный режим
+        tg.requestFullscreen().then(() => {
+            console.log('Full screen enabled');
+        }).catch(err => {
+            console.error('Full screen failed:', err);
+        });
+
+        // Получение Telegram User ID
+        const userId = tg.initDataUnsafe?.user?.id || 'guest';
+        console.log('Telegram User ID:', userId);
+
+        // Настройка Phaser
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            scene: [MainMenu, GameScene, SettingsScene],
+            parent: 'game-container'
+        };
+
+        const game = new Phaser.Game(config);
+
+        // Обработка ресайзинга
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
+
+        // Интеграция userId в игру
+        game.registry.set('userId', userId);
     </script>
 </body>
 </html>
