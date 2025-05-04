@@ -29,15 +29,12 @@ class MainMenu extends Phaser.Scene {
 
         // Временная заглушка для громкости
         this.game.sound.volume = 1.0;
-        const music = this.sound.add('menu_music', { loop: true });
-        music.play();
-        console.log('MainMenu: Music playing', music.isPlaying);
+        this.menuMusic = this.sound.add('menu_music', { loop: true });
+        this.menuMusic.play();
+        console.log('MainMenu: Music playing', this.menuMusic.isPlaying);
 
         await document.fonts.ready;
         console.log('MainMenu: Fonts loaded');
-
-        // Учитываем тему Telegram
-        
 
         this.titleText = this.add.text(width / 2, height * 0.1, '', {
             fontFamily: 'Dela Gothic One',
@@ -140,6 +137,30 @@ class MainMenu extends Phaser.Scene {
 
         this.storyGroup = this.add.group();
 
+        // Обработка блокировки экрана
+        this.handleScreenLock = () => {
+            console.log('MainMenu: Page hidden or blurred, suspending audio context');
+            if (this.sound.context) {
+                this.sound.context.suspend();
+                this.sound.stopAll(); // Запасной вариант для полной остановки
+            }
+        };
+
+        this.handleScreenUnlock = () => {
+            console.log('MainMenu: Page shown or focused, resuming audio context');
+            if (this.sound.context) {
+                this.sound.context.resume();
+                if (!this.menuMusic.isPlaying) {
+                    this.menuMusic.play();
+                }
+            }
+        };
+
+        window.addEventListener('pagehide', this.handleScreenLock);
+        window.addEventListener('blur', this.handleScreenLock);
+        window.addEventListener('pageshow', this.handleScreenUnlock);
+        window.addEventListener('focus', this.handleScreenUnlock);
+
         this.scale.on('resize', this.resize, this);
     }
 
@@ -236,5 +257,15 @@ class MainMenu extends Phaser.Scene {
         div.style.zIndex = '-1';
         div.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщьыъэюя';
         document.body.appendChild(div);
+    }
+
+    shutdown() {
+        // Очистка обработчиков событий
+        window.removeEventListener('pagehide', this.handleScreenLock);
+        window.removeEventListener('blur', this.handleScreenLock);
+        window.removeEventListener('pageshow', this.handleScreenUnlock);
+        window.removeEventListener('focus', this.handleScreenUnlock);
+        this.scale.off('resize', this.resize, this);
+        console.log('MainMenu: Shutdown completed, event listeners removed');
     }
 }

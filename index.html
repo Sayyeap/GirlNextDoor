@@ -107,7 +107,7 @@
          window.addEventListener('blur', () => {
     console.log('Window blurred, suspending audio context');
     if (game.sound.context) {
-        game.sound.context.suspend();
+        game.sound.stopAll()
     }
 });
 window.addEventListener('focus', () => {
