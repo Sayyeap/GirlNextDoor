@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visual Novel</title>
+    
     <base href="/">
 
     <!-- Telegram Web App SDK -->
@@ -12,15 +13,16 @@
     <style>
         body {
             margin: 0;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            padding: 0;
+            padding: env(safe-area-inset-top);
             overflow: hidden;
             width: 100vw;
             height: 100vh;
-            box-sizing: border-box;
             font-family: 'IBM Plex Sans', sans-serif;
         }
       
         canvas {
+            
             display: block;
             transform: none !important;
             scale: 1 !important;
@@ -44,47 +46,55 @@
     </style>
 </head>
 <body>
-    <!-- Инициализация Telegram Web App -->
-    <script>
-        /* eslint-disable no-undef */
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        tg.setViewportStable();
-        console.log('Telegram Web App version:', tg.version);
-        
-        // Попытка включения полноэкранного режима
-        console.log('Requesting fullscreen mode');
-        tg.requestFullscreen().then(() => {
-            console.log('Full screen enabled');
-        }).catch(err => {
-            console.error('Full screen failed:', err);
-        });
-
-        const userId = tg.initDataUnsafe?.user?.id;
-        if (!userId) {
-            console.error('No Telegram User ID available');
-            return;
-        }
-        console.log('Telegram User ID:', userId);
-    </script>
-
-    <!-- Скрипты Phaser и сцен -->
+    <!-- Скрипты Phaser -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <!-- Инициализация Telegram Web App -->
+  <script>
+    /* eslint-disable no-undef */
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    tg.setViewportStable();
+    console.log('Telegram Web App version:', tg.version);
+    
+    // Попытка включения полноэкранного режима
+    console.log('Requesting fullscreen mode');
+    tg.requestFullscreen().then(() => {
+        console.log('Full screen enabled');
+    }).catch(err => {
+        console.error('Full screen failed:', err);
+    });
+
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) {
+        console.error('No Telegram User ID available');
+        return;
+    }
+    console.log('Telegram User ID:', userId);
+</script>
+   
+  
+    <!-- Твои сцены -->
     <script src="js/scenes/MainMenu.js"></script>
     <script src="js/scenes/GameScene.js"></script>
     <script src="js/scenes/SettingsScene.js"></script>
     <script src="js/scenes/FullscreenScene.js"></script>
     <script src="js/scenes/InteractiveScene.js"></script>
+    
+
+    <!-- Данные -->
     <script src="js/utils.js"></script>
     <script src="js/data/story1.js"></script>
+    
     <script src="js/data/stories.js"></script>
+
+    <!-- Логика -->
     <script src="js/main.js"></script>
     <script src="js/bootstrap.js"></script>
-
-    <!-- Инициализация Phaser -->
-    <script>
-        /* eslint-disable no-undef */
+    
+   
+        <script>
+        // Настройка Phaser
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
@@ -96,14 +106,18 @@
             scene: [MainMenu, GameScene, SettingsScene],
             parent: 'game-container'
         };
+        window.addEventListener('resize', () => {
+         game.scale.resize(window.innerWidth, window.innerHeight);
+        });
 
         const game = new Phaser.Game(config);
 
+        // Обработка ресайзинга
         window.addEventListener('resize', () => {
-            const insets = tg.safeAreaInset || { top: 0, bottom: 0 };
-            game.scale.resize(window.innerWidth, window.innerHeight - insets.top - insets.bottom);
+            game.scale.resize(window.innerWidth, window.innerHeight);
         });
 
+        // Интеграция userId в игру
         game.registry.set('userId', userId);
     </script>
 </body>
