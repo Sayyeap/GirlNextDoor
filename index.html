@@ -103,6 +103,17 @@
         });
 
         game.registry.set('userId', userId);
+
+         // Пауза звука при блокировке экрана
+         document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('Screen locked, pausing all sounds');
+                game.sound.pauseAll();
+            } else {
+                console.log('Screen unlocked, resuming all sounds');
+                game.sound.resumeAll();
+            }
+        });
     </script>
 </body>
 </html>
