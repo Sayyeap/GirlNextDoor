@@ -30,9 +30,32 @@ class MainMenu extends Phaser.Scene {
         // Устанавливаем громкость
         this.game.sound.volume = 1.0;
 
-        // Создаём музыку, но не запускаем сразу
+        // Создаём музыку
         this.menuMusic = this.sound.add('menu_music', { loop: true });
         console.log('MainMenu: Music initialized');
+
+        // Функция для запуска или возобновления музыки
+        const playMusic = () => {
+            if (this.scene.isActive() && !this.menuMusic.isPlaying) {
+                try {
+                    this.menuMusic.play();
+                    console.log('MainMenu: Music playing', this.menuMusic.isPlaying);
+                } catch (err) {
+                    console.error('MainMenu: Failed to play music', err);
+                }
+            }
+        };
+
+        // Запуск музыки при клике на кнопки
+        this.input.on('pointerdown', () => playMusic());
+
+        // Запуск музыки при фокусе окна
+        window.addEventListener('focus', () => {
+            if (this.scene.isActive()) {
+                playMusic();
+                console.log('MainMenu: Window focused, attempting to play music');
+            }
+        });
 
         await document.fonts.ready;
         console.log('MainMenu: Fonts loaded');
@@ -43,14 +66,6 @@ class MainMenu extends Phaser.Scene {
             color: '#fff',
         }).setOrigin(0.5)
           .setDepth(10);
-
-        // Функция для запуска или возобновления музыки
-        const playMusic = () => {
-            if (!this.menuMusic.isPlaying) {
-                this.menuMusic.play();
-                console.log('MainMenu: Music playing', this.menuMusic.isPlaying);
-            }
-        };
 
         // Новая игра
         this.newGameContainer = this.add.container(width / 2, height * 0.72).setDepth(10);
@@ -122,9 +137,10 @@ class MainMenu extends Phaser.Scene {
             .on('pointerdown', () => {
                 playMusic();
                 this.sound.play('click');
-                this.scene.launch('SettingsScene');
-                // Убеждаемся, что кнопка остаётся интерактивной
-                settingsButton.setInteractive();
+                if (this.scene.isActive('SettingsScene')) {
+                    this.scene.stop('SettingsScene');
+                }
+                this.scene.start('SettingsScene');
             });
         const settingsText = this.add.text(0, 0, 'Настройки', {
             fontFamily: 'IBM Plex Sans',
@@ -190,49 +206,59 @@ class MainMenu extends Phaser.Scene {
         const width = size.width || this.game.config.width;
         const height = size.height || this.game.config.height;
 
-        this.cameras.main.setViewport(0, 0, width, height);
-        this.cameras.main.setBounds(0, 0, width, height);
+        // Обновляем камеру
+        if (this.cameras && this.cameras.main) {
+            this.cameras.main.setViewport(0, 0, width, height);
+            this.cameras.main.setBounds(0, 0, width, height);
+        }
 
-        if (this.bg) {
+        // Обновляем фон
+        if (this.bg && this.bg.active) {
             this.bg.setPosition(width / 2, height / 2)
                 .setScale(Math.max(width / 430, height / 932) * 0.5)
                 .setOrigin(0.5);
         }
 
-        if (this.titleText) {
+        // Обновляем заголовок
+        if (this.titleText && this.titleText.active) {
             this.titleText.setPosition(width / 2, height * 0.1)
                 .setFontSize(height * 0.043);
         }
 
-        if (this.newGameContainer) {
-            this.newGameContainer.setPosition(width / 2, height * 0.72);
-            this.newGameContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
-            this.newGameContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
-        }
+        // Обновляем контейнеры с проверкой
+        const updateContainer = (container, x, y, rectWidth, rectHeight, fontSize) => {
+            if (container && container.active) {
+                container.setPosition(x, y);
+                const rectangle = container.getAll('type', 'Rectangle')[0];
+                const text = container.getAll('type', 'Text')[0];
+                if (rectangle && rectangle.active) {
+                    rectangle.setSize(rectWidth, rectHeight);
+                }
+                if (text && text.active) {
+                    text.setFontSize(fontSize);
+                }
+            }
+        };
 
-        if (this.continueContainer) {
-            this.continueContainer.setPosition(width / 2, height * 0.79);
-            this.continueContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
-            this.continueContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
-        }
+        updateContainer(this.newGameContainer, width / 2, height * 0.72, width * 0.5, height * 0.06, height * 0.0258);
+        updateContainer(this.continueContainer, width / 2, height * 0.79, width * 0.5, height * 0.06, height * 0.0258);
+        updateContainer(this.settingsContainer, width / 2, height * 0.86, width * 0.5, height * 0.06, height * 0.0258);
+        updateContainer(this.galleryContainer, width / 2, height * 0.93, width * 0.5, height * 0.06, height * 0.0258);
 
-        if (this.settingsContainer) {
-            this.settingsContainer.setPosition(width / 2, height * 0.86);
-            this.settingsContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
-            this.settingsContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
-        }
-
-        if (this.galleryContainer) {
-            this.galleryContainer.setPosition(width / 2, height * 0.93);
-            this.galleryContainer.getAll('type', 'Rectangle')[0]?.setSize(width * 0.5, height * 0.06);
-            this.galleryContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
-        }
-
-        if (this.storiesGroup && this.storiesGroup.getChildren().length > 0) {
-            this.storiesGroup.getChildren().forEach((container, i) => {
-                container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
-                container.getAll('type', 'Rectangle')[0]?.setSize(width * 0.7, height * 0.06);
-                container.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
+        // Обновляем storyGroup
+        if (this.storyGroup && this.storyGroup.active && this.storyGroup.getChildren().length > 0) {
+            this.storyGroup.getChildren().forEach((container, i) => {
+                if (container && container.active) {
+                    container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
+                    const rectangle = container.getAll('type', 'Rectangle')[0];
+                    const text = container.getAll('type', 'Text')[0];
+                    if (rectangle && rectangle.active) {
+                        rectangle.setSize(width * 0.7, height * 0.06);
+                    }
+                    if (text && text.active) {
+                        text.setFontSize(height * 0.0258);
+                    }
+                }
             });
         }
     }
