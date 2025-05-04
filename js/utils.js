@@ -1,35 +1,35 @@
-async function saveProgress(storyId, sceneId, dialogueIndexInScene, energy, stars) {
+async function saveProgress(storyId, sceneId, dialogueIndexInScene, energy, stars, registry) {
     if (!window.Telegram || !window.Telegram.WebApp) {
         console.error('saveProgress: Telegram WebApp SDK not loaded');
-        return;
+        throw new Error('Telegram WebApp SDK not loaded');
     }
 
-    const userId = window.gameConfig?.userId;
+    const userId = registry.get('userId');
     if (!userId) {
         console.error('saveProgress: User ID not available');
-        return;
+        throw new Error('User ID not available');
     }
 
     // Валидация параметров
     if (typeof storyId !== 'string' || storyId.trim() === '') {
         console.error('saveProgress: Invalid storyId', storyId);
-        return;
+        throw new Error('Invalid storyId');
     }
     if (typeof sceneId !== 'string' || sceneId.trim() === '') {
         console.error('saveProgress: Invalid sceneId', sceneId);
-        return;
+        throw new Error('Invalid sceneId');
     }
     if (!Number.isInteger(dialogueIndexInScene) || dialogueIndexInScene < 0) {
         console.error('saveProgress: Invalid dialogueIndexInScene', dialogueIndexInScene);
-        return;
+        throw new Error('Invalid dialogueIndexInScene');
     }
-    if (typeof energy !== 'number' || energy < 0 || energy > 100) {
+    if (typeof energy !== 'number' || energy < 0 || energy > 1000) { // Увеличил лимит до 1000
         console.error('saveProgress: Invalid energy', energy);
-        return;
+        throw new Error('Invalid energy');
     }
     if (typeof stars !== 'number' || stars < 0) {
         console.error('saveProgress: Invalid stars', stars);
-        return;
+        throw new Error('Invalid stars');
     }
 
     const progress = {
@@ -40,20 +40,30 @@ async function saveProgress(storyId, sceneId, dialogueIndexInScene, energy, star
     };
 
     try {
-        await Telegram.WebApp.CloudStorage.setItem(`progress_${userId}_${storyId}`, JSON.stringify(progress));
+        await new Promise((resolve, reject) => {
+            window.Telegram.WebApp.CloudStorage.setItem(
+                `progress_${userId}_${storyId}`,
+                JSON.stringify(progress),
+                (error, success) => {
+                    if (error) reject(error);
+                    else resolve(success);
+                }
+            );
+        });
         console.log('Saved progress:', { userId, storyId, ...progress });
     } catch (error) {
         console.error('saveProgress: Failed to save progress', error);
+        throw error;
     }
 }
 
-async function loadProgress(storyId) {
+async function loadProgress(storyId, registry) {
     if (!window.Telegram || !window.Telegram.WebApp) {
         console.error('loadProgress: Telegram WebApp SDK not loaded');
         return { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
     }
 
-    const userId = window.gameConfig?.userId;
+    const userId = registry.get('userId');
     if (!userId) {
         console.error('loadProgress: User ID not available');
         return { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
@@ -65,80 +75,96 @@ async function loadProgress(storyId) {
     }
 
     try {
-        const progress = await Telegram.WebApp.CloudStorage.getItem(`progress_${userId}_${storyId}`);
-        if (!progress) {
-            console.log('loadProgress: No progress found for', { userId, storyId });
-            return { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
-        }
-
-        const parsed = JSON.parse(progress);
+        const progress = await new Promise((resolve, reject) => {
+            window.Telegram.WebApp.CloudStorage.getItem(
+                `progress_${userId}_${storyId}`,
+                (error, value) => {
+                    if (error || !value) reject(error || new Error('No progress found'));
+                    else resolve(JSON.parse(value));
+                }
+            );
+        });
 
         // Валидация загруженных данных
         if (
-            typeof parsed.sceneId !== 'string' ||
-            !Number.isInteger(parsed.dialogueIndexInScene) ||
-            parsed.dialogueIndexInScene < 0 ||
-            typeof parsed.energy !== 'number' ||
-            parsed.energy < 0 ||
-            parsed.energy > 100 ||
-            typeof parsed.stars !== 'number' ||
-            parsed.stars < 0
+            typeof progress.sceneId !== 'string' ||
+            !Number.isInteger(progress.dialogueIndexInScene) ||
+            progress.dialogueIndexInScene < 0 ||
+            typeof progress.energy !== 'number' ||
+            progress.energy < 0 ||
+            progress.energy > 1000 ||
+            typeof progress.stars !== 'number' ||
+            progress.stars < 0
         ) {
-            console.error('loadProgress: Invalid progress data', parsed);
+            console.error('loadProgress: Invalid progress data', progress);
             return { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
         }
 
-        console.log('Loaded progress:', { userId, storyId, ...parsed });
-        return parsed;
+        console.log('Loaded progress:', { userId, storyId, ...progress });
+        return progress;
     } catch (error) {
         console.error('loadProgress: Failed to load progress', error);
         return { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
     }
 }
 
-async function saveVolume(volume) {
+async function saveVolume(volume, registry) {
     if (!window.Telegram || !window.Telegram.WebApp) {
         console.error('saveVolume: Telegram WebApp SDK not loaded');
-        return;
+        throw new Error('Telegram WebApp SDK not loaded');
     }
 
-    const userId = window.gameConfig?.userId;
+    const userId = registry.get('userId');
     if (!userId) {
         console.error('saveVolume: User ID not available');
-        return;
+        throw new Error('User ID not available');
     }
 
     if (typeof volume !== 'number' || volume < 0 || volume > 1) {
         console.error('saveVolume: Invalid volume', volume);
-        return;
+        throw new Error('Invalid volume');
     }
 
     try {
-        await Telegram.WebApp.CloudStorage.setItem(`volume_${userId}`, volume.toString());
+        await new Promise((resolve, reject) => {
+            window.Telegram.WebApp.CloudStorage.setItem(
+                `volume_${userId}`,
+                volume.toString(),
+                (error, success) => {
+                    if (error) reject(error);
+                    else resolve(success);
+                }
+            );
+        });
         console.log('Saved volume:', { userId, volume });
     } catch (error) {
         console.error('saveVolume: Failed to save volume', error);
+        throw error;
     }
 }
 
-async function loadVolume() {
+async function loadVolume(registry) {
     if (!window.Telegram || !window.Telegram.WebApp) {
         console.error('loadVolume: Telegram WebApp SDK not loaded');
         return 1.0;
     }
 
-    const userId = window.gameConfig?.userId;
+    const userId = registry.get('userId');
     if (!userId) {
         console.error('loadVolume: User ID not available');
         return 1.0;
     }
 
     try {
-        const volume = await Telegram.WebApp.CloudStorage.getItem(`volume_${userId}`);
-        if (!volume) {
-            console.log('loadVolume: No volume found for', { userId });
-            return 1.0;
-        }
+        const volume = await new Promise((resolve, reject) => {
+            window.Telegram.WebApp.CloudStorage.getItem(
+                `volume_${userId}`,
+                (error, value) => {
+                    if (error || !value) reject(error || new Error('No volume found'));
+                    else resolve(value);
+                }
+            );
+        });
 
         const parsedVolume = parseFloat(volume);
         if (isNaN(parsedVolume) || parsedVolume < 0 || parsedVolume > 1) {

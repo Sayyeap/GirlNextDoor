@@ -6,12 +6,16 @@ class GameScene extends Phaser.Scene {
         this.dialogueIndexInScene = 0;
         this.currentMusic = null;
         this.energy = 100;
+        this.stars = 0;
         this.choicesGroup = null;
         this.charShakeTween = null;
         this.isLoaded = false;
         this.isTyping = false;
         this.currentDialogueText = '';
         this.typewriterTimer = null;
+        this.loadingText = null;
+        this.loadingDots = 0;
+        this.loadingTimer = null;
     }
 
     init(data) {
@@ -75,37 +79,53 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, width, height);
 
         console.log('Scene size:', width, height);
+        console.log('User ID:', this.registry.get('userId'));
         this.cameras.main.setBackgroundColor('#000000');
 
         try {
-            this.game.sound.volume = await loadVolume();
+            this.game.sound.volume = await loadVolume(this.registry);
             console.log('GameScene: Volume loaded', this.game.sound.volume);
         } catch (error) {
             console.error('GameScene: Failed to load volume', error);
             this.game.sound.volume = 1.0;
         }
 
-        const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
+        const textColor = '#ffffff';
         const accentColor = '#61bdff';
 
+        // Анимация загрузки
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-        const loadingText = this.add.text(width / 2, height / 2, 'Loading...', {
+        this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
             fontSize: `${height * 0.035}px`,
             color: textColor,
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5).setDepth(101);
 
+        // Анимация точек
+        this.loadingTimer = this.time.addEvent({
+            delay: 500,
+            callback: () => {
+                this.loadingDots = (this.loadingDots + 1) % 4;
+                const dots = '.'.repeat(this.loadingDots);
+                this.loadingText.setText(`Loading ${dots}`);
+            },
+            callbackScope: this,
+            loop: true
+        });
+
         console.log('Load started');
         if (this.isLoaded) {
-            this.children.remove(loadingRect);
-            this.children.remove(loadingText);
+            loadingRect.destroy();
+            this.loadingText.destroy();
+            this.loadingTimer.remove();
             this.setupScene();
             this.showDialogue();
             console.log('Create completed');
         } else {
             this.load.once('complete', () => {
-                this.children.remove(loadingRect);
-                this.children.remove(loadingText);
+                loadingRect.destroy();
+                this.loadingText.destroy();
+                this.loadingTimer.remove();
                 this.setupScene();
                 this.showDialogue();
                 console.log('Create completed');
@@ -117,7 +137,6 @@ class GameScene extends Phaser.Scene {
     }
 
     resize(size) {
-        // Проверка активности сцены
         if (!this.scene.isActive()) {
             console.log('GameScene: Resize called on inactive scene, skipping');
             return;
@@ -144,15 +163,15 @@ class GameScene extends Phaser.Scene {
         }
 
         if (this.energyRect) {
-            this.energyRect.setPosition(width * 0.1, height * 0.1)
+            this.energyRect.setPosition(width * 0.1, height * 0.15)
                 .setSize(width * 0.25, height * 0.04);
         }
         if (this.energyText) {
-            this.energyText.setPosition(width * 0.11, height * 0.083)
+            this.energyText.setPosition(width * 0.11, height * 0.135)
                 .setFontSize(height * 0.0258);
         }
         if (this.energyIcon) {
-            this.energyIcon.setPosition(width * 0.05, height * 0.1)
+            this.energyIcon.setPosition(width * 0.05, height * 0.15)
                 .setDisplaySize(height * 0.04, height * 0.04);
         }
 
@@ -182,40 +201,19 @@ class GameScene extends Phaser.Scene {
         }
 
         if (this.settingsButtonBg) {
-            this.settingsButtonBg.setPosition(width / 1.1, height * 0.1)
+            this.settingsButtonBg.setPosition(width / 1.1, height * 0.15)
                 .setSize(width * 0.15, height * 0.04);
         }
         if (this.settingsButton) {
-            this.settingsButton.setPosition(width / 1.1, height * 0.1)
+            this.settingsButton.setPosition(width / 1.1, height * 0.15)
                 .setDisplaySize(height * 0.032, height * 0.032);
         }
-
-        this.choicesGroup?.getChildren().forEach((container, index) => {
-            const y = (height - (this.choicesGroup.getChildren().length * (height * 0.08))) / 2 + index * (height * 0.08);
-            container.setPosition(width / 2, y);
-            container.getAll().forEach(child => {
-                if (child.type === 'Text') {
-                    child.setFontSize(height * 0.0258);
-                    if (child.text.startsWith('-')) {
-                        child.setPosition(width * 0.35, 0);
-                    } else {
-                        child.setPosition(-width * 0.45, 0);
-                    }
-                } else if (child.type === 'Image' && child.texture.key === 'energyIcon') {
-                    child.setPosition(width * 0.27, 0)
-                        .setDisplaySize(height * 0.03, height * 0.03);
-                } else if (child.type === 'Rectangle') {
-                    child.setSize(width, height * 0.06);
-                }
-            });
-        });
     }
 
     setupScene() {
         console.log('SetupScene started');
         const width = this.game.config.width;
         const height = this.game.config.height;
-       
         const accentColor = '#61bdff';
 
         this.bg = this.add.image(width / 2, height / 2, 'home')
@@ -240,16 +238,21 @@ class GameScene extends Phaser.Scene {
             paused: true
         });
 
-        this.energyRect = this.add.rectangle(width * 0.1, height * 0.1, width * 0.25, height * 0.04, 0x000000, 0.5)
+        this.energyRect = this.add.rectangle(width * 0.1, height * 0.15, width * 0.25, height * 0.04, 0x000000, 0.5)
             .setDepth(10);
-        this.energyText = this.add.text(width * 0.11, height * 0.083, this.energy, {
+        this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
             fontSize: `${height * 0.0258}px`,
             color: accentColor,
             fontFamily: 'Dela Gothic One'
         }).setDepth(10);
-        this.energyIcon = this.add.image(width * 0.05, height * 0.1, 'energyIcon')
+        this.energyIcon = this.add.image(width * 0.05, height * 0.15, 'energyIcon')
             .setDisplaySize(height * 0.04, height * 0.04)
-            .setDepth(10);
+            .setDepth(10)
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('Energy icon clicked, show modal');
+                // Здесь будет вызов модалки с "Купить энергию" и "Пригласить друга"
+            });
 
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
             .setDisplaySize(width, height * 0.6)
@@ -297,10 +300,10 @@ class GameScene extends Phaser.Scene {
                 }
             });
 
-        this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.1, width * 0.15, height * 0.04, 0x000000, 0)
+        this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.15, width * 0.15, height * 0.04, 0x000000, 0)
             .setOrigin(0.5)
             .setDepth(10);
-        this.settingsButton = this.add.image(width / 1.1, height * 0.1, 'settings')
+        this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
             .setDisplaySize(height * 0.032, height * 0.032)
             .setOrigin(0.5)
             .setInteractive()
@@ -441,10 +444,15 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    showEnding() {
+    async showEnding() {
         const width = this.game.config.width;
         const height = this.game.config.height;
-        const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
+        const textColor = '#ffffff';
+
+        // Награда за завершение рута
+        this.energy += 100;
+        this.energyText.setText(this.energy);
+        await this.saveProgress();
 
         // Очистка всех UI-элементов
         this.dialogueBox.setVisible(false);
@@ -509,22 +517,20 @@ class GameScene extends Phaser.Scene {
 
         // Переход в MainMenu через 3 секунды
         this.time.delayedCall(3000, () => {
-            // Очистка всех звуков и удаление сцены
             this.sound.stopAll();
-            this.scene.stop('GameScene'); // Останавливаем текущую сцену
-            this.scene.start('MainMenu'); // Запускаем MainMenu
+            this.scene.stop('GameScene');
+            this.scene.start('MainMenu');
             console.log('GameScene: Transition to MainMenu');
         });
     }
 
     shutdown() {
-        // Удаление всех обработчиков событий
         this.scale.off('resize', this.resize, this);
         if (this.time) {
-            this.time.removeAllEvents(); // Очистка всех таймеров
+            this.time.removeAllEvents();
         }
         if (this.tweens) {
-            this.tweens.killAll(); // Остановка всех твинов
+            this.tweens.killAll();
         }
         console.log('GameScene: Shutdown completed, all handlers and timers removed');
     }
@@ -579,7 +585,7 @@ class GameScene extends Phaser.Scene {
                 padding: { x: 10, y: 5 }
             }).setOrigin(0, 0.5)
                 .setInteractive()
-                .on('pointerdown', () => {
+                .on('pointerdown', async () => {
                     if (this.energy >= choice.energyCost) {
                         this.energy -= choice.energyCost;
                         this.energyText.setText(this.energy);
@@ -603,13 +609,15 @@ class GameScene extends Phaser.Scene {
                             dialogueIndex: this.dialogueIndexInScene
                         });
 
-                        this.saveProgress();
+                        await this.saveProgress();
                         this.showDialogue();
+                    } else {
+                        window.Telegram.WebApp.showAlert('Недостаточно энергии!');
                     }
                 });
 
             const energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
-                .setDisplaySize(height * 0.03, height * 0.03)
+                .setDisplaySize(height * 0.04, height * 0.04)
                 .setOrigin(0.5);
 
             const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
@@ -631,14 +639,21 @@ class GameScene extends Phaser.Scene {
     }
 
     async saveProgress() {
+        if (!this.currentScene) {
+            console.error('Cannot save progress: currentScene is null');
+            return;
+        }
         try {
-            await saveProgress(this.storyId, this.currentScene.id, this.dialogueIndexInScene, this.energy, 0);
-            console.log('GameScene: Progress saved:', {
+            console.log('Attempting to save:', {
+                userId: this.registry.get('userId'),
                 storyId: this.storyId,
                 sceneId: this.currentScene.id,
                 dialogueIndexInScene: this.dialogueIndexInScene,
-                energy: this.energy
+                energy: this.energy,
+                stars: this.stars
             });
+            await saveProgress(this.storyId, this.currentScene.id, this.dialogueIndexInScene, this.energy, this.stars, this.registry);
+            console.log('GameScene: Progress saved');
         } catch (error) {
             console.error('GameScene: Failed to save progress', error);
         }
@@ -648,7 +663,7 @@ class GameScene extends Phaser.Scene {
         let saveData = data;
         if (!saveData.sceneId) {
             try {
-                saveData = await loadProgress(this.storyId);
+                saveData = await loadProgress(this.storyId, this.registry);
                 console.log('GameScene: Progress loaded from CloudStorage:', saveData);
             } catch (error) {
                 console.error('GameScene: Failed to load progress', error);
@@ -658,6 +673,33 @@ class GameScene extends Phaser.Scene {
         this.currentScene = this.story.dialogues.find(scene => scene.id === saveData.sceneId) || this.story.dialogues[0];
         this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
         this.energy = saveData.energy || 100;
+        this.stars = saveData.stars || 0;
         console.log('GameScene: Game loaded:', saveData);
+    }
+
+    async buyEnergy(energyAmount, starCost) {
+        let stars = this.stars;
+        if (stars >= starCost) {
+            stars -= starCost;
+            this.energy += energyAmount;
+            this.stars = stars;
+            this.energyText.setText(this.energy);
+            await this.saveProgress();
+            console.log('Energy bought:', energyAmount, 'Stars spent:', starCost);
+            window.Telegram.WebApp.showAlert(`Куплено ${energyAmount} энергии!`);
+        } else {
+            console.log('Not enough stars');
+            window.Telegram.WebApp.showAlert('Недостаточно старсов!');
+        }
+    }
+
+    generateInviteLink() {
+        const userId = this.registry.get('userId');
+        const inviteLink = `https://t.me/YourBot?start=invite_${userId}`;
+        window.Telegram.WebApp.showPopup({
+            title: 'Пригласить друга',
+            message: `Поделитесь ссылкой: ${inviteLink}`,
+            buttons: [{ type: 'share', text: 'Поделиться', url: inviteLink }]
+        });
     }
 }
