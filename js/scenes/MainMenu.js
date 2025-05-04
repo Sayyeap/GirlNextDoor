@@ -34,29 +34,6 @@ class MainMenu extends Phaser.Scene {
         this.menuMusic = this.sound.add('menu_music', { loop: true });
         console.log('MainMenu: Music initialized');
 
-        // Флаг для отслеживания взаимодействия
-        this.hasInteracted = false;
-
-        // Функция для запуска музыки
-        const startMusic = () => {
-            if (!this.hasInteracted) {
-                this.hasInteracted = true;
-                this.menuMusic.play();
-                console.log('MainMenu: Music playing after interaction', this.menuMusic.isPlaying);
-            }
-        };
-
-        // Запускаем музыку при любом клике
-        this.input.on('pointerdown', startMusic);
-
-        // Проверяем возобновление звука после разблокировки
-        this.input.on('pointerdown', () => {
-            if (this.hasInteracted && !this.menuMusic.isPlaying) {
-                this.menuMusic.play();
-                console.log('MainMenu: Music resumed after interaction', this.menuMusic.isPlaying);
-            }
-        });
-
         await document.fonts.ready;
         console.log('MainMenu: Fonts loaded');
 
@@ -67,11 +44,20 @@ class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5)
           .setDepth(10);
 
+        // Функция для запуска или возобновления музыки
+        const playMusic = () => {
+            if (!this.menuMusic.isPlaying) {
+                this.menuMusic.play();
+                console.log('MainMenu: Music playing', this.menuMusic.isPlaying);
+            }
+        };
+
         // Новая игра
         this.newGameContainer = this.add.container(width / 2, height * 0.72).setDepth(10);
         const newGameButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', async () => {
+                playMusic();
                 this.sound.play('click');
                 if (window.Telegram?.WebApp) {
                     const userId = window.gameConfig?.userId;
@@ -110,6 +96,7 @@ class MainMenu extends Phaser.Scene {
         const continueButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
+                playMusic();
                 this.sound.play('click');
                 const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
                 this.scene.start('GameScene', {
@@ -133,8 +120,11 @@ class MainMenu extends Phaser.Scene {
         const settingsButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
+                playMusic();
                 this.sound.play('click');
                 this.scene.launch('SettingsScene');
+                // Убеждаемся, что кнопка остаётся интерактивной
+                settingsButton.setInteractive();
             });
         const settingsText = this.add.text(0, 0, 'Настройки', {
             fontFamily: 'IBM Plex Sans',
@@ -148,6 +138,7 @@ class MainMenu extends Phaser.Scene {
         const galleryButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
+                playMusic();
                 this.sound.play('click');
                 console.log('Gallery TBD');
             });
@@ -237,8 +228,8 @@ class MainMenu extends Phaser.Scene {
             this.galleryContainer.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
         }
 
-        if (this.storyGroup && this.storyGroup.getChildren().length > 0) {
-            this.storyGroup.getChildren().forEach((container, i) => {
+        if (this.storiesGroup && this.storiesGroup.getChildren().length > 0) {
+            this.storiesGroup.getChildren().forEach((container, i) => {
                 container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
                 container.getAll('type', 'Rectangle')[0]?.setSize(width * 0.7, height * 0.06);
                 container.getAll('type', 'Text')[0]?.setFontSize(height * 0.0258);
