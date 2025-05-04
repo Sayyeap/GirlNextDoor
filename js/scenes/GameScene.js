@@ -67,6 +67,21 @@ class GameScene extends Phaser.Scene {
             this.isLoaded = true;
         });
     }
+    create() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('Pausing sound due to screen lock');
+                this.sound.pauseAll();
+            } else {
+                console.log('Resuming sound after screen unlock');
+                this.sound.resumeAll();
+            }
+        });
+    
+        // Пример проигрывания музыки
+        this.bgMusic = this.sound.add('bg_music', { loop: true });
+        this.bgMusic.play();
+    }
 
     async create() {
         this.scale.setGameSize(window.innerWidth, window.innerHeight);

@@ -101,34 +101,26 @@
 
         game.registry.set('userId', userId);
 
-       // Пауза звука при блокировке экрана или сворачивании
-       document.addEventListener('visibilitychange', () => {
+         // Пауза звука при блокировке экрана
+         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                console.log('Visibility hidden, suspending audio context');
-                if (game.sound.context) {
-                    game.sound.context.suspend();
-                }
+                console.log('Screen locked, pausing all sounds');
+                game.sound.pauseAll();
             } else {
-                console.log('Visibility visible, resuming audio context');
-                if (game.sound.context) {
-                    game.sound.context.resume();
-                }
+                console.log('Screen unlocked, resuming all sounds');
+                game.sound.resumeAll();
             }
         });
 
-        document.addEventListener('pagehide', () => {
-            console.log('Page hidden, suspending audio context');
-            if (game.sound.context) {
-                game.sound.context.suspend();
-            }
-        });
+        window.addEventListener('blur', () => {
+    console.log('Window blurred - pause sounds');
+    game.sound.pauseAll();
+});
 
-        document.addEventListener('pageshow', () => {
-            console.log('Page shown, resuming audio context');
-            if (game.sound.context) {
-                game.sound.context.resume();
-            }
-        });
+window.addEventListener('focus', () => {
+    console.log('Window focused - resume sounds');
+    game.sound.resumeAll();
+});
     </script>
 </body>
 </html>
