@@ -44,31 +44,111 @@
     </style>
 </head>
 <body>
-    
-  
-
     <!-- Скрипты Phaser и сцен -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <!-- Инициализация Telegram Web App -->
-  <script>
-    // Инициализация Telegram Web App
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand(); // Разворачивает Web App на весь экран
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Разворачивает Web App на весь экран
 
-    // Полноэкранный режим
-    tg.requestFullscreen().then(() => {
-        console.log('Full screen enabled');
-    }).catch(err => {
-        console.error('Full screen failed:', err);
-    });
+        // Полноэкранный режим
+        tg.requestFullscreen().then(() => {
+            console.log('Full screen enabled');
+        }).catch(err => {
+            console.error('Full screen failed:', err);
+        });
 
-    // Получение Telegram User ID
-    const userId = tg.initDataUnsafe?.user?.id;
-    console.log('Telegram User ID:', userId);
-</script>
+        // Получение Telegram User ID
+        const userId = tg.initDataUnsafe?.user?.id;
+        console.log('Telegram User ID:', userId);
+
+
+        // Аудиоменеджер для Telegram Web App с HTMLAudioElement
+        const audioManager = {
+            backgroundMusic: new Audio('assets/common/audio/menu_music.mp3'),
+            isActive: true,
+            isTelegramWebApp: window.Telegram && window.Telegram.WebApp,
+            init: function() {
+                this.backgroundMusic.loop = true;
+                // В Telegram Web App ждём взаимодействия для воспроизведения
+                if (this.isTelegramWebApp) {
+                    const startMusic = () => {
+                        if (this.isActive) {
+                            this.backgroundMusic.play().catch(err => {
+                                console.error('AudioManager: Failed to play music', err);
+                            });
+                        }
+                        window.removeEventListener('click', startMusic);
+                    };
+                    window.addEventListener('click', startMusic, { once: true });
+                } else {
+                    // В браузере пытаемся играть сразу
+                    this.backgroundMusic.play().catch(err => {
+                        console.error('AudioManager: Failed to play music, waiting for interaction', err);
+                        const playOnInteraction = () => {
+                            this.backgroundMusic.play().catch(console.error);
+                            window.removeEventListener('click', playOnInteraction);
+                        };
+                        window.addEventListener('click', playOnInteraction);
+                    });
+                }
+            },
+            pauseAudio: function() {
+                if (this.isActive) {
+                    console.log('AudioManager: Pausing audio (screen possibly locked)');
+                    this.backgroundMusic.pause();
+                    if (game.sound.context) {
+                        game.sound.stopAll(); // Останавливаем звуки Phaser
+                        game.sound.context.close(); // Закрываем аудиоконтекст
+                    }
+                    this.isActive = false;
+                }
+            },
+            resumeAudio: function() {
+                if (!this.isActive && this.isTelegramWebApp) {
+                    console.log('AudioManager: Resuming audio (screen possibly unlocked)');
+                    this.backgroundMusic.play().catch(err => {
+                        console.error('AudioManager: Failed to resume music', err);
+                    });
+                    if (game.sound.context && game.sound.context.state === 'closed') {
+                        game.sound.context = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    this.isActive = true;
+                }
+            },
+            checkActivity: function() {
+                const isFocused = document.hasFocus();
+                const isExpanded = tg.isExpanded;
+                if (!isFocused || !isExpanded) {
+                    this.pauseAudio();
+                } else {
+                    this.resumeAudio();
+                }
+            }
+        };
+
+        // Инициализация аудиоменеджера
+        audioManager.init();
+
+        // Обработка событий blur и focus
+        window.addEventListener('blur', () => {
+            console.log('Window blurred, pausing audio via AudioManager');
+            audioManager.pauseAudio();
+        });
+
+        window.addEventListener('focus', () => {
+            console.log('Window focused, resuming audio via AudioManager');
+            audioManager.resumeAudio();
+        });
+
+        // Периодическая проверка активности Telegram Web App
+        setInterval(() => {
+            audioManager.checkActivity();
+        }, 500);
+    </script>
    
-
     <script src="js/scenes/MainMenu.js"></script>
     <script src="js/scenes/GameScene.js"></script>
     <script src="js/scenes/SettingsScene.js"></script>
@@ -79,9 +159,8 @@
     <script src="js/data/stories.js"></script>
     <script src="js/main.js"></script>
     <script src="js/bootstrap.js"></script>
-    <script src="js/AudioManager.js"></script>
 
-    <!-- Инициализация Phaser -->
+    <!-- Инициализация Phaser и аудиоменеджера -->
     <script>
         /* eslint-disable no-undef */
         const config = {
@@ -98,66 +177,14 @@
 
         const game = new Phaser.Game(config);
 
-     
+        window.addEventListener('resize', () => {
+            const insets = tg.safeAreaInset || { top: 0, bottom: 0 };
+            game.scale.resize(window.innerWidth, window.innerHeight - insets.top - insets.bottom);
+        });
 
         game.registry.set('userId', userId);
 
         
-       
-// Простой аудиоменеджер для Telegram Web App
-const audioManager = {
-            context: game.sound.context,
-            isActive: true,
-            suspendAudio: function() {
-                if (this.context && this.isActive) {
-                    console.log('AudioManager: Suspending audio context (screen possibly locked)');
-                    this.context.suspend();
-                    game.sound.stopAll(); // Запасной вариант для полной остановки
-                    this.context.close(); // Радикальный вариант для Telegram WebView
-                    this.isActive = false;
-                }
-            },
-            resumeAudio: function() {
-                if (!this.isActive) {
-                    console.log('AudioManager: Resuming audio context (screen possibly unlocked)');
-                    if (!this.context || this.context.state === 'closed') {
-                        // Пересоздать аудиоконтекст
-                        this.context = new (window.AudioContext || window.webkitAudioContext)();
-                        game.sound.context = this.context; // Обновить контекст Phaser
-                    }
-                    if (this.context.state === 'suspended') {
-                        this.context.resume();
-                    }
-                    this.isActive = true;
-                }
-            },
-            checkActivity: function() {
-                const isFocused = document.hasFocus();
-                const isExpanded = tg.isExpanded;
-                if (!isFocused || !isExpanded) {
-                    this.suspendAudio();
-                } else {
-                    this.resumeAudio();
-                }
-            }
-        };
-
-        // Обработка событий blur и focus
-        window.addEventListener('blur', () => {
-            console.log('Window blurred, suspending audio via AudioManager');
-            audioManager.suspendAudio();
-        });
-
-        window.addEventListener('focus', () => {
-            console.log('Window focused, resuming audio via AudioManager');
-            audioManager.resumeAudio();
-        });
-
-        // Периодическая проверка активности Telegram Web App
-        setInterval(() => {
-            audioManager.checkActivity();
-        }, 500);
-   
     </script>
 </body>
 </html>
