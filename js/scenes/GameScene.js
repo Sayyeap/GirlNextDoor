@@ -90,14 +90,12 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
-        const textColor = '#ffffff';
-        const accentColor = '#61bdff';
-
+   
         // Анимация загрузки
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
         this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
             fontSize: `${height * 0.035}px`,
-            color: textColor,
+            color: '#ffffff',
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5).setDepth(101);
 

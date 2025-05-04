@@ -49,31 +49,22 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
   <!-- Инициализация Telegram Web App -->
   <script>
-    /* eslint-disable no-undef */
+    // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand();
-    tg.setViewportStable();
-    console.log('Telegram Web App version:', tg.version);
-    setTimeout(() => {
-        if (tg.isVersionAtLeast('7.7')) {
-            tg.requestFullscreen().then(() => {
-                console.log('Full screen enabled');
-            }).catch(err => {
-                console.error('Full screen failed:', err);
-            });
-        } else {
-            console.log('Full screen not supported, Telegram Web App version:', tg.version);
-        }
-    }, 500);
+    tg.expand(); // Разворачивает Web App на весь экран
+
+    // Полноэкранный режим
+    tg.requestFullscreen().then(() => {
+        console.log('Full screen enabled');
+    }).catch(err => {
+        console.error('Full screen failed:', err);
+    });
+
+    // Получение Telegram User ID
     const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) {
-        console.error('No Telegram User ID available');
-        return;
-    }
     console.log('Telegram User ID:', userId);
 </script>
-
    
   
     <!-- Твои сцены -->
