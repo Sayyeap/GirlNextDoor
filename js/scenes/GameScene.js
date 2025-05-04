@@ -658,10 +658,11 @@ class GameScene extends Phaser.Scene {
         );
     }
     
-    loadGame(data, callback) {
+    loadGame(data) {
         let saveData = data;
         if (!saveData || !saveData.sceneId) {
-            window.gameStorage.loadProgress(this.storyId, this.registry, function(loadedData) {
+            // Если данные не переданы, загружаем из хранилища
+            window.gameStorage.loadProgress(this.storyId, this.registry, (loadedData) => {
                 this.currentScene = this.story.dialogues.find(
                     scene => scene.id === loadedData.sceneId
                 ) || this.story.dialogues[0];
@@ -670,16 +671,10 @@ class GameScene extends Phaser.Scene {
                 this.energy = loadedData.energy || 100;
                 this.stars = loadedData.stars || 0;
                 
-                console.log('Game loaded:', {
-                    scene: this.currentScene.id,
-                    dialogueIndex: this.dialogueIndexInScene,
-                    energy: this.energy,
-                    stars: this.stars
-                });
-                
-                if (callback) callback();
-            }.bind(this));
+                console.log('Game loaded:', loadedData);
+            });
         } else {
+            // Используем переданные данные
             this.currentScene = this.story.dialogues.find(
                 scene => scene.id === saveData.sceneId
             ) || this.story.dialogues[0];
@@ -687,10 +682,9 @@ class GameScene extends Phaser.Scene {
             this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
             this.energy = saveData.energy || 100;
             this.stars = saveData.stars || 0;
-            
-            if (callback) callback();
         }
     }
+    
 
     async buyEnergy(energyAmount, starCost) {
         let stars = this.stars;

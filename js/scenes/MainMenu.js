@@ -92,28 +92,33 @@ class MainMenu extends Phaser.Scene {
         this.newGameContainer.add([newGameButton, newGameText]);
 
         // Продолжить
-        this.continueContainer = this.add.container(width / 2, height * 0.79).setDepth(10);
-        const continueButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
-            .setInteractive()
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
-                this.scene.start('GameScene', {
-                    storyId: 'story1',
-                    sceneId: progress.sceneId,
-                    dialogueIndexInScene: progress.dialogueIndexInScene,
-                    energy: progress.energy,
-                    stars: progress.stars
-                });
+     // В методе create() MainMenu замените кнопку "Продолжить" на этот код:
+
+this.continueContainer = this.add.container(width / 2, height * 0.79).setDepth(10);
+const continueButton = this.add.rectangle(0, 0, width * 0.5, height * 0.06, 0x000000, 0.8)
+    .setInteractive()
+    .on('pointerdown', () => {
+        playMusic();
+        this.sound.play('click');
+        
+        // Загружаем прогресс перед переходом
+        window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+            this.scene.start('GameScene', {
+                storyId: 'story1',
+                sceneId: progress.sceneId,
+                dialogueIndexInScene: progress.dialogueIndex,
+                energy: progress.energy,
+                stars: progress.stars
             });
-        const continueText = this.add.text(0, 0, 'Продолжить', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${height * 0.0258}px`,
-            color: '#fff',
-            textTransform: 'uppercase'
-        }).setOrigin(0.5);
-        this.continueContainer.add([continueButton, continueText]);
+        });
+    });
+const continueText = this.add.text(0, 0, 'Продолжить', {
+    fontFamily: 'IBM Plex Sans',
+    fontSize: `${height * 0.0258}px`,
+    color: '#fff',
+    textTransform: 'uppercase'
+}).setOrigin(0.5);
+this.continueContainer.add([continueButton, continueText]);
 
         // Настройки
         this.settingsContainer = this.add.container(width / 2, height * 0.86).setDepth(10);
