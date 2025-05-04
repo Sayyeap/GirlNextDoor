@@ -1,76 +1,68 @@
+import { Howl, Howler } from 'howler';
+
 export class AudioManager {
-    constructor(game) {
-        this.game = game;
-        this.context = game.sound.context;
-        this.masterGain = this.context.createGain();
-        this.masterGain.connect(this.context.destination);
+    constructor() {
+        const savedVolume = localStorage.getItem('volume');
+        this.volume = savedVolume !== null ? parseFloat(savedVolume) : 1.0;
+        Howler.volume(this.volume);
 
-        const savedVolume = localStorage.getItem('game_volume');
-        this.volume = savedVolume !== null ? parseFloat(savedVolume) : 1;
-        this.masterGain.gain.value = this.volume;
-
-        this.patchAllSounds();
-
-        this._bindActivityListeners();
-        this._startIdleCheck();
+        this.sounds = new Map(); // name → Howl
+        this.music = null;
     }
 
     setVolume(value) {
         this.volume = Phaser.Math.Clamp(value, 0, 1);
-        this.masterGain.gain.value = this.volume;
-        localStorage.setItem('game_volume', this.volume.toString());
+        Howler.volume(this.volume);
+        localStorage.setItem('volume', this.volume.toString());
     }
 
     getVolume() {
         return this.volume;
     }
 
-    patchAllSounds() {
-        this.game.sound.sounds.forEach(sound => this.patchSound(sound));
-        this.game.sound.on('added', sound => this.patchSound(sound));
+    setMasterVolume(value) {
+        this.setVolume(value);
     }
 
-    patchSound(sound) {
-        if (sound.source && sound.source.mediaElement) {
-            return; // Пропускаем HTML5 аудио
+    getMasterVolume() {
+        return this.getVolume();
+    }
+
+    loadSound(name, src) {
+        const sound = new Howl({
+            src: [src],
+            volume: 1.0
+        });
+        this.sounds.set(name, sound);
+    }
+
+    playSound(name) {
+        const sound = this.sounds.get(name);
+        if (sound) {
+            sound.play();
+        } else {
+            console.warn(`Звук "${name}" не найден`);
+        }
+    }
+
+    playMusic(src, loop = true) {
+        if (this.music) {
+            this.music.stop();
+            this.music.unload();
         }
 
-        if (!sound._customGainNode) {
-            const sourceNode = sound.source;
-            const originalNode = sourceNode._node;
+        this.music = new Howl({
+            src: [src],
+            loop,
+            volume: 1.0
+        });
 
-            const gainNode = this.context.createGain();
-            gainNode.gain.value = 1;
+        this.music.play();
+    }
 
-            sourceNode._node.disconnect();
-            sourceNode._node.connect(gainNode);
-            gainNode.connect(this.masterGain);
-
-            sound._customGainNode = gainNode;
+    stopMusic() {
+        if (this.music) {
+            this.music.stop();
         }
-    }
-
-    _bindActivityListeners() {
-        const resumeContext = () => {
-            if (this.context.state === 'suspended') {
-                this.context.resume();
-            }
-        };
-        window.addEventListener('pointerdown', resumeContext);
-        window.addEventListener('keydown', resumeContext);
-    }
-
-    _startIdleCheck() {
-        this.lastInteraction = Date.now();
-        const check = () => {
-            const now = Date.now();
-            if (now - this.lastInteraction > 1000 * 60 * 2) { // 2 минуты
-                if (this.context.state === 'running') {
-                    this.context.suspend();
-                }
-            }
-            requestAnimationFrame(check);
-        };
-        check();
     }
 }

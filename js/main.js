@@ -3,7 +3,7 @@ const config = {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'game-container',
-    backgroundColor: '#1a1a1a',
+ 
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene],
     scale: {
         mode: Phaser.Scale.RESIZE,

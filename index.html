@@ -104,7 +104,59 @@
 
         
        
+// Простой аудиоменеджер для Telegram Web App
+const audioManager = {
+            context: game.sound.context,
+            isActive: true,
+            suspendAudio: function() {
+                if (this.context && this.isActive) {
+                    console.log('AudioManager: Suspending audio context (screen possibly locked)');
+                    this.context.suspend();
+                    game.sound.stopAll(); // Запасной вариант для полной остановки
+                    this.context.close(); // Радикальный вариант для Telegram WebView
+                    this.isActive = false;
+                }
+            },
+            resumeAudio: function() {
+                if (!this.isActive) {
+                    console.log('AudioManager: Resuming audio context (screen possibly unlocked)');
+                    if (!this.context || this.context.state === 'closed') {
+                        // Пересоздать аудиоконтекст
+                        this.context = new (window.AudioContext || window.webkitAudioContext)();
+                        game.sound.context = this.context; // Обновить контекст Phaser
+                    }
+                    if (this.context.state === 'suspended') {
+                        this.context.resume();
+                    }
+                    this.isActive = true;
+                }
+            },
+            checkActivity: function() {
+                const isFocused = document.hasFocus();
+                const isExpanded = tg.isExpanded;
+                if (!isFocused || !isExpanded) {
+                    this.suspendAudio();
+                } else {
+                    this.resumeAudio();
+                }
+            }
+        };
 
+        // Обработка событий blur и focus
+        window.addEventListener('blur', () => {
+            console.log('Window blurred, suspending audio via AudioManager');
+            audioManager.suspendAudio();
+        });
+
+        window.addEventListener('focus', () => {
+            console.log('Window focused, resuming audio via AudioManager');
+            audioManager.resumeAudio();
+        });
+
+        // Периодическая проверка активности Telegram Web App
+        setInterval(() => {
+            audioManager.checkActivity();
+        }, 500);
    
     </script>
 </body>
