@@ -27,17 +27,38 @@ class MainMenu extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(1);
 
-        // Временная заглушка для громкости
+        // Устанавливаем громкость
         this.game.sound.volume = 1.0;
-        const music = this.sound.add('menu_music', { loop: true });
-        music.play();
-        console.log('MainMenu: Music playing', music.isPlaying);
+
+        // Создаём музыку, но не запускаем сразу
+        this.menuMusic = this.sound.add('menu_music', { loop: true });
+        console.log('MainMenu: Music initialized');
+
+        // Флаг для отслеживания взаимодействия
+        this.hasInteracted = false;
+
+        // Функция для запуска музыки
+        const startMusic = () => {
+            if (!this.hasInteracted) {
+                this.hasInteracted = true;
+                this.menuMusic.play();
+                console.log('MainMenu: Music playing after interaction', this.menuMusic.isPlaying);
+            }
+        };
+
+        // Запускаем музыку при любом клике
+        this.input.on('pointerdown', startMusic);
+
+        // Проверяем возобновление звука после разблокировки
+        this.input.on('pointerdown', () => {
+            if (this.hasInteracted && !this.menuMusic.isPlaying) {
+                this.menuMusic.play();
+                console.log('MainMenu: Music resumed after interaction', this.menuMusic.isPlaying);
+            }
+        });
 
         await document.fonts.ready;
         console.log('MainMenu: Fonts loaded');
-
-        // Учитываем тему Telegram
-        
 
         this.titleText = this.add.text(width / 2, height * 0.1, '', {
             fontFamily: 'Dela Gothic One',
@@ -90,7 +111,6 @@ class MainMenu extends Phaser.Scene {
             .setInteractive()
             .on('pointerdown', () => {
                 this.sound.play('click');
-                // Временная заглушка вместо loadProgress
                 const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
                 this.scene.start('GameScene', {
                     storyId: 'story1',
@@ -154,7 +174,6 @@ class MainMenu extends Phaser.Scene {
                 .setInteractive()
                 .on('pointerdown', () => {
                     this.sound.play('click');
-                    // Временная заглушка вместо loadProgress
                     const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
                     this.scene.start('GameScene', {
                         storyId: story.id,
