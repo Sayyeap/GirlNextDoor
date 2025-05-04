@@ -97,21 +97,36 @@
 
         const game = new Phaser.Game(config);
 
-        window.addEventListener('resize', () => {
-            const insets = tg.safeAreaInset || { top: 0, bottom: 0 };
-            game.scale.resize(window.innerWidth, window.innerHeight - insets.top - insets.bottom);
-        });
+     
 
         game.registry.set('userId', userId);
 
-         // Пауза звука при блокировке экрана
-         document.addEventListener('visibilitychange', () => {
+       // Пауза звука при блокировке экрана или сворачивании
+       document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                console.log('Screen locked, pausing all sounds');
-                game.sound.pauseAll();
+                console.log('Visibility hidden, suspending audio context');
+                if (game.sound.context) {
+                    game.sound.context.suspend();
+                }
             } else {
-                console.log('Screen unlocked, resuming all sounds');
-                game.sound.resumeAll();
+                console.log('Visibility visible, resuming audio context');
+                if (game.sound.context) {
+                    game.sound.context.resume();
+                }
+            }
+        });
+
+        document.addEventListener('pagehide', () => {
+            console.log('Page hidden, suspending audio context');
+            if (game.sound.context) {
+                game.sound.context.suspend();
+            }
+        });
+
+        document.addEventListener('pageshow', () => {
+            console.log('Page shown, resuming audio context');
+            if (game.sound.context) {
+                game.sound.context.resume();
             }
         });
     </script>
