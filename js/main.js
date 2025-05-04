@@ -3,12 +3,25 @@ const config = {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'game-container',
+    backgroundColor: '#1a1a1a',
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    
+    audio: {
+        disableWebAudio: false
+    },
+    fps: {
+        target: 60,
+        forceSetTimeOut: true
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
+    }
 };
 
 const game = new Phaser.Game(config);
