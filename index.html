@@ -14,6 +14,7 @@
         body {
             margin: 0;
             padding: 0;
+            padding: env(safe-area-inset-top);
             overflow: hidden;
             width: 100vw;
             height: 100vh;
@@ -98,6 +99,9 @@
             scene: [MainMenu, GameScene, SettingsScene],
             parent: 'game-container'
         };
+        window.addEventListener('resize', () => {
+         game.scale.resize(window.innerWidth, window.innerHeight);
+        });
 
         const game = new Phaser.Game(config);
 
