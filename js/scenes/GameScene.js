@@ -1,3 +1,4 @@
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
@@ -67,6 +68,7 @@ class GameScene extends Phaser.Scene {
             this.isLoaded = true;
         });
     }
+
     create() {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
@@ -78,7 +80,6 @@ class GameScene extends Phaser.Scene {
             }
         });
     
-        // Пример проигрывания музыки
         this.bgMusic = this.sound.add('bg_music', { loop: true });
         this.bgMusic.play();
     }
@@ -105,8 +106,6 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
-   
-        // Анимация загрузки
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
         this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
             fontSize: `${height * 0.035}px`,
@@ -114,7 +113,6 @@ class GameScene extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans'
         }).setOrigin(0.5).setDepth(101);
 
-        // Анимация точек
         this.loadingTimer = this.time.addEvent({
             delay: 500,
             callback: () => {
@@ -264,7 +262,6 @@ class GameScene extends Phaser.Scene {
             .setInteractive()
             .on('pointerdown', () => {
                 console.log('Energy icon clicked, show modal');
-                // Здесь будет вызов модалки с "Купить энергию" и "Пригласить друга"
             });
 
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
@@ -462,12 +459,10 @@ class GameScene extends Phaser.Scene {
         const height = this.game.config.height;
         const textColor = '#ffffff';
 
-        // Награда за завершение рута
         this.energy += 100;
         this.energyText.setText(this.energy);
         await this.saveProgress();
 
-        // Очистка всех UI-элементов
         this.dialogueBox.setVisible(false);
         this.speakerText.setVisible(false).setText('');
         this.dialogueText.setVisible(false).setText('');
@@ -494,7 +489,6 @@ class GameScene extends Phaser.Scene {
             this.settingsButton.setVisible(false);
         }
 
-        // Показ финального текста
         const endingText = this.add.text(width / 2, height / 2, 'Конец истории', {
             fontSize: `${height * 0.043}px`,
             color: textColor,
@@ -503,7 +497,6 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5)
             .setDepth(10);
 
-        // Затухание музыки
         if (this.currentMusic) {
             const music = this.sound.get(this.currentMusic);
             if (music) {
@@ -519,7 +512,6 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // Остановка всех твинов и таймеров
         if (this.charShakeTween) {
             this.charShakeTween.stop();
         }
@@ -528,7 +520,6 @@ class GameScene extends Phaser.Scene {
             this.typewriterTimer = null;
         }
 
-        // Переход в MainMenu через 3 секунды
         this.time.delayedCall(3000, () => {
             this.sound.stopAll();
             this.scene.stop('GameScene');
