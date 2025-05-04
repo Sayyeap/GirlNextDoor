@@ -642,43 +642,54 @@ class GameScene extends Phaser.Scene {
         this.showDialogue();
     }
 
-    async saveProgress() {
+    saveProgress() {
         if (!this.currentScene) {
             console.error('Cannot save progress: currentScene is null');
             return;
         }
-        try {
-            console.log('Attempting to save:', {
-                userId: this.registry.get('userId'),
-                storyId: this.storyId,
-                sceneId: this.currentScene.id,
-                dialogueIndexInScene: this.dialogueIndexInScene,
-                energy: this.energy,
-                stars: this.stars
-            });
-            await saveProgress(this.storyId, this.currentScene.id, this.dialogueIndexInScene, this.energy, this.stars, this.registry);
-            console.log('GameScene: Progress saved');
-        } catch (error) {
-            console.error('GameScene: Failed to save progress', error);
-        }
+        
+        window.gameStorage.saveProgress(
+            this.storyId,
+            this.currentScene.id,
+            this.dialogueIndexInScene,
+            this.energy,
+            this.stars,
+            this.registry
+        );
     }
-
-    async loadGame(data) {
+    
+    loadGame(data, callback) {
         let saveData = data;
-        if (!saveData.sceneId) {
-            try {
-                saveData = await loadProgress(this.storyId, this.registry);
-                console.log('GameScene: Progress loaded from CloudStorage:', saveData);
-            } catch (error) {
-                console.error('GameScene: Failed to load progress', error);
-                saveData = { sceneId: this.story.dialogues[0].id, dialogueIndexInScene: 0, energy: 100, stars: 0 };
-            }
+        if (!saveData || !saveData.sceneId) {
+            window.gameStorage.loadProgress(this.storyId, this.registry, function(loadedData) {
+                this.currentScene = this.story.dialogues.find(
+                    scene => scene.id === loadedData.sceneId
+                ) || this.story.dialogues[0];
+                
+                this.dialogueIndexInScene = loadedData.dialogueIndex || 0;
+                this.energy = loadedData.energy || 100;
+                this.stars = loadedData.stars || 0;
+                
+                console.log('Game loaded:', {
+                    scene: this.currentScene.id,
+                    dialogueIndex: this.dialogueIndexInScene,
+                    energy: this.energy,
+                    stars: this.stars
+                });
+                
+                if (callback) callback();
+            }.bind(this));
+        } else {
+            this.currentScene = this.story.dialogues.find(
+                scene => scene.id === saveData.sceneId
+            ) || this.story.dialogues[0];
+            
+            this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
+            this.energy = saveData.energy || 100;
+            this.stars = saveData.stars || 0;
+            
+            if (callback) callback();
         }
-        this.currentScene = this.story.dialogues.find(scene => scene.id === saveData.sceneId) || this.story.dialogues[0];
-        this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
-        this.energy = saveData.energy || 100;
-        this.stars = saveData.stars || 0;
-        console.log('GameScene: Game loaded:', saveData);
     }
 
     async buyEnergy(energyAmount, starCost) {

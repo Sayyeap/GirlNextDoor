@@ -1,66 +1,108 @@
-async function saveProgress(storyId, sceneId, dialogueIndex, energy, stars = 0, registry = null) {
-    const progress = {
-        storyId,
-        sceneId,
-        dialogueIndex,
-        energy,
-        stars,
-        timestamp: Date.now()
-    };
+// progress.js
+(function() {
+    function saveProgress(storyId, sceneId, dialogueIndex, energy, stars, registry) {
+        const progress = {
+            storyId: storyId,
+            sceneId: sceneId,
+            dialogueIndex: dialogueIndex,
+            energy: energy,
+            stars: stars || 0,
+            timestamp: Date.now()
+        };
 
-    try {
-        // 1. Сохраняем в Telegram Cloud Storage (если доступен)
-        if (window.Telegram?.WebApp?.CloudStorage?.setItem) {
-            const userId = registry?.get('userId') || 'default';
-            await window.Telegram.WebApp.CloudStorage.setItem(
-                `save_${userId}_${storyId}`,
-                JSON.stringify(progress)
-            );
-            console.log('Progress saved to Telegram Cloud');
-        }
-
-        // 2. Всегда сохраняем в localStorage (для тестирования)
-        localStorage.setItem(`save_${storyId}`, JSON.stringify(progress));
-        console.log('Progress saved to localStorage');
-    } catch (error) {
-        console.error('Save error:', error);
-        throw error;
-    }
-}
-
-async function loadProgress(storyId, registry = null) {
-    try {
-        // 1. Пробуем загрузить из Telegram Cloud
-        if (window.Telegram?.WebApp?.CloudStorage?.getItem) {
-            const userId = registry?.get('userId') || 'default';
-            const data = await window.Telegram.WebApp.CloudStorage.getItem(
-                `save_${userId}_${storyId}`
-            );
-            if (data) {
-                console.log('Progress loaded from Telegram Cloud');
-                return JSON.parse(data);
+        try {
+            // Пробуем сохранить в Telegram Cloud (если доступно)
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+                try {
+                    const userId = (registry && registry.get('userId')) || 'default';
+                    window.Telegram.WebApp.CloudStorage.setItem(
+                        'save_' + userId + '_' + storyId,
+                        JSON.stringify(progress),
+                        function(err) {
+                            if (err) {
+                                console.warn('Telegram Cloud save failed, using localStorage:', err);
+                                saveToLocalStorage(storyId, progress);
+                            } else {
+                                console.log('Progress saved to Telegram Cloud');
+                            }
+                        }
+                    );
+                } catch (tgError) {
+                    console.warn('Telegram Cloud error, using localStorage:', tgError);
+                    saveToLocalStorage(storyId, progress);
+                }
+            } else {
+                saveToLocalStorage(storyId, progress);
             }
+        } catch (error) {
+            console.error('Save progress failed completely:', error);
         }
-
-        // 2. Fallback: localStorage
-        const localData = localStorage.getItem(`save_${storyId}`);
-        if (localData) {
-            console.log('Progress loaded from localStorage');
-            return JSON.parse(localData);
-        }
-    } catch (error) {
-        console.error('Load error:', error);
     }
 
-    // 3. Возвращаем данные по умолчанию
-    return {
-        sceneId: 'scene1',
-        dialogueIndex: 0,
-        energy: 100,
-        stars: 0
-    };
-}
+    function saveToLocalStorage(storyId, progress) {
+        try {
+            localStorage.setItem('save_' + storyId, JSON.stringify(progress));
+            console.log('Progress saved to localStorage');
+        } catch (localError) {
+            console.error('LocalStorage save failed:', localError);
+        }
+    }
 
-// Регистрируем функции глобально
-window.saveProgress = saveProgress;
-window.loadProgress = loadProgress;
+    function loadProgress(storyId, registry, callback) {
+        // Сначала пробуем Telegram Cloud
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+            try {
+                const userId = (registry && registry.get('userId')) || 'default';
+                window.Telegram.WebApp.CloudStorage.getItem(
+                    'save_' + userId + '_' + storyId,
+                    function(err, data) {
+                        if (!err && data) {
+                            console.log('Loaded from Telegram Cloud');
+                            callback(JSON.parse(data));
+                        } else {
+                            console.log('Telegram Cloud load failed, trying localStorage...', err);
+                            loadFromLocalStorage(storyId, callback);
+                        }
+                    }
+                );
+            } catch (tgError) {
+                console.warn('Telegram Cloud load error:', tgError);
+                loadFromLocalStorage(storyId, callback);
+            }
+        } else {
+            loadFromLocalStorage(storyId, callback);
+        }
+    }
+
+    function loadFromLocalStorage(storyId, callback) {
+        try {
+            const data = localStorage.getItem('save_' + storyId);
+            if (data) {
+                console.log('Loaded from localStorage');
+                callback(JSON.parse(data));
+            } else {
+                console.log('No saved data, using default');
+                callback({
+                    sceneId: 'scene1',
+                    dialogueIndex: 0,
+                    energy: 100,
+                    stars: 0
+                });
+            }
+        } catch (error) {
+            console.error('LocalStorage load failed:', error);
+            callback({
+                sceneId: 'scene1',
+                dialogueIndex: 0,
+                energy: 100,
+                stars: 0
+            });
+        }
+    }
+
+    // Экспортируем в глобальную область видимости
+    window.gameStorage = {
+        saveProgress: saveProgress,
+        loadProgress: loadProgress
+    };
+})();
