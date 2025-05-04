@@ -104,14 +104,17 @@
          // Пауза звука при блокировке экрана
        
 
-        window.addEventListener('blur', () => {
-    console.log('Window blurred - pause sounds');
-    game.sound.pauseAll();
+         window.addEventListener('blur', () => {
+    console.log('Window blurred, suspending audio context');
+    if (game.sound.context) {
+        game.sound.context.suspend();
+    }
 });
-
 window.addEventListener('focus', () => {
-    console.log('Window focused - resume sounds');
-    game.sound.resumeAll();
+    console.log('Window focused, resuming audio context');
+    if (game.sound.context) {
+        game.sound.context.resume();
+    }
 });
     </script>
 </body>
