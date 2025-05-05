@@ -1,104 +1,148 @@
 class SettingsScene extends Phaser.Scene {
     constructor() {
         super('SettingsScene');
+        this.sliderArea = { minX: 0, maxX: 0 };
+        this.elements = {};
+    }
+
+    preload() {
+        this.load.image('volume_icon', 'assets/common/images/volume_icon.png');
+        this.load.audio('click', 'assets/common/audio/click.wav');
     }
 
     create() {
-        const width = this.game.config.width;
-        const height = this.game.config.height;
-        this.scale.setGameSize(window.innerWidth, window.innerHeight);
-        this.scale.mode = Phaser.Scale.RESIZE;
-        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
+        const width = this.scale.width;
+        const height = this.scale.height;
+        
+        // Полупрозрачный черный фон
+        this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
+            .setOrigin(0, 0);
 
-        this.cameras.main.setViewport(0, 0, width, height);
-        this.cameras.main.setBounds(0, 0, width, height);
-
-        // Фон
-        this.add.rectangle(width / 2, height / 2, width * 0.8, height * 0.5, 0x000000, 0.8)
-            .setDepth(10);
-
-        // Текст "Настройки"
-        this.add.text(width / 2, height * 0.4, 'Настройки', {
+        // Заголовок "Настройки"
+        this.elements.titleText = this.add.text(width/2, height*0.3, 'НАСТРОЙКИ', {
             fontFamily: 'Dela Gothic One',
-            fontSize: `${height * 0.03}px`,
-            color: '#ffffff'
-        }).setOrigin(0.5)
-          .setDepth(11);
+            fontSize: `${height*0.035}px`,
+            color: '#ffffff',
+            resolution: 2
+        }).setOrigin(0.5);
 
-        // Текст и ползунок громкости
-        const volumeText = this.add.text(width * 0.25, height * 0.5, 'Громкость:', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${height * 0.025}px`,
-            color: '#ffffff'
-        }).setOrigin(0, 0.5)
-          .setDepth(11);
+        // Создаем элементы управления
+        this.createVolumeControl(width, height);
+        this.createCloseButton(width, height);
 
-        const volumeBar = this.add.rectangle(width * 0.55, height * 0.5, width * 0.3, height * 0.03, 0xffffff)
-            .setInteractive({ draggable: true })
-            .setOrigin(0, 0.5)
-            .setDepth(11)
-            .on('drag', (pointer, x) => {
-                volumeBar.width = Phaser.Math.Clamp(x - (width * 0.55 - width * 0.15), 0, width * 0.3);
-                this.game.sound.volume = volumeBar.width / (width * 0.3);
-            });
-        volumeBar.width = this.game.sound.volume * (width * 0.3);
-
-        // Кнопка "Закрыть"
-        const closeButton = this.add.rectangle(width / 2, height * 0.6, width * 0.3, height * 0.06, 0x61bdff)
-            .setInteractive()
-            .setDepth(11)
-            .on('pointerdown', () => this.scene.stop());
-        this.add.text(width / 2, height * 0.6, 'Закрыть', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${height * 0.025}px`,
-            color: '#ffffff'
-        }).setOrigin(0.5)
-          .setDepth(12);
-
-        this.scale.on('resize', this.resize, this);
+        this.scale.on('resize', (gameSize) => {
+            this.time.delayedCall(100, () => this.resize(gameSize));
+        });
     }
 
-    resize(size) {
-        if (!this.scene.isActive()) return;
+    createVolumeControl(width, height) {
+        const centerY = height*0.45;
+        const textX = width*0.35;
+        const sliderX = width*0.55;
+        const sliderWidth = width*0.35;
 
-        const width = size.width || this.game.config.width;
-        const height = size.height || this.game.config.height;
+        this.sliderArea = { minX: sliderX, maxX: sliderX + sliderWidth };
 
-        this.cameras.main.setViewport(0, 0, width, height);
-        this.cameras.main.setBounds(0, 0, width, height);
+        // Текст и иконка громкости
+        this.elements.volumeText = this.add.text(textX, centerY, 'Громкость', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height*0.022}px`,
+            color: '#ffffff',
+            resolution: 2
+        }).setOrigin(1, 0.5);
 
-        // Фон
-        this.children.list.find(child => child.type === 'Rectangle' && child.fillColor === 0x000000)
-            ?.setPosition(width / 2, height / 2)
-            .setSize(width * 0.8, height * 0.5);
-
-        // Текст "Настройки"
-        this.children.list.find(child => child.type === 'Text' && child.text === 'Настройки')
-            ?.setPosition(width / 2, height * 0.4)
-            .setFontSize(height * 0.03);
-
-        // Текст "Громкость"
-        this.children.list.find(child => child.type === 'Text' && child.text === 'Громкость:')
-            ?.setPosition(width * 0.25, height * 0.5)
-            .setFontSize(height * 0.025);
+        this.elements.volumeIcon = this.add.image(textX + height*0.025, centerY, 'volume_icon')
+            .setDisplaySize(height*0.025, height*0.025)
+            .setOrigin(0, 0.5);
 
         // Ползунок громкости
-        const volumeBar = this.children.list.find(child => child.type === 'Rectangle' && child.fillColor === 0xffffff);
-        if (volumeBar) {
-            const currentVolume = this.game.sound.volume;
-            volumeBar.setPosition(width * 0.55, height * 0.5)
-                .setSize(width * 0.3, height * 0.03)
-                .setOrigin(0, 0.5);
-            volumeBar.width = currentVolume * (width * 0.3);
+        this.elements.sliderBg = this.add.rectangle(sliderX, centerY, sliderWidth, height*0.012, 0x666666)
+            .setOrigin(0, 0.5);
+
+        this.elements.sliderFill = this.add.rectangle(
+            sliderX, centerY, 
+            sliderWidth * this.game.sound.volume, 
+            height*0.012, 
+            0xffffff
+        ).setOrigin(0, 0.5);
+
+        this.elements.sliderHandle = this.add.circle(
+            sliderX + (sliderWidth * this.game.sound.volume), 
+            centerY, 
+            height*0.012,
+            0xffffff
+        ).setInteractive({ draggable: true })
+         .on('drag', (pointer, x) => {
+             x = Phaser.Math.Clamp(x, this.sliderArea.minX, this.sliderArea.maxX);
+             this.elements.sliderHandle.x = x;
+             this.elements.sliderFill.width = x - this.sliderArea.minX;
+             this.game.sound.volume = (x - this.sliderArea.minX) / sliderWidth;
+         });
+    }
+
+    createCloseButton(width, height) {
+        // Только текст без подложки
+        this.elements.closeText = this.add.text(
+            width/2, 
+            height*0.6, 
+            'ЗАКРЫТЬ', 
+            {
+                fontFamily: 'Dela Gothic One',
+                fontSize: `${height*0.025}px`,
+                color: '#61bdff', // Голубой цвет
+                resolution: 2
+            }
+        ).setOrigin(0.5)
+         .setInteractive()
+         .on('pointerdown', () => {
+             this.sound.play('click'); // Звук клика
+             this.scene.stop();
+         });
+    }
+
+    resize(gameSize) {
+        if (!this.elements) return;
+
+        const width = gameSize.width;
+        const height = gameSize.height;
+        const centerY = height*0.45;
+        const textX = width*0.35;
+        const sliderX = width*0.55;
+        const sliderWidth = width*0.35;
+
+        // Обновляем границы
+        this.sliderArea = { minX: sliderX, maxX: sliderX + sliderWidth };
+
+        // Фон
+        this.elements.bgOverlay?.setDisplaySize(width, height);
+
+        // Заголовок
+        this.elements.titleText?.setPosition(width/2, height*0.3)
+                               .setFontSize(height*0.035);
+
+        // Громкость
+        this.elements.volumeText?.setPosition(textX, centerY)
+                                .setFontSize(height*0.022);
+        
+        this.elements.volumeIcon?.setPosition(textX + height*0.025, centerY)
+                                .setDisplaySize(height*0.025, height*0.025);
+
+        // Ползунок
+        if (this.elements.sliderBg && this.elements.sliderFill && this.elements.sliderHandle) {
+            const vol = this.game.sound.volume;
+            
+            this.elements.sliderBg.setPosition(sliderX, centerY)
+                                 .setSize(sliderWidth, height*0.012);
+            
+            this.elements.sliderFill.setPosition(sliderX, centerY)
+                                   .setSize(sliderWidth * vol, height*0.012);
+            
+            this.elements.sliderHandle.setPosition(sliderX + (sliderWidth * vol), centerY)
+                                     .setRadius(height*0.018);
         }
 
-        // Кнопка "Закрыть"
-        this.children.list.find(child => child.type === 'Rectangle' && child.fillColor === 0x61bdff)
-            ?.setPosition(width / 2, height * 0.6)
-            .setSize(width * 0.3, height * 0.06);
-
-        this.children.list.find(child => child.type === 'Text' && child.text === 'Закрыть')
-            ?.setPosition(width / 2, height * 0.6)
-            .setFontSize(height * 0.025);
+        // Кнопка закрытия
+        this.elements.closeText?.setPosition(width/2, height*0.6)
+                               .setFontSize(height*0.025);
     }
 }
