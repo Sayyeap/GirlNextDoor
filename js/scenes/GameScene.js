@@ -85,17 +85,15 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
-        this.scale.setGameSize(window.innerWidth, window.innerHeight);
-        this.scale.mode = Phaser.Scale.RESIZE;
-        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
+        // Настройки масштабирования
+        this.scale.on('resize', this.resize, this);
+        this.scale.refresh();
 
-        const width = this.game.config.width;
-        const height = this.game.config.height;
+        const width = this.scale.width;
+        const height = this.scale.height;
+
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
-
-        console.log('Scene size:', width, height);
-        console.log('User ID:', this.registry.get('userId'));
         this.cameras.main.setBackgroundColor('#000000');
 
         try {
@@ -106,11 +104,13 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
+        // Элементы загрузки
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
         this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
             fontSize: `${height * 0.035}px`,
             color: '#ffffff',
-            fontFamily: 'IBM Plex Sans'
+            fontFamily: 'IBM Plex Sans',
+            resolution: 2
         }).setOrigin(0.5).setDepth(101);
 
         this.loadingTimer = this.time.addEvent({
@@ -124,75 +124,197 @@ class GameScene extends Phaser.Scene {
             loop: true
         });
 
-        console.log('Load started');
         if (this.isLoaded) {
-            loadingRect.destroy();
-            this.loadingText.destroy();
-            this.loadingTimer.remove();
-            this.setupScene();
-            this.showDialogue();
-            console.log('Create completed');
+            this.finishLoading(loadingRect);
         } else {
-            this.load.once('complete', () => {
-                loadingRect.destroy();
-                this.loadingText.destroy();
-                this.loadingTimer.remove();
-                this.setupScene();
-                this.showDialogue();
-                console.log('Create completed');
-            });
+            this.load.once('complete', () => this.finishLoading(loadingRect));
             this.load.start();
         }
+    }
 
-        this.scale.on('resize', this.resize, this);
+    finishLoading(loadingRect) {
+        loadingRect.destroy();
+        this.loadingText.destroy();
+        this.loadingTimer.remove();
+        
+        this.setupScene();
+        this.showDialogue();
+        console.log('Create completed');
+    }
+
+    setupScene() {
+        const width = this.scale.width;
+        const height = this.scale.height;
+        const accentColor = '#61bdff';
+
+        // Фон (растягиваем на весь экран)
+        this.bg = this.add.image(width / 2, height / 2, 'home')
+            .setDisplaySize(width, height)
+            .setOrigin(0.5)
+            .setDepth(1);
+
+        // Персонаж (масштабируем пропорционально ширине)
+        this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
+            .setScale(width * 0.79 / 600)
+            .setOrigin(0.5, 1)
+            .setAlpha(0)
+            .setDepth(5);
+
+        // Анимация дыхания персонажа
+        this.charBreathTween = this.tweens.add({
+            targets: this.char,
+            scaleX: { from: 0.530, to: 0.531 },
+            scaleY: { from: 0.530, to: 0.533 },
+            duration: 800,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+            paused: true
+        });
+
+        // Энергия и интерфейс
+        this.setupUI(width, height, accentColor);
+
+        // Диалоговое окно
+        this.setupDialogueBox(width, height);
+
+        // Кнопка "Далее"
+        this.setupNextButton(width, height);
+
+        // Кнопка настроек
+        this.setupSettingsButton(width, height);
+
+        this.choicesGroup = this.add.group();
+        console.log('SetupScene completed');
+    }
+
+    setupUI(width, height, accentColor) {
+        // Панель энергии
+        this.energyRect = this.add.rectangle(width * 0.1, height * 0.15, width * 0.25, height * 0.04, 0x000000, 0.5)
+            .setDepth(10);
+        
+        this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
+            fontSize: `${height * 0.0258}px`,
+            color: accentColor,
+            fontFamily: 'Dela Gothic One',
+            resolution: 2
+        }).setDepth(10);
+        
+        this.energyIcon = this.add.image(width * 0.05, height * 0.15, 'energyIcon')
+            .setDisplaySize(height * 0.04, height * 0.04)
+            .setDepth(10)
+            .setInteractive()
+            .on('pointerdown', () => console.log('Energy icon clicked'));
+    }
+
+    setupDialogueBox(width, height) {
+        const accentColor = '#61bdff';
+        
+        this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
+            .setDisplaySize(width, height * 0.6)
+            .setOrigin(0.5, 1)
+            .setDepth(10);
+        
+        this.speakerText = this.add.text(width / 2, height * 0.72, '', {
+            fontSize: `${height * 0.027}px`,
+            color: accentColor,
+            fontFamily: 'Dela Gothic One',
+            stroke: '#000000',
+            strokeThickness: 2,
+            resolution: 2
+        }).setOrigin(0.5).setDepth(10);
+        
+        this.dialogueText = this.add.text(width * 0.1, height * 0.76, '', {
+            fontSize: `${height * 0.024}px`,
+            color: '#fff',
+            fontFamily: 'IBM Plex Sans',
+            stroke: '#000000',
+            strokeThickness: 2,
+            align: 'left',
+            resolution: 2,
+            wordWrap: { width: width * 0.8 }
+        }).setOrigin(0.0).setDepth(10);
+    }
+
+    setupNextButton(width, height) {
+        this.nextButtonContainer = this.add.container(width / 2, height * 0.91).setDepth(10);
+        
+        const nextText = this.add.text(0, 0, 'Далее', {
+            fontSize: `${height * 0.0258}px`,
+            color: '#fff',
+            fontFamily: 'IBM Plex Sans',
+            resolution: 2
+        }).setOrigin(0.5);
+        
+        const rightArrow = this.add.image(width * 0.12, 0, 'next')
+            .setDisplaySize(height * 0.023, height * 0.023)
+            .setOrigin(0.5);
+        
+        this.nextButtonContainer.add([nextText, rightArrow]);
+        this.nextButtonContainer.setInteractive(new Phaser.Geom.Rectangle(-width * 0.15, -height * 0.03, width * 0.3, height * 0.06), Phaser.Geom.Rectangle.Contains)
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                if (this.isTyping) {
+                    this.isTyping = false;
+                    this.dialogueText.setText(this.currentDialogueText);
+                } else {
+                    this.showNextDialogue();
+                }
+            });
+    }
+
+    setupSettingsButton(width, height) {
+        this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.15, width * 0.15, height * 0.04, 0x000000, 0)
+            .setOrigin(0.5)
+            .setDepth(10);
+        
+        this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
+            .setDisplaySize(height * 0.032, height * 0.032)
+            .setOrigin(0.5)
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('Settings clicked');
+                this.scene.launch('SettingsScene');
+            })
+            .setDepth(10);
     }
 
     resize(size) {
-        if (!this.scene.isActive()) {
-            console.log('GameScene: Resize called on inactive scene, skipping');
-            return;
-        }
+        if (!this.scene.isActive()) return;
 
-        const width = size.width || this.game.config.width;
-        const height = size.height || this.game.config.height;
-        console.log('Resize - Scene size:', width, height);
+        const width = size.width || this.scale.width;
+        const height = size.height || this.scale.height;
 
-        if (this.cameras?.main) {
-            this.cameras.main.setViewport(0, 0, width, height);
-            this.cameras.main.setBounds(0, 0, width, height);
-        }
+        this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setBounds(0, 0, width, height);
 
+        // Фон
         if (this.bg) {
-            this.bg.setPosition(width / 2, height / 2)
-                .setDisplaySize(width, height)
-                .setOrigin(0.5);
+            this.bg.setDisplaySize(width, height).setPosition(width / 2, height / 2);
         }
 
+        // Персонаж
         if (this.char) {
-            this.char.setPosition(width / 2, height)
-                .setScale(width * 0.79 / 600);
+            this.char.setPosition(width / 2, height).setScale(width * 0.79 / 600);
         }
 
+        // UI элементы
         if (this.energyRect) {
-            this.energyRect.setPosition(width * 0.1, height * 0.15)
-                .setSize(width * 0.25, height * 0.04);
+            this.energyRect.setPosition(width * 0.1, height * 0.15).setSize(width * 0.25, height * 0.04);
         }
         if (this.energyText) {
-            this.energyText.setPosition(width * 0.11, height * 0.135)
-                .setFontSize(height * 0.0258);
+            this.energyText.setPosition(width * 0.11, height * 0.135).setFontSize(height * 0.0258);
         }
         if (this.energyIcon) {
-            this.energyIcon.setPosition(width * 0.05, height * 0.15)
-                .setDisplaySize(height * 0.04, height * 0.04);
+            this.energyIcon.setPosition(width * 0.05, height * 0.15).setDisplaySize(height * 0.04, height * 0.04);
         }
 
+        // Диалоговое окно
         if (this.dialogueBox) {
-            this.dialogueBox.setPosition(width / 2, height)
-                .setDisplaySize(width, height * 0.6);
+            this.dialogueBox.setDisplaySize(width, height * 0.6).setPosition(width / 2, height);
         }
         if (this.speakerText) {
-            this.speakerText.setPosition(width / 2, height * 0.72)
-                .setFontSize(height * 0.027);
+            this.speakerText.setPosition(width / 2, height * 0.72).setFontSize(height * 0.027);
         }
         if (this.dialogueText) {
             this.dialogueText.setPosition(width * 0.1, height * 0.76)
@@ -200,24 +322,25 @@ class GameScene extends Phaser.Scene {
                 .setWordWrapWidth(width * 0.8);
         }
 
+        // Кнопки
         if (this.nextButtonContainer) {
             this.nextButtonContainer.setPosition(width / 2, height * 0.91);
             this.nextButtonContainer.getAll().forEach(child => {
                 if (child.type === 'Text') {
                     child.setFontSize(height * 0.0258);
                 } else if (child.type === 'Image') {
-                    child.setDisplaySize(height * 0.04, height * 0.04);
+                    child.setDisplaySize(height * 0.023, height * 0.023);
                 }
             });
         }
 
-        if (this.settingsButtonBg) {
-            this.settingsButtonBg.setPosition(width / 1.1, height * 0.15)
-                .setSize(width * 0.15, height * 0.04);
-        }
         if (this.settingsButton) {
             this.settingsButton.setPosition(width / 1.1, height * 0.15)
                 .setDisplaySize(height * 0.032, height * 0.032);
+        }
+        if (this.settingsButtonBg) {
+            this.settingsButtonBg.setPosition(width / 1.1, height * 0.15)
+                .setSize(width * 0.15, height * 0.04);
         }
     }
 
