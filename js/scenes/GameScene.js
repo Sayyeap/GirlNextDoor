@@ -298,7 +298,7 @@ class GameScene extends Phaser.Scene {
 
         // Персонаж
         if (this.char) {
-            this.char.setPosition(width / 2, height).setScale(width * 0.79 / 600);
+            this.char.setPosition(width / 2, height).setScale(width * 0.88 / 600);
         }
 
         // UI элементы
@@ -331,7 +331,7 @@ class GameScene extends Phaser.Scene {
 
         // Кнопки
         if (this.nextButtonContainer) {
-            this.nextButtonContainer.setPosition(width / 2, height * 0.91);
+            this.nextButtonContainer.setPosition(width / 2, height * 0.88);
             this.nextButtonContainer.getAll().forEach(child => {
                 if (child.type === 'Text') {
                     child.setFontSize(height * 0.0258);
@@ -362,22 +362,27 @@ class GameScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(1);
 
-        this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
-            .setScale(width * 0.8 / 600)
-            .setOrigin(0.5, 1)
-            .setAlpha(0)
-            .setDepth(5);
+           // 1. Настройка персонажа с "запасом" по Y
+           this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
+           .setScale(width * 0.89 / 600)
+           .setOrigin(0.5, 0.97)
+           .setAlpha(0)
+           .setDepth(5);
 
-        this.charBreathTween = this.tweens.add({
+           this.charBreathTween = this.tweens.add({
             targets: this.char,
-            scaleX: { from: 0.530, to: 0.531 },
-            scaleY: { from: 0.530, to: 0.533 },
-            duration: 800,
+            y: { 
+                from: height, 
+                to: height - 3, // Сила "вдоха" (регулируйте)
+            },
+            duration: 650,      // Очень плавно
             ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1,
             paused: true
         });
+
+
 
       // Создаем графику для подложки с закругленными углами
 this.energyBg = this.add.graphics()
