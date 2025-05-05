@@ -493,7 +493,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             // Рисуем квадратную подложку с закругленными углами
             this.settingsButtonBg.fillStyle(0x000000, 0.7); // Цвет и прозрачность как в energyRect
             this.settingsButtonBg.fillRoundedRect(
-                width / 1.1 - settingsBgSize/2, // X позиция (центрирование)
+                width / 1.073 - settingsBgSize/2, // X позиция (центрирование)
                 height * 0.15 - settingsBgSize/2, // Y позиция (центрирование)
                 settingsBgSize, 
                 settingsBgSize, 
@@ -502,7 +502,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             this.clickSound = this.sound.add('click');
             
             // Иконка настроек (остается без изменений)
-            this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
+            this.settingsButton = this.add.image(width / 1.073, height * 0.15, 'settings')
                 .setDisplaySize(height * 0.032, height * 0.032)
                 .setOrigin(0.5)
                 .setInteractive()
