@@ -5,9 +5,9 @@ const story1Dialogues = [
         music: "pixel_dreaming",
         dialogues: [
             {
-                speaker: " ",
+                speaker: "Мия",
                 text: "Старый подъезд, облупившаяся зеленая краска на стенах, запах сырости и старого линолеума.Тусклая лампочка мигает, отбрасывая тени на потертый пол",
-                charSprite: null,
+                charSprite: "mia_tshirt_shy",
                 shake: null,
                 sfx: null,
                 choices: null
