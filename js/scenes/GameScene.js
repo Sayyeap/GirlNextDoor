@@ -51,6 +51,7 @@ class GameScene extends Phaser.Scene {
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('next', 'assets/common/images/next.png');
         this.load.image('darkbg', 'assets/common/images/darkbg.png');
+        this.load.image('nameline', 'assets/common/images/nameline.png');
 
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
@@ -195,7 +196,7 @@ class GameScene extends Phaser.Scene {
         
         this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
             fontSize: `${height * 0.0258}px`,
-            color: accentColor,
+            color: '#fff',
             fontFamily: 'Dela Gothic One',
             resolution: 2
         }).setDepth(10);
@@ -208,7 +209,7 @@ class GameScene extends Phaser.Scene {
     }
 
     setupDialogueBox(width, height) {
-        const accentColor = '#61bdff';
+        const accentColor = '#fff';
         
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
             .setDisplaySize(width, height * 0.6)
@@ -222,7 +223,9 @@ class GameScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 2,
             resolution: 2
-        }).setOrigin(0.5).setDepth(10);
+        }).setOrigin(0.5).setDepth(12);
+
+      
         
         this.dialogueText = this.add.text(width * 0.1, height * 0.76, '', {
             fontSize: `${height * 0.024}px`,
@@ -316,6 +319,10 @@ class GameScene extends Phaser.Scene {
         if (this.speakerText) {
             this.speakerText.setPosition(width / 2, height * 0.72).setFontSize(height * 0.027);
         }
+        if (this.nameline && this.speakerText.visible) {
+            this.nameline.setPosition(width * 0.1, height * 0.65)
+                         .setDisplaySize(this.speakerText.width + 20, 2);
+        }
         if (this.dialogueText) {
             this.dialogueText.setPosition(width * 0.1, height * 0.76)
                 .setFontSize(height * 0.024)
@@ -343,12 +350,12 @@ class GameScene extends Phaser.Scene {
                 .setSize(width * 0.15, height * 0.04);
         }
     }
-
+// Нормальаня сетап сцена)
     setupScene() {
         console.log('SetupScene started');
         const width = this.game.config.width;
         const height = this.game.config.height;
-        const accentColor = '#61bdff';
+       
 
         this.bg = this.add.image(width / 2, height / 2, 'home')
             .setDisplaySize(width, height)
@@ -356,7 +363,7 @@ class GameScene extends Phaser.Scene {
             .setDepth(1);
 
         this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
-            .setScale(width * 0.79 / 600)
+            .setScale(width * 0.8 / 600)
             .setOrigin(0.5, 1)
             .setAlpha(0)
             .setDepth(5);
@@ -372,36 +379,74 @@ class GameScene extends Phaser.Scene {
             paused: true
         });
 
-        this.energyRect = this.add.rectangle(width * 0.1, height * 0.15, width * 0.25, height * 0.04, 0x000000, 0.5)
-            .setDepth(10);
-        this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
-            fontSize: `${height * 0.0258}px`,
-            color: accentColor,
-            fontFamily: 'Dela Gothic One'
-        }).setDepth(10);
-        this.energyIcon = this.add.image(width * 0.05, height * 0.15, 'energyIcon')
-            .setDisplaySize(height * 0.04, height * 0.04)
-            .setDepth(10)
-            .setInteractive()
-            .on('pointerdown', () => {
-                console.log('Energy icon clicked, show modal');
-            });
+      // Создаем графику для подложки с закругленными углами
+this.energyBg = this.add.graphics()
+
+.setDepth(10);
+
+// Настраиваем параметры подложки (аналогично кнопке настроек)
+const bgX = width * 0.15;
+const bgY = height * 0.15;
+const bgWidth = width * 0.26;  // Сохраняем оригинальную ширину
+const bgHeight = height * 0.04; // Высота как у кнопки настроек
+const bgRadius = 5;             // Закругление как у кнопки настроек (было 10)
+const bgColor = 0x000000;       // Цвет как у кнопки настроек
+const bgAlpha = 0.7;            // Прозрачность как у кнопки настроек
+
+// Создаем графический объект для подложки (аналогично кнопке настроек)
+this.energyBg = this.add.graphics()
+    .setDepth(10);
+
+// Рисуем прямоугольник с закругленными углами в стиле кнопки настроек
+this.energyBg.fillStyle(bgColor, bgAlpha);
+this.energyBg.fillRoundedRect(
+    bgX - bgWidth/2,  // x позиция (центрирование)
+    bgY - bgHeight/2, // y позиция (центрирование)
+    bgWidth, 
+    bgHeight, 
+    bgRadius
+);
+
+
+
+this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
+fontSize: `${height * 0.0258}px`,
+color: '#fff',
+fontFamily: 'Dela Gothic One'
+}).setDepth(11); // Увеличиваем depth, чтобы текст был поверх подложки
+
+this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
+.setDisplaySize(height * 0.037, height * 0.037)
+.setDepth(11) // Увеличиваем depth, чтобы иконка была поверх подложки
+.setInteractive()
+.on('pointerdown', () => {
+    console.log('Energy icon clicked, show modal');
+});
 
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
-            .setDisplaySize(width, height * 0.6)
+            .setDisplaySize(width, height * 0.7)
             .setOrigin(0.5, 1)
             .setDepth(10);
 
-        this.speakerText = this.add.text(width / 2, height * 0.72, '', {
+        this.speakerText = this.add.text(width * 0.1, height * 0.62, '', {
             fontSize: `${height * 0.027}px`,
-            color: accentColor,
+            color: '#fff',
             fontFamily: 'Dela Gothic One',
             stroke: '#000000',
             strokeThickness: 2
-        }).setOrigin(0.5)
+        }).setOrigin(0.0)
             .setDepth(10);
 
-        this.dialogueText = this.add.text(width * 0.1, height * 0.76, '', {
+          // Инициализируем nameline как прямоугольник (или используйте вашу текстуру)
+          this.nameline = this.add.image(
+            width * 0,  // начальная X позиция (совпадает с speakerText)
+            height * 0.655, // начальная Y позиция (ниже speakerText)
+            'nameline'    // ключ текстуры
+        )
+        .setOrigin(0, 0.5) // выравнивание по левому краю
+        .setDepth(11);
+
+        this.dialogueText = this.add.text(width * 0.1, height * 0.666, '', {
             fontSize: `${height * 0.024}px`,
             color: '#fff',
             fontFamily: 'IBM Plex Sans',
@@ -433,21 +478,38 @@ class GameScene extends Phaser.Scene {
                 }
             });
 
-        this.settingsButtonBg = this.add.rectangle(width / 1.1, height * 0.15, width * 0.15, height * 0.04, 0x000000, 0)
-            .setOrigin(0.5)
-            .setDepth(10);
-        this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
-            .setDisplaySize(height * 0.032, height * 0.032)
-            .setOrigin(0.5)
-            .setInteractive()
-            .on('pointerdown', () => {
-                console.log('Settings clicked');
-                this.scene.launch('SettingsScene');
-            })
-            .setDepth(10);
-
-        this.choicesGroup = this.add.group();
-        console.log('SetupScene completed');
+            
+            const settingsBgSize = height * 0.04; // Размер квадратной подложки
+            const settingsBgRadius = 5; // Небольшое закругление (можно поставить 0 для идеального квадрата)
+            
+            this.settingsButtonBg = this.add.graphics()
+                .setDepth(10);
+            
+            // Рисуем квадратную подложку с закругленными углами
+            this.settingsButtonBg.fillStyle(0x000000, 0.7); // Цвет и прозрачность как в energyRect
+            this.settingsButtonBg.fillRoundedRect(
+                width / 1.1 - settingsBgSize/2, // X позиция (центрирование)
+                height * 0.15 - settingsBgSize/2, // Y позиция (центрирование)
+                settingsBgSize, 
+                settingsBgSize, 
+                settingsBgRadius
+            );
+            this.clickSound = this.sound.add('click');
+            
+            // Иконка настроек (остается без изменений)
+            this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
+                .setDisplaySize(height * 0.032, height * 0.032)
+                .setOrigin(0.5)
+                .setInteractive()
+                .on('pointerdown', () => {
+                    this.clickSound.play();
+                    console.log('Settings clicked');
+                    this.scene.launch('SettingsScene');
+                })
+                .setDepth(11); // Увеличиваем depth, чтобы иконка была поверх подложки
+            
+            this.choicesGroup = this.add.group();
+            console.log('SetupScene completed');
     }
 
     updateScene() {
@@ -550,19 +612,29 @@ class GameScene extends Phaser.Scene {
 
         const width = this.game.config.width;
         const height = this.game.config.height;
+        
         if (dialogue.text && dialogue.speaker) {
             this.dialogueBox.setVisible(true);
-            this.speakerText.setVisible(true).setText(dialogue.speaker || '');
+            const hasSpeaker = !!dialogue.speaker?.trim();
+            this.speakerText.setVisible(hasSpeaker)
+                .setText(dialogue.speaker || '');
+            this.nameline.setVisible(hasSpeaker);
+            
+            
+            this.dialogueBox.setVisible(true);
             this.currentDialogueText = dialogue.text || '';
             this.dialogueText.setVisible(true);
             this.speakerText.setDepth(12);
+        
             this.dialogueText.setDepth(12);
+            
             this.isTyping = true;
             this.typewriterEffect(this.currentDialogueText);
             this.nextButtonContainer.setVisible(true);
         } else {
             this.dialogueBox.setVisible(false);
             this.speakerText.setVisible(false).setText('');
+            this.nameline.setVisible(false); 
             this.dialogueText.setVisible(false).setText('');
             this.nextButtonContainer.setVisible(true);
         }
@@ -611,6 +683,10 @@ class GameScene extends Phaser.Scene {
         if (this.settingsButton) {
             this.settingsButton.setVisible(false);
         }
+        if (this.nameline) {
+            this.nameline.setVisible(false); 
+        }
+        
 
         const endingText = this.add.text(width / 2, height / 2, 'Конец истории', {
             fontSize: `${height * 0.043}px`,
