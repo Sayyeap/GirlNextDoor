@@ -1,4 +1,3 @@
-
 class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
@@ -33,6 +32,7 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Backgrounds
         this.load.image('elevator', 'assets/story1/images/backgrounds/elevator.jpg');
         this.load.image('home', 'assets/story1/images/backgrounds/home.jpg');
         this.load.image('miapc', 'assets/story1/images/backgrounds/miaPC.jpg');
@@ -40,6 +40,7 @@ class GameScene extends Phaser.Scene {
         this.load.image('assshot', 'assets/story1/images/backgrounds/assshot.jpg');
         this.load.image('loch', 'assets/story1/images/backgrounds/loch.jpg');
 
+        // Characters
         this.load.image('mia_tshirt_shy', 'assets/story1/images/characters/mia_tshirt_shy.png');
         this.load.image('mia_tshirt_angry', 'assets/story1/images/characters/mia_tshirt_angry.png');
         this.load.image('mia_tshirt_happy', 'assets/story1/images/characters/mia_tshirt_happy.png');
@@ -47,12 +48,14 @@ class GameScene extends Phaser.Scene {
         this.load.image('mia_skirtoffice_shy', 'assets/story1/images/characters/mia_skirtoffice_shy.png');
         this.load.image('mia_skirt_back', 'assets/story1/images/characters/mia_skirt_back.png');
 
+        // UI
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('next', 'assets/common/images/next.png');
         this.load.image('darkbg', 'assets/common/images/darkbg.png');
         this.load.image('nameline', 'assets/common/images/nameline.png');
 
+        // Audio
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
         this.load.audio('map_memory', 'assets/story1/audio/map_memory.mp3');
@@ -70,7 +73,8 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    create() {
+    async create() {
+        // Handle screen visibility changes
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 console.log('Pausing sound due to screen lock');
@@ -80,13 +84,8 @@ class GameScene extends Phaser.Scene {
                 this.sound.resumeAll();
             }
         });
-    
-        this.bgMusic = this.sound.add('bg_music', { loop: true });
-        this.bgMusic.play();
-    }
 
-    async create() {
-        // Настройки масштабирования
+        // Setup scaling
         this.scale.on('resize', this.resize, this);
         this.scale.refresh();
 
@@ -105,10 +104,10 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
-        // Элементы загрузки
+        // Loading screen
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
         this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
-            fontSize: `${height * 0.035}px`,
+            fontSize: `${Math.min(height * 0.035, 24)}px`,
             color: '#ffffff',
             fontFamily: 'IBM Plex Sans',
             resolution: 2
@@ -143,73 +142,291 @@ class GameScene extends Phaser.Scene {
         console.log('Create completed');
     }
 
-    
+    setupScene() {
+        console.log('SetupScene started');
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        // Background
+        this.bg = this.add.image(width / 2, height / 2, 'home')
+            .setDisplaySize(width, height)
+            .setOrigin(0.5)
+            .setDepth(1);
+
+        // Character
+        this.char = this.add.image(width / 2, height * 0.95, 'mia_tshirt_shy')
+            .setScale(width * 0.89 / 600)
+            .setOrigin(0.5, 1)
+            .setAlpha(0)
+            .setDepth(5);
+
+        this.charBreathTween = this.tweens.add({
+            targets: this.char,
+            y: { 
+                from: height * 0.95, 
+                to: height * 0.95 - 3,
+            },
+            duration: 650,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+            paused: true
+        });
+
+        // Energy UI
+        this.createEnergyUI(width, height);
+
+        // Dialogue Box
+        this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
+            .setDisplaySize(width, height * 0.35)
+            .setOrigin(0.5, 1)
+            .setDepth(10);
+
+        // Speaker Text
+        this.speakerText = this.add.text(width * 0.1, height * 0.62, '', {
+            fontSize: `${Math.min(height * 0.027, 22)}px`,
+            color: '#fff',
+            fontFamily: 'Dela Gothic One',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.0)
+            .setDepth(10);
+
+        // Name Line
+        this.nameline = this.add.image(
+            width * 0.1,
+            height * 0.655,
+            'nameline'
+        )
+        .setOrigin(0, 0.5)
+        .setDepth(11);
+
+        // Dialogue Text
+        this.dialogueText = this.add.text(width * 0.1, height * 0.68, '', {
+            fontSize: `${Math.min(height * 0.024, 20)}px`,
+            color: '#fff',
+            fontFamily: 'IBM Plex Sans',
+            stroke: '#000000',
+            strokeThickness: 2,
+            align: 'left',
+            wordWrap: { width: width * 0.8 }
+        }).setOrigin(0.0)
+            .setDepth(10);
+
+        // Next Button
+        this.createNextButton(width, height);
+
+        // Settings Button
+        this.createSettingsButton(width, height);
+
+        this.choicesGroup = this.add.group();
+        console.log('SetupScene completed');
+    }
+
+    createEnergyUI(width, height) {
+        const bgWidth = width * 0.26;
+        const bgHeight = height * 0.04;
+        const bgX = width * 0.15;
+        const bgY = height * 0.1;
+
+        this.energyBg = this.add.graphics()
+            .fillStyle(0x000000, 0.7)
+            .fillRoundedRect(
+                bgX - bgWidth/2,
+                bgY - bgHeight/2,
+                bgWidth,
+                bgHeight,
+                5
+            )
+            .setDepth(10);
+
+        this.energyText = this.add.text(bgX - bgWidth/2 + 10, bgY, this.energy.toString(), {
+            fontSize: `${Math.min(height * 0.0258, 20)}px`,
+            color: '#fff',
+            fontFamily: 'Dela Gothic One'
+        }).setOrigin(0, 0.5)
+          .setDepth(11);
+
+        this.energyIcon = this.add.image(bgX - bgWidth/2 + 30, bgY, 'energyIcon')
+            .setDisplaySize(height * 0.037, height * 0.037)
+            .setOrigin(0.5)
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('Energy icon clicked, show modal');
+            })
+            .setDepth(11);
+    }
+
+    createNextButton(width, height) {
+        this.nextButtonContainer = this.add.container(width / 2, height * 0.9).setDepth(10);
+        
+        const bg = this.add.rectangle(0, 0, width * 0.3, height * 0.06, 0x000000, 0.7)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                if (this.isTyping) {
+                    this.isTyping = false;
+                    this.dialogueText.setText(this.currentDialogueText);
+                } else {
+                    this.showNextDialogue();
+                }
+            });
+
+        const nextText = this.add.text(0, 0, 'Далее', {
+            fontSize: `${Math.min(height * 0.0258, 20)}px`,
+            color: '#fff',
+            fontFamily: 'IBM Plex Sans'
+        }).setOrigin(0.5);
+
+        const rightArrow = this.add.image(width * 0.12, 0, 'next')
+            .setDisplaySize(height * 0.023, height * 0.023)
+            .setOrigin(0.5);
+
+        this.nextButtonContainer.add([bg, nextText, rightArrow]);
+    }
+
+    createSettingsButton(width, height) {
+        const btnSize = height * 0.04;
+        const btnX = width * 0.85;
+        const btnY = height * 0.1;
+
+        this.settingsButtonBg = this.add.graphics()
+            .fillStyle(0x000000, 0.7)
+            .fillRoundedRect(
+                btnX - btnSize/2,
+                btnY - btnSize/2,
+                btnSize,
+                btnSize,
+                5
+            )
+            .setDepth(10);
+
+        this.settingsButton = this.add.image(btnX, btnY, 'settings')
+            .setDisplaySize(height * 0.032, height * 0.032)
+            .setOrigin(0.5)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                console.log('Settings clicked');
+                this.scene.launch('SettingsScene');
+            })
+            .setDepth(11);
+    }
+
     resize(size) {
         if (!this.scene.isActive()) return;
 
         const width = size.width || this.scale.width;
         const height = size.height || this.scale.height;
 
+        // Update camera
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
 
-        // Фон
+        // Background
         if (this.bg) {
-            this.bg.setDisplaySize(width, height).setPosition(width / 2, height / 2);
+            this.bg.setDisplaySize(width, height).setPosition(width/2, height/2);
         }
 
-        // Персонаж
+        // Character
         if (this.char) {
-            this.char.setPosition(width / 2, height).setScale(width * 0.88 / 600);
+            const charY = height * 0.95;
+            this.char.setPosition(width/2, charY).setScale(width * 0.89 / 600);
+            
+            // Update breathing animation
+            if (this.charBreathTween) {
+                this.charBreathTween.updateTo('y', { 
+                    from: charY,
+                    to: charY - 3
+                }, true);
+            }
         }
 
-        // UI элементы
-        if (this.energyRect) {
-            this.energyRect.setPosition(width * 0.1, height * 0.15).setSize(width * 0.25, height * 0.04);
-        }
-        if (this.energyText) {
-            this.energyText.setPosition(width * 0.11, height * 0.135).setFontSize(height * 0.0258);
-        }
-        if (this.energyIcon) {
-            this.energyIcon.setPosition(width * 0.05, height * 0.15).setDisplaySize(height * 0.04, height * 0.04);
+        // Energy UI
+        if (this.energyBg) {
+            const bgWidth = width * 0.26;
+            const bgHeight = height * 0.04;
+            const bgX = width * 0.15;
+            const bgY = height * 0.1;
+
+            this.energyBg.clear()
+                .fillStyle(0x000000, 0.7)
+                .fillRoundedRect(
+                    bgX - bgWidth/2,
+                    bgY - bgHeight/2,
+                    bgWidth,
+                    bgHeight,
+                    5
+                );
+
+            if (this.energyText) {
+                this.energyText.setPosition(bgX - bgWidth/2 + 10, bgY)
+                    .setFontSize(Math.min(height * 0.0258, 20));
+            }
+
+            if (this.energyIcon) {
+                this.energyIcon.setPosition(bgX - bgWidth/2 + 30, bgY)
+                    .setDisplaySize(height * 0.037, height * 0.037);
+            }
         }
 
-        // Диалоговое окно
+        // Dialogue Box
         if (this.dialogueBox) {
-            this.dialogueBox.setDisplaySize(width, height * 0.6).setPosition(width / 2, height);
+            this.dialogueBox.setDisplaySize(width, height * 0.35)
+                .setPosition(width/2, height);
         }
+
+        // Speaker and Dialogue Text
         if (this.speakerText) {
-            this.speakerText.setPosition(width / 2, height * 0.72).setFontSize(height * 0.027);
+            this.speakerText.setPosition(width * 0.1, height * 0.62)
+                .setFontSize(Math.min(height * 0.027, 22));
         }
-        if (this.nameline && this.speakerText.visible) {
-            this.nameline.setPosition(width * 0.1, height * 0.65)
-                         .setDisplaySize(this.speakerText.width + 20, 2);
+
+        if (this.nameline) {
+            this.nameline.setPosition(width * 0.1, height * 0.655)
+                .setDisplaySize(this.speakerText.width + 20, 2);
         }
+
         if (this.dialogueText) {
-            this.dialogueText.setPosition(width * 0.1, height * 0.76)
-                .setFontSize(height * 0.024)
+            this.dialogueText.setPosition(width * 0.1, height * 0.68)
+                .setFontSize(Math.min(height * 0.024, 20))
                 .setWordWrapWidth(width * 0.8);
         }
 
-        // Кнопки
+        // Next Button
         if (this.nextButtonContainer) {
-            this.nextButtonContainer.setPosition(width / 2, height * 0.88);
+            this.nextButtonContainer.setPosition(width/2, height * 0.9);
             this.nextButtonContainer.getAll().forEach(child => {
                 if (child.type === 'Text') {
-                    child.setFontSize(height * 0.0258);
+                    child.setFontSize(Math.min(height * 0.0258, 20));
                 } else if (child.type === 'Image') {
                     child.setDisplaySize(height * 0.023, height * 0.023);
+                } else if (child.type === 'Rectangle') {
+                    child.setSize(width * 0.3, height * 0.06);
                 }
             });
         }
 
-        if (this.settingsButton) {
-            this.settingsButton.setPosition(width / 1.1, height * 0.15)
-                .setDisplaySize(height * 0.032, height * 0.032);
-        }
+        // Settings Button
         if (this.settingsButtonBg) {
-            this.settingsButtonBg.setPosition(width / 1.1, height * 0.15)
-                .setSize(width * 0.15, height * 0.04);
+            const btnSize = height * 0.04;
+            const btnX = width * 0.85;
+            const btnY = height * 0.1;
+
+            this.settingsButtonBg.clear()
+                .fillStyle(0x000000, 0.7)
+                .fillRoundedRect(
+                    btnX - btnSize/2,
+                    btnY - btnSize/2,
+                    btnSize,
+                    btnSize,
+                    5
+                );
+
+            if (this.settingsButton) {
+                this.settingsButton.setPosition(btnX, btnY)
+                    .setDisplaySize(height * 0.032, height * 0.032);
+            }
         }
     }
 // Нормальаня сетап сцена)
