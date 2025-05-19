@@ -39,6 +39,22 @@ class GameScene extends Phaser.Scene {
         this.load.image('miaroom', 'assets/story1/images/backgrounds/miaRoom.jpg');
         this.load.image('assshot', 'assets/story1/images/backgrounds/assshot.jpg');
         this.load.image('loch', 'assets/story1/images/backgrounds/loch.jpg');
+        this.load.image('city_street', 'assets/story1/images/backgrounds/city_street.png');
+        this.load.image('girl_with_phone', 'assets/story1/images/backgrounds/girl_with_phone.jpg');
+        this.load.image('Home_enter', 'assets/story1/images/backgrounds/Home_enter.png');
+        this.load.image('home_hall_box', 'assets/story1/images/backgrounds/home_hall_box.png');
+        this.load.image('metro_enter', 'assets/story1/images/backgrounds/metro_enter.png');
+        this.load.image('metro_people', 'assets/story1/images/backgrounds/metro_people.png');
+        this.load.image('metro_people_station', 'assets/story1/images/backgrounds/metro_people_station.png');
+        this.load.image('mia_appart', 'assets/story1/images/backgrounds/mia_appart.png');
+        this.load.image('miaRoom_new', 'assets/story1/images/backgrounds/miaRoom_new.png');
+        this.load.image('morning_scene', 'assets/story1/images/backgrounds/morning_scene.jpg');
+        this.load.image('ggroom', 'assets/story1/images/backgrounds/ggroom.jpg');
+        this.load.image('office', 'assets/story1/images/backgrounds/office.jpg');
+        this.load.image('office_pc', 'assets/story1/images/backgrounds/office_pc.jpg');
+        this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
+        this.load.image('phone_hand', 'assets/story1/images/backgrounds/phone_hand.jpg');
+        this.load.image('sexphoto_metro', 'assets/story1/images/backgrounds/sexphoto_metro.jpg');
 
         // Characters
         this.load.image('mia_tshirt_shy', 'assets/story1/images/characters/mia_tshirt_shy.png');
@@ -47,6 +63,8 @@ class GameScene extends Phaser.Scene {
         this.load.image('mia_tshirt_back', 'assets/story1/images/characters/mia_tshirt_back.png');
         this.load.image('mia_skirtoffice_shy', 'assets/story1/images/characters/mia_skirtoffice_shy.png');
         this.load.image('mia_skirt_back', 'assets/story1/images/characters/mia_skirt_back.png');
+        this.load.image('Workguy_chill', 'assets/story1/images/characters/Workguy_chill.png');
+        this.load.image('workguy_angry', 'assets/story1/images/characters/workguy_angry.png');
 
         // UI
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
@@ -596,8 +614,15 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             console.log('SetupScene completed');
     }
 
+
+
+
+
+
+
     updateScene() {
-        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch'];
+        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street','sexphoto_office','phone_hand','sexphoto_metro',
+            'home_hall_box','metro_enter','metro_people','metro_people_station','mia_appart','miaRoom_new','morning_scene','ggroom' ,'office','office_pc'];
         const bgKey = validBackgrounds.includes(this.currentScene.bg) ? this.currentScene.bg : 'home';
         console.log('Setting background to:', bgKey);
         this.bg.setTexture(bgKey);
@@ -622,33 +647,43 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
     }
 
     showDialogue() {
-        console.log('ShowDialogue started');
-        if (!this.currentScene || !this.currentScene.dialogues) {
-            console.log('No current scene or dialogues');
-            this.scene.start('MainMenu');
+    console.log('ShowDialogue started');
+    if (!this.currentScene || !this.currentScene.dialogues) {
+        console.log('No current scene or dialogues');
+        this.scene.start('MainMenu');
+        return;
+    }
+
+    const dialogues = this.currentScene.dialogues;
+
+    if (this.dialogueIndexInScene >= dialogues.length) {
+        if (this.currentScene.nextScene) {
+            console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
+            // Очистка текстовых полей и состояния перед переходом
+            this.dialogueText.setText('');
+            this.speakerText.setText('');
+            this.currentDialogueText = '';
+            this.isTyping = false;
+            if (this.typewriterTimer) {
+                this.typewriterTimer.remove();
+                this.typewriterTimer = null;
+            }
+            // Переход на новую сцену
+            this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
+            this.dialogueIndexInScene = 0;
+            this.saveProgress();
+            this.updateScene();
+            this.showDialogue(); // Рекурсивный вызов
+        } else {
+            console.log('End of story, showing ending');
+            this.showEnding();
             return;
         }
-
-        const dialogues = this.currentScene.dialogues;
-
-        if (this.dialogueIndexInScene >= dialogues.length) {
-            if (this.currentScene.nextScene) {
-                console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
-                this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
-                this.dialogueIndexInScene = 0;
-                this.saveProgress();
-                this.updateScene();
-                this.showDialogue();
-            } else {
-                console.log('End of story, showing ending');
-                this.showEnding();
-                return;
-            }
-        }
-
+    } else {
         const dialogue = dialogues[this.dialogueIndexInScene];
         console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
 
+        // Очистка предыдущего состояния
         this.currentDialogueText = '';
         this.dialogueText.setText('');
         this.speakerText.setText('');
@@ -674,7 +709,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             }
         }
 
-        const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back'];
+        const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back','workguy_angry'];
         if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
             this.char.setTexture(dialogue.charSprite).setAlpha(1);
             this.charBreathTween.play();
@@ -696,29 +731,26 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
 
         const width = this.game.config.width;
         const height = this.game.config.height;
-        
+
         if (dialogue.text && dialogue.speaker) {
             this.dialogueBox.setVisible(true);
             const hasSpeaker = !!dialogue.speaker?.trim();
             this.speakerText.setVisible(hasSpeaker)
                 .setText(dialogue.speaker || '');
             this.nameline.setVisible(hasSpeaker);
-            
-            
-            this.dialogueBox.setVisible(true);
+
             this.currentDialogueText = dialogue.text || '';
             this.dialogueText.setVisible(true);
             this.speakerText.setDepth(12);
-        
             this.dialogueText.setDepth(12);
-            
+
             this.isTyping = true;
             this.typewriterEffect(this.currentDialogueText);
             this.nextButtonContainer.setVisible(true);
         } else {
             this.dialogueBox.setVisible(false);
             this.speakerText.setVisible(false).setText('');
-            this.nameline.setVisible(false); 
+            this.nameline.setVisible(false);
             this.dialogueText.setVisible(false).setText('');
             this.nextButtonContainer.setVisible(true);
         }
@@ -732,6 +764,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             this.saveProgress();
         }
     }
+}
 
     async showEnding() {
         const width = this.game.config.width;
