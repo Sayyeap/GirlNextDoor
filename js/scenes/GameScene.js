@@ -307,51 +307,48 @@ class GameScene extends Phaser.Scene {
             .setOrigin(0.5, 1)
             .setDepth(10);
 
-        this.speakerText = this.add.text(width * 0.1, height * 0.62, '', {
+        this.speakerText = this.add.text(width * 0.05, height * 0.72, '', {
             fontSize: `${height * 0.022}px`,
-            color: '#fff',
+            color: '#bcff64',
             fontFamily: 'Dela Gothic One',
             stroke: '#000000',
             strokeThickness: 2
         }).setOrigin(0.0)
             .setDepth(10);
 
-        this.nameline = this.add.image(width * 0, height * 0.655, 'nameline')
+        this.nameline = this.add.image(width * 0, height * 0.755, 'nameline')
             .setOrigin(0, 0.5)
             .setDepth(11)
             .setVisible(false);
 
-        this.dialogueText = this.add.text(width * 0.1, height * 0.666, '', {
+        this.dialogueText = this.add.text(width * 0.05, height * 0.766, '', {
             fontSize: `${height * 0.020}px`,
             color: '#fff',
             fontFamily: 'IBM Plex Sans',
             stroke: '#000000',
             strokeThickness: 2,
             align: 'left'
-        }).setWordWrapWidth(width * 0.8)
+        }).setWordWrapWidth(width * 0.9)
             .setOrigin(0.0)
             .setDepth(10);
 
-        this.nextButtonContainer = this.add.container(width / 2, height * 0.91).setDepth(10);
-        const nextText = this.add.text(0, 0, 'Далее', {
-            fontSize: `${height * 0.0258}px`,
-            color: '#fff',
-            fontFamily: 'IBM Plex Sans'
-        }).setOrigin(0.5);
-        const rightArrow = this.add.image(width * 0.12, 0, 'next')
-            .setDisplaySize(height * 0.023, height * 0.023)
-            .setOrigin(0.5);
-        this.nextButtonContainer.add([nextText, rightArrow]);
-        this.nextButtonContainer.setInteractive(new Phaser.Geom.Rectangle(-width * 0.15, -height * 0.03, width * 0.3, height * 0.06), Phaser.Geom.Rectangle.Contains)
-            .on('pointerdown', () => {
-                this.sound.play('click');
-                if (this.isTyping) {
-                    this.isTyping = false;
-                    this.dialogueText.setText(this.currentDialogueText);
-                } else {
-                    this.showNextDialogue();
-                }
-            });
+       this.nextButtonContainer = this.add.container(width / 1.1, height * 0.92).setDepth(10);
+const rightArrow = this.add.image(0, 0, 'next')  // Position set to (0,0) since it's in a container
+    .setDisplaySize(height * 0.032, height * 0.032)
+    .setOrigin(0.5);
+this.nextButtonContainer.add(rightArrow);
+
+// Make only the arrow interactive
+rightArrow.setInteractive()
+    .on('pointerdown', () => {
+        this.sound.play('click');
+        if (this.isTyping) {
+            this.isTyping = false;
+            this.dialogueText.setText(this.currentDialogueText);
+        } else {
+            this.showNextDialogue();
+        }
+    });
 
         this.settingsButtonBg = this.add.graphics()
             .setDepth(10);
@@ -391,10 +388,10 @@ class GameScene extends Phaser.Scene {
         if (this.bg) this.bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
         if (this.char) this.char.setPosition(width / 2, height).setScale(width * 0.97 / 600);
         if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.7);
-        if (this.speakerText) this.speakerText.setPosition(width * 0.1, height * 0.62).setFontSize(`${height * 0.022}px`);
-        if (this.nameline) this.nameline.setPosition(width * 0, height * 0.655);
-        if (this.dialogueText) this.dialogueText.setPosition(width * 0.1, height * 0.666).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.8);
-        if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 2, height * 0.91);
+        if (this.speakerText) this.speakerText.setPosition(width * 0.05, height * 0.72).setFontSize(`${height * 0.022}px`);
+        if (this.nameline) this.nameline.setPosition(width * 0, height * 0.755);
+        if (this.dialogueText) this.dialogueText.setPosition(width * 0.05, height * 0.766).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.8);
+        if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 1.1, height * 0.92);
         if (this.energyBg) {
             this.energyBg.clear();
             this.energyBg.fillStyle(0x000000, 0.7);

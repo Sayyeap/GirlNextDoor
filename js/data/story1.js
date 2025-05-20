@@ -6,9 +6,9 @@ const story1Dialogues = [
         nextScene: "scene2",
         dialogues: [
             {
-                speaker: "Девушка0000",
-                text: "12345789Туман обволакивает, густой, почти живой, будто мир растворяется в молочной дымке. В центре — она",
-                charSprite: 'mia_tshirt_shy',
+                speaker: "Девушка",
+                text: "Туман обволакивает, густой, почти живой, будто мир растворяется в молочной дымке. В центре — она",
+                charSprite: null,
                 shake: null,
                 sfx: null,
                 choices: null
