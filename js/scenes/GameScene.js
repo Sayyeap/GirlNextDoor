@@ -92,74 +92,81 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
-        // Handle screen visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('Pausing sound due to screen lock');
-                this.sound.pauseAll();
-            } else {
-                console.log('Resuming sound after screen unlock');
-                this.sound.resumeAll();
-            }
-        });
+    // Обработка изменений видимости экрана
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            console.log('Пауза звука из-за блокировки экрана');
+            this.sound.pauseAll();
+        } else {
+            console.log('Возобновление звука после разблокировки');
+            this.sound.resumeAll();
+            // Принудительное обновление верстки при восстановлении
+            this.scale.refresh();
+            this.resize({ width: this.scale.width, height: this.scale.height });
+        }
+    });
 
     this.game.events.on('hidden', () => {
-    console.log('Game hidden, pausing');
-    this.sound.pauseAll();
+        console.log('Игра скрыта, пауза');
+        this.sound.pauseAll();
     });
 
     this.game.events.on('visible', () => {
-    console.log('Game visible, resuming');
-    this.sound.resumeAll();
-    this.scale.refresh(); // Важно: принудительное обновление масштабирования
+        console.log('Игра видима, возобновление');
+        this.sound.resumeAll();
+        this.scale.refresh();
+        this.resize({ width: this.scale.width, height: this.scale.height });
     });
 
-        // Setup scaling
-        this.scale.on('resize', this.resize, this);
-        this.scale.refresh();
+  
+  
 
-        const width = this.scale.width;
-        const height = this.scale.height;
+    // Установка размера игры на весь вьюпорт
+    this.scale.setGameSize(window.innerWidth, window.innerHeight);
+    this.scale.refresh();
 
-        this.cameras.main.setViewport(0, 0, width, height);
-        this.cameras.main.setBounds(0, 0, width, height);
-        this.cameras.main.setBackgroundColor('#000000');
+    const width = this.scale.width;
+    const height = this.scale.height;
 
-        try {
-            this.game.sound.volume = await loadVolume(this.registry);
-            console.log('GameScene: Volume loaded', this.game.sound.volume);
-        } catch (error) {
-            console.error('GameScene: Failed to load volume', error);
-            this.game.sound.volume = 1.0;
-        }
+    this.cameras.main.setViewport(0, 0, width, height);
+    this.cameras.main.setBounds(0, 0, width, height);
+    this.cameras.main.setBackgroundColor('#000000');
 
-        // Loading screen
-        const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-        this.loadingText = this.add.text(width / 2, height / 2, 'Loading ...', {
-            fontSize: `${Math.min(height * 0.035, 24)}px`,
-            color: '#ffffff',
-            fontFamily: 'IBM Plex Sans',
-            resolution: 2
-        }).setOrigin(0.5).setDepth(101);
-
-        this.loadingTimer = this.time.addEvent({
-            delay: 500,
-            callback: () => {
-                this.loadingDots = (this.loadingDots + 1) % 4;
-                const dots = '.'.repeat(this.loadingDots);
-                this.loadingText.setText(`Loading ${dots}`);
-            },
-            callbackScope: this,
-            loop: true
-        });
-
-        if (this.isLoaded) {
-            this.finishLoading(loadingRect);
-        } else {
-            this.load.once('complete', () => this.finishLoading(loadingRect));
-            this.load.start();
-        }
+    try {
+        this.game.sound.volume = await loadVolume(this.registry);
+        console.log('GameScene: Громкость загружена', this.game.sound.volume);
+    } catch (error) {
+        console.error('GameScene: Не удалось загрузить громкость', error);
+        this.game.sound.volume = 1.0;
     }
+
+    // Экран загрузки (без изменений)
+    const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
+    this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
+        fontSize: `${Math.min(height * 0.035, 24)}px`,
+        color: '#ffffff',
+        fontFamily: 'IBM Plex Sans',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(101);
+
+    this.loadingTimer = this.time.addEvent({
+        delay: 500,
+        callback: () => {
+            this.loadingDots = (this.loadingDots + 1) % 4;
+            const dots = '.'.repeat(this.loadingDots);
+            this.loadingText.setText(`Загрузка ${dots}`);
+        },
+        callbackScope: this,
+        loop: true
+    });
+
+    if (this.isLoaded) {
+        this.finishLoading(loadingRect);
+    } else {
+        this.load.once('complete', () => this.finishLoading(loadingRect));
+        this.load.start();
+    }
+}
 
     finishLoading(loadingRect) {
         loadingRect.destroy();
