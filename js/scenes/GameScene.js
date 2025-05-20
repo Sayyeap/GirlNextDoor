@@ -9,6 +9,7 @@ class GameScene extends Phaser.Scene {
         this.stars = 0;
         this.choicesGroup = null;
         this.charShakeTween = null;
+        this.charBreathTween = null;
         this.isLoaded = false;
         this.isTyping = false;
         this.currentDialogueText = '';
@@ -16,36 +17,72 @@ class GameScene extends Phaser.Scene {
         this.loadingText = null;
         this.loadingDots = 0;
         this.loadingTimer = null;
+        this.bg = null;
+        this.char = null;
+        this.dialogueBox = null;
+        this.energyBg = null;
+        this.energyText = null;
+        this.energyIcon = null;
+        this.speakerText = null;
+        this.nameline = null;
+        this.dialogueText = null;
+        this.nextButtonContainer = null;
+        this.settingsButtonBg = null;
+        this.settingsButton = null;
+        this.clickSound = null;
     }
 
     init(data) {
+        // Очистка всех ресурсов перед началом
+        this.cleanup();
+
         this.storyId = data.storyId || 'story1';
         this.story = stories.find(s => s.id === this.storyId);
-        
+
         if (!this.story) {
             console.error('Story not found:', this.storyId);
             this.scene.restart({ storyId: this.storyId });
             return;
         }
-        this.children.each(child => child.destroy());
-        this.tweens.killAll();
-    this.time.removeAllEvents();
-        this.sound.stopAll();
-        console.log('All sounds stopped');
-        if (this.bg) this.bg.destroy();
-        if (this.char) this.char.destroy();
-        if (this.dialogueBox) this.dialogueBox.destroy();
-        if (this.energyBg) this.energyBg.destroy();
-        if (this.energyText) this.energyText.destroy();
-        if (this.energyIcon) this.energyIcon.destroy();
-        if (this.speakerText) this.speakerText.destroy();
-        if (this.nameline) this.nameline.destroy();
-        if (this.dialogueText) this.dialogueText.destroy();
-        if (this.nextButtonContainer) this.nextButtonContainer.destroy();
-        if (this.settingsButtonBg) this.settingsButtonBg.destroy();
-        if (this.settingsButton) this.settingsButton.destroy();
-        if (this.choicesGroup) this.choicesGroup.clear(true, true);
+
         this.loadGame(data);
+    }
+
+    cleanup() {
+        // Полная очистка сцены
+        this.children.each(child => child.destroy());
+        if (this.tweens) this.tweens.killAll();
+        if (this.time) this.time.removeAllEvents();
+        if (this.sound) this.sound.stopAll();
+        if (this.choicesGroup) this.choicesGroup.clear(true, true);
+        if (this.load) this.load.reset(); // Используем reset вместо removeAll
+
+        // Сбрасываем состояние переменных
+        this.currentScene = null;
+        this.dialogueIndexInScene = 0;
+        this.currentMusic = null;
+        this.energy = 100;
+        this.stars = 0;
+        this.isLoaded = false;
+        this.isTyping = false;
+        this.currentDialogueText = '';
+        this.charShakeTween = null;
+        this.charBreathTween = null;
+        this.typewriterTimer = null;
+        this.loadingTimer = null;
+        this.bg = null;
+        this.char = null;
+        this.dialogueBox = null;
+        this.energyBg = null;
+        this.energyText = null;
+        this.energyIcon = null;
+        this.speakerText = null;
+        this.nameline = null;
+        this.dialogueText = null;
+        this.nextButtonContainer = null;
+        this.settingsButtonBg = null;
+        this.settingsButton = null;
+        this.clickSound = null;
     }
 
     preload() {
@@ -109,177 +146,146 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
-this.scale.setGameSize(window.innerWidth, window.innerHeight);
-    this.scale.refresh();
+        // Устанавливаем размер игры сразу
+        this.scale.setGameSize(window.innerWidth, window.innerHeight);
+        this.scale.refresh();
 
-    const width = this.scale.width;
-    const height = this.scale.height;
+        const width = this.scale.width;
+        const height = this.scale.height;
 
-    this.cameras.main.setViewport(0, 0, width, height);
-    this.cameras.main.setBounds(0, 0, width, height);
-    this.cameras.main.setBackgroundColor('#000000');
-    // Обработка изменений видимости экрана
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            console.log('Пауза звука из-за блокировки экрана');
+        // Устанавливаем камеру
+        this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setBounds(0, 0, width, height);
+        this.cameras.main.setBackgroundColor('#000000');
+
+        // Добавляем обработчик изменения размера
+        this.scale.on('resize', this.resize, this);
+
+        // Обработка изменений видимости
+        document.addEventListener('visibilitychange', () => {
+            if (!this.scene.isActive()) return;
+            if (document.hidden) {
+                console.log('Пауза звука из-за блокировки экрана');
+                this.sound.pauseAll();
+            } else {
+                console.log('Возобновление звука после разблокировки');
+                this.sound.resumeAll();
+                this.scale.refresh();
+                this.resize({ width: this.scale.width, height: this.scale.height });
+            }
+        });
+
+        this.game.events.on('hidden', () => {
+            if (!this.scene.isActive()) return;
+            console.log('Игра скрыта, пауза');
             this.sound.pauseAll();
-        } else {
-            console.log('Возобновление звука после разблокировки');
+        });
+
+        this.game.events.on('visible', () => {
+            if (!this.scene.isActive()) return;
+            console.log('Игра видима, возобновление');
             this.sound.resumeAll();
-            // Принудительное обновление верстки при восстановлении
             this.scale.refresh();
             this.resize({ width: this.scale.width, height: this.scale.height });
+        });
+
+        // Загрузка громкости
+        try {
+            this.game.sound.volume = await loadVolume(this.registry);
+            console.log('GameScene: Громкость загружена', this.game.sound.volume);
+        } catch (error) {
+            console.error('GameScene: Не удалось загрузить громкость', error);
+            this.game.sound.volume = 1.0;
         }
-    });
 
-    this.game.events.on('hidden', () => {
-        console.log('Игра скрыта, пауза');
-        this.sound.pauseAll();
-    });
+        // Экран загрузки
+        const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
+        this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
+            fontSize: `${Math.min(height * 0.035, 24)}px`,
+            color: '#ffffff',
+            fontFamily: 'IBM Plex Sans',
+            resolution: 2
+        }).setOrigin(0.5).setDepth(101);
 
-    this.game.events.on('visible', () => {
-        console.log('Игра видима, возобновление');
-        this.sound.resumeAll();
-        this.scale.refresh();
-        this.resize({ width: this.scale.width, height: this.scale.height });
-    });
+        this.loadingTimer = this.time.addEvent({
+            delay: 500,
+            callback: () => {
+                this.loadingDots = (this.loadingDots + 1) % 4;
+                const dots = '.'.repeat(this.loadingDots);
+                this.loadingText.setText(`Загрузка ${dots}`);
+            },
+            callbackScope: this,
+            loop: true
+        });
 
-  
-  
-
-    // Установка размера игры на весь вьюпорт
-   
-
-    try {
-        this.game.sound.volume = await loadVolume(this.registry);
-        console.log('GameScene: Громкость загружена', this.game.sound.volume);
-    } catch (error) {
-        console.error('GameScene: Не удалось загрузить громкость', error);
-        this.game.sound.volume = 1.0;
+        if (this.isLoaded) {
+            this.finishLoading(loadingRect);
+        } else {
+            this.load.once('complete', () => this.finishLoading(loadingRect));
+            this.load.start();
+        }
     }
-
-    // Экран загрузки (без изменений)
-    const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-    this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
-        fontSize: `${Math.min(height * 0.035, 24)}px`,
-        color: '#ffffff',
-        fontFamily: 'IBM Plex Sans',
-        resolution: 2
-    }).setOrigin(0.5).setDepth(101);
-
-    this.loadingTimer = this.time.addEvent({
-        delay: 500,
-        callback: () => {
-            this.loadingDots = (this.loadingDots + 1) % 4;
-            const dots = '.'.repeat(this.loadingDots);
-            this.loadingText.setText(`Загрузка ${dots}`);
-        },
-        callbackScope: this,
-        loop: true
-    });
-
-    if (this.isLoaded) {
-        this.finishLoading(loadingRect);
-    } else {
-        this.load.once('complete', () => this.finishLoading(loadingRect));
-        this.load.start();
-    }
-}
 
     finishLoading(loadingRect) {
-        loadingRect.destroy();
-        this.loadingText.destroy();
-        this.loadingTimer.remove();
-        
+        if (loadingRect) loadingRect.destroy();
+        if (this.loadingText) this.loadingText.destroy();
+        if (this.loadingTimer) this.loadingTimer.remove();
+
         this.setupScene();
         this.showDialogue();
         console.log('Create completed');
     }
 
-    
-
-    
-    
-
-   
-    
-// Нормальаня сетап сцена)
     setupScene() {
         console.log('SetupScene started');
-        const width = this.game.config.width;
-        const height = this.game.config.height;
-       
+        const width = this.scale.width;
+        const height = this.scale.height;
 
         this.bg = this.add.image(width / 2, height / 2, 'home')
             .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setDepth(1);
 
-           // 1. Настройка персонажа с "запасом" по Y
-           this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
-           .setScale(width * 0.89 / 600)
-           .setOrigin(0.5, 0.97)
-           .setAlpha(0)
-           .setDepth(5);
+        this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
+            .setScale(width * 0.89 / 600)
+            .setOrigin(0.5, 0.97)
+            .setAlpha(0)
+            .setDepth(5);
 
-           this.charBreathTween = this.tweens.add({
+        this.charBreathTween = this.tweens.add({
             targets: this.char,
-            y: { 
-                from: height, 
-                to: height - 3, // Сила "вдоха" (регулируйте)
-            },
-            duration: 650,      // Очень плавно
+            y: { from: height, to: height - 3 },
+            duration: 650,
             ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1,
             paused: true
         });
 
+        this.energyBg = this.add.graphics()
+            .setDepth(10);
+        this.energyBg.fillStyle(0x000000, 0.7);
+        this.energyBg.fillRoundedRect(
+            width * 0.15 - (width * 0.26) / 2,
+            height * 0.15 - (height * 0.04) / 2,
+            width * 0.26,
+            height * 0.04,
+            5
+        );
 
+        this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
+            fontSize: `${height * 0.0258}px`,
+            color: '#fff',
+            fontFamily: 'Dela Gothic One'
+        }).setDepth(11);
 
-      // Создаем графику для подложки с закругленными углами
-this.energyBg = this.add.graphics()
-
-.setDepth(10);
-
-// Настраиваем параметры подложки (аналогично кнопке настроек)
-const bgX = width * 0.15;
-const bgY = height * 0.15;
-const bgWidth = width * 0.26;  // Сохраняем оригинальную ширину
-const bgHeight = height * 0.04; // Высота как у кнопки настроек
-const bgRadius = 5;             // Закругление как у кнопки настроек (было 10)
-const bgColor = 0x000000;       // Цвет как у кнопки настроек
-const bgAlpha = 0.7;            // Прозрачность как у кнопки настроек
-
-// Создаем графический объект для подложки (аналогично кнопке настроек)
-this.energyBg = this.add.graphics()
-    .setDepth(10);
-
-// Рисуем прямоугольник с закругленными углами в стиле кнопки настроек
-this.energyBg.fillStyle(bgColor, bgAlpha);
-this.energyBg.fillRoundedRect(
-    bgX - bgWidth/2,  // x позиция (центрирование)
-    bgY - bgHeight/2, // y позиция (центрирование)
-    bgWidth, 
-    bgHeight, 
-    bgRadius
-);
-
-
-
-this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
-fontSize: `${height * 0.0258}px`,
-color: '#fff',
-fontFamily: 'Dela Gothic One'
-}).setDepth(11); // Увеличиваем depth, чтобы текст был поверх подложки
-
-this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
-.setDisplaySize(height * 0.037, height * 0.037)
-.setDepth(11) // Увеличиваем depth, чтобы иконка была поверх подложки
-.setInteractive()
-.on('pointerdown', () => {
-    console.log('Energy icon clicked, show modal');
-});
+        this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
+            .setDisplaySize(height * 0.037, height * 0.037)
+            .setDepth(11)
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('Energy icon clicked, show modal');
+            });
 
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
             .setDisplaySize(width, height * 0.7)
@@ -295,14 +301,9 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
         }).setOrigin(0.0)
             .setDepth(10);
 
-          // Инициализируем nameline как прямоугольник (или используйте вашу текстуру)
-          this.nameline = this.add.image(
-            width * 0,  // начальная X позиция (совпадает с speakerText)
-            height * 0.655, // начальная Y позиция (ниже speakerText)
-            'nameline'    // ключ текстуры
-        )
-        .setOrigin(0, 0.5) // выравнивание по левому краю
-        .setDepth(11);
+        this.nameline = this.add.image(width * 0, height * 0.655, 'nameline')
+            .setOrigin(0, 0.5)
+            .setDepth(11);
 
         this.dialogueText = this.add.text(width * 0.1, height * 0.666, '', {
             fontSize: `${height * 0.024}px`,
@@ -336,49 +337,84 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
                 }
             });
 
-            
-            const settingsBgSize = height * 0.04; // Размер квадратной подложки
-            const settingsBgRadius = 5; // Небольшое закругление (можно поставить 0 для идеального квадрата)
-            
-            this.settingsButtonBg = this.add.graphics()
-                .setDepth(10);
-            
-            // Рисуем квадратную подложку с закругленными углами
-            this.settingsButtonBg.fillStyle(0x000000, 0.7); // Цвет и прозрачность как в energyRect
-            this.settingsButtonBg.fillRoundedRect(
-                width / 1.073 - settingsBgSize/2, // X позиция (центрирование)
-                height * 0.15 - settingsBgSize/2, // Y позиция (центрирование)
-                settingsBgSize, 
-                settingsBgSize, 
-                settingsBgRadius
-            );
-            this.clickSound = this.sound.add('click');
-            
-            // Иконка настроек (остается без изменений)
-            this.settingsButton = this.add.image(width / 1.073, height * 0.15, 'settings')
-                .setDisplaySize(height * 0.032, height * 0.032)
-                .setOrigin(0.5)
-                .setInteractive()
-                .on('pointerdown', () => {
-                    this.clickSound.play();
-                    console.log('Settings clicked');
-                    this.scene.launch('SettingsScene');
-                })
-                .setDepth(11); // Увеличиваем depth, чтобы иконка была поверх подложки
-            
-            this.choicesGroup = this.add.group();
-            console.log('SetupScene completed');
+        this.settingsButtonBg = this.add.graphics()
+            .setDepth(10);
+        this.settingsButtonBg.fillStyle(0x000000, 0.7);
+        this.settingsButtonBg.fillRoundedRect(
+            width / 1.073 - (height * 0.04) / 2,
+            height * 0.15 - (height * 0.04) / 2,
+            height * 0.04,
+            height * 0.04,
+            5
+        );
+
+        this.clickSound = this.sound.add('click');
+
+        this.settingsButton = this.add.image(width / 1.073, height * 0.15, 'settings')
+            .setDisplaySize(height * 0.032, height * 0.032)
+            .setOrigin(0.5)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.clickSound.play();
+                console.log('Settings clicked');
+                this.scene.launch('SettingsScene');
+            })
+            .setDepth(11);
+
+        this.choicesGroup = this.add.group();
+        console.log('SetupScene completed');
     }
 
+    resize(gameSize) {
+        const width = gameSize.width;
+        const height = gameSize.height;
 
+        this.cameras.main.setViewport(0, 0, width, height);
+        this.cameras.main.setBounds(0, 0, width, height);
 
+        if (this.bg) this.bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
+        if (this.char) this.char.setPosition(width / 2, height).setScale(width * 0.89 / 600);
+        if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.7);
+        if (this.speakerText) this.speakerText.setPosition(width * 0.1, height * 0.62).setFontSize(`${height * 0.027}px`);
+        if (this.nameline) this.nameline.setPosition(width * 0, height * 0.655);
+        if (this.dialogueText) this.dialogueText.setPosition(width * 0.1, height * 0.666).setFontSize(`${height * 0.024}px`).setWordWrapWidth(width * 0.8);
+        if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 2, height * 0.91);
+        if (this.energyBg) {
+            this.energyBg.clear();
+            this.energyBg.fillStyle(0x000000, 0.7);
+            this.energyBg.fillRoundedRect(width * 0.15 - (width * 0.26) / 2, height * 0.15 - (height * 0.04) / 2, width * 0.26, height * 0.04, 5);
+        }
+        if (this.energyText) this.energyText.setPosition(width * 0.11, height * 0.135).setFontSize(`${height * 0.0258}px`);
+        if (this.energyIcon) this.energyIcon.setPosition(width * 0.064, height * 0.15).setDisplaySize(height * 0.037, height * 0.037);
+        if (this.settingsButtonBg) {
+            this.settingsButtonBg.clear();
+            this.settingsButtonBg.fillStyle(0x000000, 0.7);
+            this.settingsButtonBg.fillRoundedRect(width / 1.073 - (height * 0.04) / 2, height * 0.15 - (height * 0.04) / 2, height * 0.04, height * 0.04, 5);
+        }
+        if (this.settingsButton) this.settingsButton.setPosition(width / 1.073, height * 0.15).setDisplaySize(height * 0.032, height * 0.032);
 
-
-
+        if (this.choicesGroup) {
+            const choices = this.choicesGroup.getChildren();
+            const totalHeight = choices.length * (height * 0.08);
+            const startY = (height - totalHeight) / 2;
+            choices.forEach((container, index) => {
+                container.setPosition(width / 2, startY + index * (height * 0.08));
+                const bg = container.getAt(0);
+                const choiceText = container.getAt(1);
+                const energyIcon = container.getAt(2);
+                const energyText = container.getAt(3);
+                bg.setPosition(0, 0).setSize(width, height * 0.06);
+                choiceText.setPosition(-width * 0.45, 0).setFontSize(`${height * 0.0258}px`);
+                energyIcon.setPosition(width * 0.27, 0).setDisplaySize(height * 0.04, height * 0.04);
+                energyText.setPosition(width * 0.35, 0).setFontSize(`${height * 0.0258}px`);
+            });
+        }
+    }
 
     updateScene() {
-        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street','sexphoto_office','phone_hand','sexphoto_metro',
-            'home_hall_box','metro_enter','metro_people','metro_people_station','mia_appart','miaRoom_new','morning_scene','ggroom' ,'office','office_pc'];
+        if (!this.currentScene) return;
+        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street', 'sexphoto_office', 'phone_hand', 'sexphoto_metro',
+            'home_hall_box', 'metro_enter', 'metro_people', 'metro_people_station', 'mia_appart', 'miaRoom_new', 'morning_scene', 'ggroom', 'office', 'office_pc'];
         const bgKey = validBackgrounds.includes(this.currentScene.bg) ? this.currentScene.bg : 'home';
         console.log('Setting background to:', bgKey);
         this.bg.setTexture(bgKey);
@@ -403,128 +439,127 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
     }
 
     showDialogue() {
-    console.log('ShowDialogue started');
-    if (!this.currentScene || !this.currentScene.dialogues) {
-        console.log('No current scene or dialogues');
-        this.scene.start('MainMenu');
-        return;
-    }
+        if (!this.scene.isActive()) return;
+        console.log('ShowDialogue started');
+        if (!this.currentScene || !this.currentScene.dialogues) {
+            console.log('No current scene or dialogues');
+            this.scene.start('MainMenu');
+            return;
+        }
 
-    const dialogues = this.currentScene.dialogues;
+        const dialogues = this.currentScene.dialogues;
 
-    if (this.dialogueIndexInScene >= dialogues.length) {
-        if (this.currentScene.nextScene) {
-            console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
-            // Очистка текстовых полей и состояния перед переходом
+        if (this.dialogueIndexInScene >= dialogues.length) {
+            if (this.currentScene.nextScene) {
+                console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
+                this.dialogueText.setText('');
+                this.speakerText.setText('');
+                this.currentDialogueText = '';
+                this.isTyping = false;
+                if (this.typewriterTimer) {
+                    this.typewriterTimer.remove();
+                    this.typewriterTimer = null;
+                }
+                this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
+                this.dialogueIndexInScene = 0;
+                this.saveProgress();
+                this.updateScene();
+                this.showDialogue();
+            } else {
+                console.log('End of story, showing ending');
+                this.showEnding();
+                return;
+            }
+        } else {
+            const dialogue = dialogues[this.dialogueIndexInScene];
+            console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
+
+            this.currentDialogueText = '';
             this.dialogueText.setText('');
             this.speakerText.setText('');
-            this.currentDialogueText = '';
             this.isTyping = false;
             if (this.typewriterTimer) {
                 this.typewriterTimer.remove();
                 this.typewriterTimer = null;
             }
-            // Переход на новую сцену
-            this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
-            this.dialogueIndexInScene = 0;
-            this.saveProgress();
+
+            if (this.choicesGroup) {
+                this.choicesGroup.clear(true, true);
+            }
+
             this.updateScene();
-            this.showDialogue(); // Рекурсивный вызов
-        } else {
-            console.log('End of story, showing ending');
-            this.showEnding();
-            return;
-        }
-    } else {
-        const dialogue = dialogues[this.dialogueIndexInScene];
-        console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
 
-        // Очистка предыдущего состояния
-        this.currentDialogueText = '';
-        this.dialogueText.setText('');
-        this.speakerText.setText('');
-        this.isTyping = false;
-        if (this.typewriterTimer) {
-            this.typewriterTimer.remove();
-            this.typewriterTimer = null;
-        }
+            if (dialogue.sfx) {
+                try {
+                    const sfx = this.sound.add(dialogue.sfx, { volume: this.game.sound.volume });
+                    sfx.play();
+                    console.log('Playing SFX:', dialogue.sfx);
+                } catch (error) {
+                    console.error('Failed to play SFX:', dialogue.sfx, error);
+                }
+            }
 
-        if (this.choicesGroup) {
-            this.choicesGroup.clear(true, true);
-        }
+            const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back', 'workguy_angry'];
+            if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
+                this.char.setTexture(dialogue.charSprite).setAlpha(1);
+                this.charBreathTween.play();
+            } else {
+                this.char.setAlpha(0);
+                this.charBreathTween.pause();
+            }
 
-        this.updateScene();
+            if (this.charShakeTween) {
+                this.charShakeTween.stop();
+            }
+            if (dialogue.shake === 'shake') {
+                this.charShakeTween = this.tweens.add({
+                    targets: this.char,
+                    x: { value: '+=10', yoyo: true, repeat: -1, duration: 100 },
+                    y: { value: '+=10', yoyo: true, repeat: -1, duration: 100 }
+                });
+            }
 
-        if (dialogue.sfx) {
-            try {
-                const sfx = this.sound.add(dialogue.sfx, { volume: this.game.sound.volume });
-                sfx.play();
-                console.log('Playing SFX:', dialogue.sfx);
-            } catch (error) {
-                console.error('Failed to play SFX:', dialogue.sfx, error);
+            const width = this.scale.width;
+            const height = this.scale.height;
+
+            if (dialogue.text && dialogue.speaker) {
+                this.dialogueBox.setVisible(true);
+                const hasSpeaker = !!dialogue.speaker?.trim();
+                this.speakerText.setVisible(hasSpeaker)
+                    .setText(dialogue.speaker || '');
+                this.nameline.setVisible(hasSpeaker);
+
+                this.currentDialogueText = dialogue.text || '';
+                this.dialogueText.setVisible(true);
+                this.speakerText.setDepth(12);
+                this.dialogueText.setDepth(12);
+
+                this.isTyping = true;
+                this.typewriterEffect(this.currentDialogueText);
+                this.nextButtonContainer.setVisible(true);
+            } else {
+                this.dialogueBox.setVisible(false);
+                this.speakerText.setVisible(false).setText('');
+                this.nameline.setVisible(false);
+                this.dialogueText.setVisible(false).setText('');
+                this.nextButtonContainer.setVisible(true);
+            }
+
+            if (dialogue.choices) {
+                this.showChoices(dialogue.choices);
+                this.nextButtonContainer.setVisible(false);
+            }
+
+            if (!dialogue.choices) {
+                this.saveProgress();
             }
         }
-
-        const validCharacters = ['mia_tshirt_shy', 'mia_tshirt_angry', 'mia_tshirt_happy', 'mia_tshirt_back', 'mia_skirtoffice_shy', 'mia_skirt_back','workguy_angry'];
-        if (dialogue.charSprite && validCharacters.includes(dialogue.charSprite)) {
-            this.char.setTexture(dialogue.charSprite).setAlpha(1);
-            this.charBreathTween.play();
-        } else {
-            this.char.setAlpha(0);
-            this.charBreathTween.pause();
-        }
-
-        if (this.charShakeTween) {
-            this.charShakeTween.stop();
-        }
-        if (dialogue.shake === 'shake') {
-            this.charShakeTween = this.tweens.add({
-                targets: this.char,
-                x: { value: '+=10', yoyo: true, repeat: -1, duration: 100 },
-                y: { value: '+=10', yoyo: true, repeat: -1, duration: 100 }
-            });
-        }
-
-        const width = this.game.config.width;
-        const height = this.game.config.height;
-
-        if (dialogue.text && dialogue.speaker) {
-            this.dialogueBox.setVisible(true);
-            const hasSpeaker = !!dialogue.speaker?.trim();
-            this.speakerText.setVisible(hasSpeaker)
-                .setText(dialogue.speaker || '');
-            this.nameline.setVisible(hasSpeaker);
-
-            this.currentDialogueText = dialogue.text || '';
-            this.dialogueText.setVisible(true);
-            this.speakerText.setDepth(12);
-            this.dialogueText.setDepth(12);
-
-            this.isTyping = true;
-            this.typewriterEffect(this.currentDialogueText);
-            this.nextButtonContainer.setVisible(true);
-        } else {
-            this.dialogueBox.setVisible(false);
-            this.speakerText.setVisible(false).setText('');
-            this.nameline.setVisible(false);
-            this.dialogueText.setVisible(false).setText('');
-            this.nextButtonContainer.setVisible(true);
-        }
-
-        if (dialogue.choices) {
-            this.showChoices(dialogue.choices);
-            this.nextButtonContainer.setVisible(false);
-        }
-
-        if (!dialogue.choices) {
-            this.saveProgress();
-        }
     }
-}
 
     async showEnding() {
-        const width = this.game.config.width;
-        const height = this.game.config.height;
+        if (!this.scene.isActive()) return;
+        const width = this.scale.width;
+        const height = this.scale.height;
         const textColor = '#ffffff';
 
         this.energy += 100;
@@ -538,28 +573,13 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
         this.choicesGroup.clear(true, true);
         this.char.setAlpha(0);
         this.charBreathTween.pause();
-        if (this.bg) {
-            this.bg.setVisible(false);
-        }
-        if (this.energyRect) {
-            this.energyRect.setVisible(false);
-        }
-        if (this.energyText) {
-            this.energyText.setVisible(false);
-        }
-        if (this.energyIcon) {
-            this.energyIcon.setVisible(false);
-        }
-        if (this.settingsButtonBg) {
-            this.settingsButtonBg.setVisible(false);
-        }
-        if (this.settingsButton) {
-            this.settingsButton.setVisible(false);
-        }
-        if (this.nameline) {
-            this.nameline.setVisible(false); 
-        }
-        
+        if (this.bg) this.bg.setVisible(false);
+        if (this.energyBg) this.energyBg.setVisible(false);
+        if (this.energyText) this.energyText.setVisible(false);
+        if (this.energyIcon) this.energyIcon.setVisible(false);
+        if (this.settingsButtonBg) this.settingsButtonBg.setVisible(false);
+        if (this.settingsButton) this.settingsButton.setVisible(false);
+        if (this.nameline) this.nameline.setVisible(false);
 
         const endingText = this.add.text(width / 2, height / 2, 'Конец истории', {
             fontSize: `${height * 0.043}px`,
@@ -593,6 +613,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
         }
 
         this.time.delayedCall(3000, () => {
+            if (!this.scene.isActive()) return;
             this.sound.stopAll();
             this.scene.stop('GameScene');
             this.scene.start('MainMenu');
@@ -602,13 +623,11 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
 
     shutdown() {
         this.scale.off('resize', this.resize, this);
-        if (this.time) {
-            this.time.removeAllEvents();
-        }
-        if (this.tweens) {
-            this.tweens.killAll();
-        }
-        console.log('GameScene: Shutdown completed, all handlers and timers removed');
+        this.game.events.off('hidden');
+        this.game.events.off('visible');
+        document.removeEventListener('visibilitychange');
+        this.cleanup();
+        console.log('GameScene: Shutdown completed');
     }
 
     typewriterEffect(text) {
@@ -640,8 +659,9 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
     }
 
     showChoices(choices) {
-        const width = this.game.config.width;
-        const height = this.game.config.height;
+        if (!this.scene.isActive()) return;
+        const width = this.scale.width;
+        const height = this.scale.height;
         const accentColor = '#61bdff';
         this.choicesGroup.clear(true, true);
 
@@ -662,6 +682,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             }).setOrigin(0, 0.5)
                 .setInteractive()
                 .on('pointerdown', async () => {
+                    if (!this.scene.isActive()) return;
                     if (this.energy >= choice.energyCost) {
                         this.energy -= choice.energyCost;
                         this.energyText.setText(this.energy);
@@ -708,6 +729,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
     }
 
     showNextDialogue() {
+        if (!this.scene.isActive()) return;
         this.choicesGroup.clear(true, true);
         this.dialogueIndexInScene++;
         this.saveProgress();
@@ -719,7 +741,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             console.error('Cannot save progress: currentScene is null');
             return;
         }
-        
+
         window.gameStorage.saveProgress(
             this.storyId,
             this.currentScene.id,
@@ -729,36 +751,31 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             this.registry
         );
     }
-    
+
     loadGame(data) {
         let saveData = data;
         if (!saveData || !saveData.sceneId) {
-            // Если данные не переданы, загружаем из хранилища
             window.gameStorage.loadProgress(this.storyId, this.registry, (loadedData) => {
                 this.currentScene = this.story.dialogues.find(
                     scene => scene.id === loadedData.sceneId
                 ) || this.story.dialogues[0];
-                
                 this.dialogueIndexInScene = loadedData.dialogueIndex || 0;
                 this.energy = loadedData.energy || 100;
                 this.stars = loadedData.stars || 0;
-                
                 console.log('Game loaded:', loadedData);
             });
         } else {
-            // Используем переданные данные
             this.currentScene = this.story.dialogues.find(
                 scene => scene.id === saveData.sceneId
             ) || this.story.dialogues[0];
-            
             this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
             this.energy = saveData.energy || 100;
             this.stars = saveData.stars || 0;
         }
     }
-    
 
     async buyEnergy(energyAmount, starCost) {
+        if (!this.scene.isActive()) return;
         let stars = this.stars;
         if (stars >= starCost) {
             stars -= starCost;
@@ -775,6 +792,7 @@ this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
     }
 
     generateInviteLink() {
+        if (!this.scene.isActive()) return;
         const userId = this.registry.get('userId');
         const inviteLink = `https://t.me/YourBot?start=invite_${userId}`;
         window.Telegram.WebApp.showPopup({
