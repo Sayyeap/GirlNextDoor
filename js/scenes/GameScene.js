@@ -94,9 +94,11 @@ class GameScene extends Phaser.Scene {
     const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
     this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
         fontSize: `${Math.min(height * 0.035, 24)}px`,
-        color: '#ffffff',
+        color: '#bcff64',
+        align: 'left',
         fontFamily: 'IBM Plex Sans',
         resolution: 2
+        
     }).setOrigin(0.5).setDepth(101);
 
     // Запускаем анимацию точек при старте загрузки
@@ -106,7 +108,7 @@ class GameScene extends Phaser.Scene {
             callback: () => {
                 this.loadingDots = (this.loadingDots + 1) % 4;
                 const dots = '.'.repeat(this.loadingDots);
-                this.loadingText.setText(`Загрузка ${dots}`);
+                 this.loadingText.setText(`Загрузка${dots}`); // Точки добавляются справа
             },
             callbackScope: this,
             loop: true
@@ -121,6 +123,7 @@ class GameScene extends Phaser.Scene {
         // Уничтожаем элементы экрана загрузки
         if (loadingRect) loadingRect.destroy();
         if (this.loadingText) this.loadingText.destroy();
+        
         if (this.loadingTimer) this.loadingTimer.remove();
 
         // Запускаем настройку сцены и отображение диалога
@@ -259,15 +262,15 @@ class GameScene extends Phaser.Scene {
             .setDepth(1);
 
         this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
-            .setScale(width * 0.89 / 600)
+            .setScale(width * 0.97 / 600)
             .setOrigin(0.5, 0.97)
             .setAlpha(0)
             .setDepth(5);
 
         this.charBreathTween = this.tweens.add({
             targets: this.char,
-            y: { from: height, to: height - 3 },
-            duration: 650,
+            y: { from: height, to: height - 0},
+            duration: 0,
             ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1,
@@ -276,7 +279,7 @@ class GameScene extends Phaser.Scene {
 
         this.energyBg = this.add.graphics()
             .setDepth(10);
-        this.energyBg.fillStyle(0x000000, 0.7);
+        this.energyBg.fillStyle(0x000000, 0.3);
         this.energyBg.fillRoundedRect(
             width * 0.15 - (width * 0.26) / 2,
             height * 0.15 - (height * 0.04) / 2,
@@ -287,7 +290,7 @@ class GameScene extends Phaser.Scene {
 
         this.energyText = this.add.text(width * 0.11, height * 0.135, this.energy, {
             fontSize: `${height * 0.0258}px`,
-            color: '#fff',
+            color: '#bcff64',
             fontFamily: 'Dela Gothic One'
         }).setDepth(11);
 
@@ -305,7 +308,7 @@ class GameScene extends Phaser.Scene {
             .setDepth(10);
 
         this.speakerText = this.add.text(width * 0.1, height * 0.62, '', {
-            fontSize: `${height * 0.027}px`,
+            fontSize: `${height * 0.022}px`,
             color: '#fff',
             fontFamily: 'Dela Gothic One',
             stroke: '#000000',
@@ -315,10 +318,11 @@ class GameScene extends Phaser.Scene {
 
         this.nameline = this.add.image(width * 0, height * 0.655, 'nameline')
             .setOrigin(0, 0.5)
-            .setDepth(11);
+            .setDepth(11)
+            .setVisible(false);
 
         this.dialogueText = this.add.text(width * 0.1, height * 0.666, '', {
-            fontSize: `${height * 0.024}px`,
+            fontSize: `${height * 0.020}px`,
             color: '#fff',
             fontFamily: 'IBM Plex Sans',
             stroke: '#000000',
@@ -351,7 +355,7 @@ class GameScene extends Phaser.Scene {
 
         this.settingsButtonBg = this.add.graphics()
             .setDepth(10);
-        this.settingsButtonBg.fillStyle(0x000000, 0.7);
+        this.settingsButtonBg.fillStyle(0x000000, 0.3);
         this.settingsButtonBg.fillRoundedRect(
             width / 1.073 - (height * 0.04) / 2,
             height * 0.15 - (height * 0.04) / 2,
@@ -385,11 +389,11 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, width, height);
 
         if (this.bg) this.bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
-        if (this.char) this.char.setPosition(width / 2, height).setScale(width * 0.89 / 600);
+        if (this.char) this.char.setPosition(width / 2, height).setScale(width * 0.97 / 600);
         if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.7);
-        if (this.speakerText) this.speakerText.setPosition(width * 0.1, height * 0.62).setFontSize(`${height * 0.027}px`);
+        if (this.speakerText) this.speakerText.setPosition(width * 0.1, height * 0.62).setFontSize(`${height * 0.022}px`);
         if (this.nameline) this.nameline.setPosition(width * 0, height * 0.655);
-        if (this.dialogueText) this.dialogueText.setPosition(width * 0.1, height * 0.666).setFontSize(`${height * 0.024}px`).setWordWrapWidth(width * 0.8);
+        if (this.dialogueText) this.dialogueText.setPosition(width * 0.1, height * 0.666).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.8);
         if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 2, height * 0.91);
         if (this.energyBg) {
             this.energyBg.clear();
