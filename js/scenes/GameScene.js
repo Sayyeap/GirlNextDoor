@@ -19,8 +19,6 @@ class GameScene extends Phaser.Scene {
     }
 
     init(data) {
-        this.resetScene(); // Полная очистка
-    this.loadGame(data); // Загрузка данных
         this.storyId = data.storyId || 'story1';
         this.story = stories.find(s => s.id === this.storyId);
         
@@ -111,7 +109,7 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
-    this.scale.setGameSize(window.innerWidth, window.innerHeight);
+this.scale.setGameSize(window.innerWidth, window.innerHeight);
     this.scale.refresh();
 
     const width = this.scale.width;
