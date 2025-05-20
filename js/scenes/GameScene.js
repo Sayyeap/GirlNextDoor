@@ -28,6 +28,19 @@ class GameScene extends Phaser.Scene {
         }
         this.sound.stopAll();
         console.log('All sounds stopped');
+        if (this.bg) this.bg.destroy();
+        if (this.char) this.char.destroy();
+        if (this.dialogueBox) this.dialogueBox.destroy();
+        if (this.energyBg) this.energyBg.destroy();
+        if (this.energyText) this.energyText.destroy();
+        if (this.energyIcon) this.energyIcon.destroy();
+        if (this.speakerText) this.speakerText.destroy();
+        if (this.nameline) this.nameline.destroy();
+        if (this.dialogueText) this.dialogueText.destroy();
+        if (this.nextButtonContainer) this.nextButtonContainer.destroy();
+        if (this.settingsButtonBg) this.settingsButtonBg.destroy();
+        if (this.settingsButton) this.settingsButton.destroy();
+        if (this.choicesGroup) this.choicesGroup.clear(true, true);
         this.loadGame(data);
     }
 
