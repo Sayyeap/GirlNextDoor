@@ -6,9 +6,9 @@ const story1Dialogues = [
         nextScene: "scene2",
         dialogues: [
             {
-                speaker: " ",
+                speaker: "Девушка",
                 text: "Туман обволакивает, густой, почти живой, будто мир растворяется в молочной дымке. В центре — она",
-                charSprite: "null",
+                charSprite: 'mia_tshirt_shy',
                 shake: null,
                 sfx: null,
                 choices: null
@@ -73,7 +73,7 @@ const story1Dialogues = [
             },
               {
                 speaker: " ",
-                text: "Комната тонет в сером полумраке: мятая кровать, стол с пустыми банками пива, ноутбук с потертой наклейкой StarCraf",
+                text: "Комната тонет в сером полумраке: мятая кровать, стол с пустыми банками пива, ноутбук с потертой наклейкой StarCraft",
                 charSprite: null,
                 shake: null,
                 sfx: null,
@@ -1251,20 +1251,20 @@ const story1Dialogues = [
      {
         id: "scene23",
         bg: "girl_with_phone",
-        music: "map_memory",
+        music: "Home_enter",
         nextScene: "scene18",
         dialogues: [
             {
                 speaker: " ",
                 text: null,
-                charSprite: "Не подавая вида, ты начинаешь наискось пялиться в ее экран.  Вагон трясёт, и ты успеваешь поймать только кусок  еще пары  фото — голое плечо и край кружевного белья",
+                charSprite: "Вечер. Город утопает в сером полумраке, асфальт источает сырость, фонари отбрасывают тусклые тени. У подъезда припаркован белый фургон, разгружающий коробки.",
                 shake: null,
                 sfx: null,
                 choices: null
             },
                 {
-                speaker: "Подруга",
-                text: "Огонь, кидай ещё!",
+                speaker: " ",
+                text: "Новые соседи?",
                 charSprite: null,
                 shake: null,
                 sfx: null,
@@ -1272,7 +1272,7 @@ const story1Dialogues = [
             },
              {
                 speaker: " ",
-                text: "Чат движется слишком быстро, сообщения мелькают, и ты не успеваешь ничего разобрать",
+                text: "Фургон с визгом уезжает, оставив у входа хаотичную кучу: картонные коробки, торшер в рваном целлофане и хрупкую девушку ",
                 charSprite: null,
                 shake: null,
                 sfx: null,
@@ -1280,14 +1280,14 @@ const story1Dialogues = [
             },
                  {
                 speaker: " ",
-                text: " Поезд прибывает на станцию, и девушка поднимает голову, ища глазами путь на выход из вагона, как вдруг замечает что ты продолжаешь пялиться ей в экран.",
+                text: "Она наклоняется за очередной коробкой, и её короткие шорты натягиваются, обрисовывая бёдра и изгиб попы так, что воздух в лёгких застревает",
                 charSprite: null,
                 shake: null,
                 sfx: null,
                 choices: null
             },
                    {
-                speaker: "Девушка",
+                speaker: " ",
                 text: "Изварещенец",
                 charSprite: null,
                 shake: null,
@@ -1296,7 +1296,7 @@ const story1Dialogues = [
             },
                {
                 speaker: " ",
-                text: "Выкрикивает, она бросив на тебя взгляд, полный презрения и спешно покидает вагон, прижав телефон к груди",
+                text: "Тёмные волосы, выбившиеся из хвоста, падают на её лицо, обтягивающая майка липнет к телу, подчёркивая грудь, и капли пота блестят на её коже, как бриллианты.",
                 charSprite: null,
                 shake: null,
                 sfx: null,
@@ -1304,23 +1304,166 @@ const story1Dialogues = [
             },
                 {
                 speaker: " ",
-                text: "Ты отворачиваешься, чувствуя себя идиотом, и лёгкий укол разочарования грызёт. Ты ждал чего-то большего, но увидел лишь обрывок",
+                text: "Ты не можешь отвести взгляд — её движения гипнотизируют, разжигая азарт",
                 charSprite: null,
                 shake: null,
                 sfx: null,
                 choices: null
             },
+             {
+                speaker: " ",
+                text:  null,
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: [
+                    {
+                        text: "Помочь",
+                        energyCost: 10,
+                        nextScene: "scene24",
+                        nextDialogue: 3
+                    },
+                    {
+                        text: "Наблюдать",
+                        energyCost: 5,
+                        nextScene: "scene2",
+                        nextDialogue: 4
+                    }
+                ]
+            },
+         
+        ]
+    },
+      {
+        id: "scene23",
+        bg: "girl_with_phone",
+        music: "map_memory",
+        nextScene: "scene18",
+        dialogues: [
             {
                 speaker: " ",
-                text: "Вагон гудит, но ты сидишь с этим чувством — смесь неловкости и зуда, который шепчет: в следующий раз будь осторожнее.",
+                text: null,
+                charSprite: "Ты подходишь, чувствуя, как кровь пульсирует в висках, и нажимаешь кнопку домофона",
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                {
+                speaker: " ",
+                text: "Девушка выглядывает из-за коробки, и её зелёные глаза — острые, как лезвия, — цепляют тебя. Её губы трогает смущённая улыбка, обнажая ямочку на щеке.",
+                charSprite:  'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+             {
+                speaker: "Девушка",
+                text:  "Спасибо! Можно ещё придержать дверь лифта? Я почти всё подняла на этаж, хочу забрать остальное за раз",
+                charSprite: 'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                 {
+                speaker: " ",
+                text: "Её голос — как шёлк, с лёгкой хрипотцой от усталости, и он проникает под кожу.",
+                charSprite:  'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                   {
+                speaker: "Ты",
+                text: "Без проблем.",
                 charSprite: null,
                 shake: null,
                 sfx: null,
                 choices: null
             },
-               
-                          
-            
+               {
+                speaker: " ",
+                text: "Ты нажимаешь кнопку лифта, удерживая двери, и наблюдаешь, как она таскает коробки. Каждый её наклон — как кадр из сна: шорты обтягивают попу, майка задирается, обнажая талию, и пот стекает по её коже, оставляя влажный след. ",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                {
+                speaker: " ",
+                text: "Ты сглатываешь, горло пересохло, и пальцы сами тянутся к телефону. Когда она наклоняется в очередной раз, ты делаешь снимок",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+             
+         
+        ]
+    },
+    {
+        id: "scene24",
+        bg: "home_hall_box",
+        music: "map_memory",
+        nextScene: "scene18",
+        dialogues: [
+            {
+                speaker: " ",
+                text: null,
+                charSprite: "Ты подходишь, чувствуя, как кровь пульсирует в висках, и нажимаешь кнопку домофона",
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                {
+                speaker: " ",
+                text: "Девушка выглядывает из-за коробки, и её зелёные глаза — острые, как лезвия, — цепляют тебя. Её губы трогает смущённая улыбка, обнажая ямочку на щеке.",
+                charSprite:  'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+             {
+                speaker: "Девушка",
+                text:  "Спасибо! Можно ещё придержать дверь лифта? Я почти всё подняла на этаж, хочу забрать остальное за раз",
+                charSprite: 'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                 {
+                speaker: " ",
+                text: "Её голос — как шёлк, с лёгкой хрипотцой от усталости, и он проникает под кожу.",
+                charSprite:  'mia_tshirt_shy',
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                   {
+                speaker: "Ты",
+                text: "Без проблем.",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+               {
+                speaker: " ",
+                text: "Ты нажимаешь кнопку лифта, удерживая двери, и наблюдаешь, как она таскает коробки. Каждый её наклон — как кадр из сна: шорты обтягивают попу, майка задирается, обнажая талию, и пот стекает по её коже, оставляя влажный след. ",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+                {
+                speaker: " ",
+                text: "Ты сглатываешь, горло пересохло, и пальцы сами тянутся к телефону. Когда она наклоняется в очередной раз, ты делаешь снимок",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null
+            },
+             
+         
         ]
     },
    

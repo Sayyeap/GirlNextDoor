@@ -103,6 +103,17 @@ class GameScene extends Phaser.Scene {
             }
         });
 
+    this.game.events.on('hidden', () => {
+    console.log('Game hidden, pausing');
+    this.sound.pauseAll();
+    });
+
+    this.game.events.on('visible', () => {
+    console.log('Game visible, resuming');
+    this.sound.resumeAll();
+    this.scale.refresh(); // Важно: принудительное обновление масштабирования
+    });
+
         // Setup scaling
         this.scale.on('resize', this.resize, this);
         this.scale.refresh();
@@ -172,7 +183,8 @@ class GameScene extends Phaser.Scene {
             .setDepth(1);
 
         // Character
-        this.char = this.add.image(width / 2, height * 0.95, 'mia_tshirt_shy')
+        const charY = height - (height * 0.05); // Фиксированный отступ от низа
+        this.char = this.add.image(width / 2, charY, 'mia_tshirt_shy')
             .setScale(width * 0.89 / 600)
             .setOrigin(0.5, 1)
             .setAlpha(0)
