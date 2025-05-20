@@ -21,11 +21,15 @@ class GameScene extends Phaser.Scene {
     init(data) {
         this.storyId = data.storyId || 'story1';
         this.story = stories.find(s => s.id === this.storyId);
+        
         if (!this.story) {
             console.error('Story not found:', this.storyId);
             this.scene.restart({ storyId: this.storyId });
             return;
         }
+        this.children.each(child => child.destroy());
+        this.tweens.killAll();
+    this.time.removeAllEvents();
         this.sound.stopAll();
         console.log('All sounds stopped');
         if (this.bg) this.bg.destroy();
@@ -105,6 +109,15 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
+         this.scale.setGameSize(window.innerWidth, window.innerHeight);
+    this.scale.refresh();
+
+    const width = this.scale.width;
+    const height = this.scale.height;
+
+    this.cameras.main.setViewport(0, 0, width, height);
+    this.cameras.main.setBounds(0, 0, width, height);
+    this.cameras.main.setBackgroundColor('#000000');
     // Обработка изменений видимости экрана
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
@@ -135,15 +148,7 @@ class GameScene extends Phaser.Scene {
   
 
     // Установка размера игры на весь вьюпорт
-    this.scale.setGameSize(window.innerWidth, window.innerHeight);
-    this.scale.refresh();
-
-    const width = this.scale.width;
-    const height = this.scale.height;
-
-    this.cameras.main.setViewport(0, 0, width, height);
-    this.cameras.main.setBounds(0, 0, width, height);
-    this.cameras.main.setBackgroundColor('#000000');
+   
 
     try {
         this.game.sound.volume = await loadVolume(this.registry);
