@@ -86,6 +86,47 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+    // Создаем экран загрузки до начала загрузки ресурсов
+    const width = this.scale.width;
+    const height = this.scale.height;
+
+    // Создаем прямоугольник фона для экрана загрузки
+    const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
+    this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
+        fontSize: `${Math.min(height * 0.035, 24)}px`,
+        color: '#ffffff',
+        fontFamily: 'IBM Plex Sans',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(101);
+
+    // Запускаем анимацию точек при старте загрузки
+    this.load.on('start', () => {
+        this.loadingTimer = this.time.addEvent({
+            delay: 500,
+            callback: () => {
+                this.loadingDots = (this.loadingDots + 1) % 4;
+                const dots = '.'.repeat(this.loadingDots);
+                this.loadingText.setText(`Загрузка ${dots}`);
+            },
+            callbackScope: this,
+            loop: true
+        });
+    });
+
+    // Обработчик завершения загрузки
+    this.load.on('complete', () => {
+        console.log('All assets loaded');
+        this.isLoaded = true;
+
+        // Уничтожаем элементы экрана загрузки
+        if (loadingRect) loadingRect.destroy();
+        if (this.loadingText) this.loadingText.destroy();
+        if (this.loadingTimer) this.loadingTimer.remove();
+
+        // Запускаем настройку сцены и отображение диалога
+        this.setupScene();
+        this.showDialogue();
+    });
         // Backgrounds
         this.load.image('elevator', 'assets/story1/images/backgrounds/elevator.jpg');
         this.load.image('home', 'assets/story1/images/backgrounds/home.jpg');
@@ -199,42 +240,13 @@ class GameScene extends Phaser.Scene {
         }
 
         // Экран загрузки
-        const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-        this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
-            fontSize: `${Math.min(height * 0.035, 24)}px`,
-            color: '#ffffff',
-            fontFamily: 'IBM Plex Sans',
-            resolution: 2
-        }).setOrigin(0.5).setDepth(101);
-
-        this.loadingTimer = this.time.addEvent({
-            delay: 500,
-            callback: () => {
-                this.loadingDots = (this.loadingDots + 1) % 4;
-                const dots = '.'.repeat(this.loadingDots);
-                this.loadingText.setText(`Загрузка ${dots}`);
-            },
-            callbackScope: this,
-            loop: true
-        });
-
-        if (this.isLoaded) {
-            this.finishLoading(loadingRect);
-        } else {
-            this.load.once('complete', () => this.finishLoading(loadingRect));
-            this.load.start();
+       if (this.isLoaded) {
+        this.setupScene();
+        this.showDialogue();
         }
     }
 
-    finishLoading(loadingRect) {
-        if (loadingRect) loadingRect.destroy();
-        if (this.loadingText) this.loadingText.destroy();
-        if (this.loadingTimer) this.loadingTimer.remove();
-
-        this.setupScene();
-        this.showDialogue();
-        console.log('Create completed');
-    }
+   
 
     setupScene() {
         console.log('SetupScene started');
