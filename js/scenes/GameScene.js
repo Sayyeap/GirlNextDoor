@@ -30,10 +30,12 @@ class GameScene extends Phaser.Scene {
         this.settingsButtonBg = null;
         this.settingsButton = null;
         this.clickSound = null;
+        this.minigameResults = {}; // Добавляем для хранения результатов мини-игр
     }
 
     init(data) {
         // Очистка всех ресурсов перед началом
+        console.log('GameScene init:', data);
         this.cleanup();
 
         this.storyId = data.storyId || 'story1';
@@ -45,6 +47,12 @@ class GameScene extends Phaser.Scene {
             return;
         }
 
+        // Параметры для обработки результата мини-игры
+        this.minigameId = data.minigameId || null;
+        this.success = data.success || null;
+        this.successSceneId = data.successSceneId || null;
+        this.failSceneId = data.failSceneId || null;
+
         this.loadGame(data);
     }
 
@@ -55,7 +63,7 @@ class GameScene extends Phaser.Scene {
         if (this.time) this.time.removeAllEvents();
         if (this.sound) this.sound.stopAll();
         if (this.choicesGroup) this.choicesGroup.clear(true, true);
-        if (this.load) this.load.reset(); // Используем reset вместо removeAll
+        if (this.load) this.load.reset();
 
         // Сбрасываем состояние переменных
         this.currentScene = null;
@@ -83,53 +91,46 @@ class GameScene extends Phaser.Scene {
         this.settingsButtonBg = null;
         this.settingsButton = null;
         this.clickSound = null;
+        this.minigameResults = {};
     }
 
     preload() {
-    // Создаем экран загрузки до начала загрузки ресурсов
-    const width = this.scale.width;
-    const height = this.scale.height;
+        // Создаем экран загрузки до начала загрузки ресурсов
+        const width = this.scale.width;
+        const height = this.scale.height;
 
-    // Создаем прямоугольник фона для экрана загрузки
-    const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
-    this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
-        fontSize: `${Math.min(height * 0.035, 24)}px`,
-        color: '#bcff64',
-        align: 'left',
-        fontFamily: 'IBM Plex Sans',
-        resolution: 2
-        
-    }).setOrigin(0.5).setDepth(101);
+        const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
+        this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
+            fontSize: `${Math.min(height * 0.035, 24)}px`,
+            color: '#bcff64',
+            align: 'left',
+            fontFamily: 'IBM Plex Sans',
+            resolution: 2
+        }).setOrigin(0.5).setDepth(101);
 
-    // Запускаем анимацию точек при старте загрузки
-    this.load.on('start', () => {
-        this.loadingTimer = this.time.addEvent({
-            delay: 500,
-            callback: () => {
-                this.loadingDots = (this.loadingDots + 1) % 4;
-                const dots = '.'.repeat(this.loadingDots);
-                 this.loadingText.setText(`Загрузка${dots}`); // Точки добавляются справа
-            },
-            callbackScope: this,
-            loop: true
+        this.load.on('start', () => {
+            this.loadingTimer = this.time.addEvent({
+                delay: 500,
+                callback: () => {
+                    this.loadingDots = (this.loadingDots + 1) % 4;
+                    const dots = '.'.repeat(this.loadingDots);
+                    this.loadingText.setText(`Загрузка${dots}`);
+                },
+                callbackScope: this,
+                loop: true
+            });
         });
-    });
 
-    // Обработчик завершения загрузки
-    this.load.on('complete', () => {
-        console.log('All assets loaded');
-        this.isLoaded = true;
+        this.load.on('complete', () => {
+            console.log('All assets loaded');
+            this.isLoaded = true;
+            if (loadingRect) loadingRect.destroy();
+            if (this.loadingText) this.loadingText.destroy();
+            if (this.loadingTimer) this.loadingTimer.remove();
+            this.setupScene();
+            this.showDialogue();
+        });
 
-        // Уничтожаем элементы экрана загрузки
-        if (loadingRect) loadingRect.destroy();
-        if (this.loadingText) this.loadingText.destroy();
-        
-        if (this.loadingTimer) this.loadingTimer.remove();
-
-        // Запускаем настройку сцены и отображение диалога
-        this.setupScene();
-        this.showDialogue();
-    });
         // Backgrounds
         this.load.image('elevator', 'assets/story1/images/backgrounds/elevator.jpg');
         this.load.image('home', 'assets/story1/images/backgrounds/home.jpg');
@@ -183,29 +184,21 @@ class GameScene extends Phaser.Scene {
 
         this.load.on('filecomplete', (key) => console.log('File loaded:', key));
         this.load.on('fileerror', (file) => console.error('File failed to load:', file.key, file.src));
-        this.load.on('complete', () => {
-            console.log('All assets loaded');
-            this.isLoaded = true;
-        });
     }
 
     async create() {
-        // Устанавливаем размер игры сразу
         this.scale.setGameSize(window.innerWidth, window.innerHeight);
         this.scale.refresh();
 
         const width = this.scale.width;
         const height = this.scale.height;
 
-        // Устанавливаем камеру
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
         this.cameras.main.setBackgroundColor('#000000');
 
-        // Добавляем обработчик изменения размера
         this.scale.on('resize', this.resize, this);
 
-        // Обработка изменений видимости
         document.addEventListener('visibilitychange', () => {
             if (!this.scene.isActive()) return;
             if (document.hidden) {
@@ -233,7 +226,6 @@ class GameScene extends Phaser.Scene {
             this.resize({ width: this.scale.width, height: this.scale.height });
         });
 
-        // Загрузка громкости
         try {
             this.game.sound.volume = await loadVolume(this.registry);
             console.log('GameScene: Громкость загружена', this.game.sound.volume);
@@ -242,14 +234,11 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
-        // Экран загрузки
-       if (this.isLoaded) {
-        this.setupScene();
-        this.showDialogue();
+        if (this.isLoaded) {
+            this.setupScene();
+            this.showDialogue();
         }
     }
-
-   
 
     setupScene() {
         console.log('SetupScene started');
@@ -269,7 +258,7 @@ class GameScene extends Phaser.Scene {
 
         this.charBreathTween = this.tweens.add({
             targets: this.char,
-            y: { from: height, to: height - 0},
+            y: { from: height, to: height - 0 },
             duration: 0,
             ease: 'Sine.easeInOut',
             yoyo: true,
@@ -332,23 +321,22 @@ class GameScene extends Phaser.Scene {
             .setOrigin(0.0)
             .setDepth(10);
 
-       this.nextButtonContainer = this.add.container(width / 1.1, height * 0.92).setDepth(10);
-const rightArrow = this.add.image(0, 0, 'next')  // Position set to (0,0) since it's in a container
-    .setDisplaySize(height * 0.032, height * 0.032)
-    .setOrigin(0.5);
-this.nextButtonContainer.add(rightArrow);
+        this.nextButtonContainer = this.add.container(width / 1.1, height * 0.92).setDepth(10);
+        const rightArrow = this.add.image(0, 0, 'next')
+            .setDisplaySize(height * 0.032, height * 0.032)
+            .setOrigin(0.5);
+        this.nextButtonContainer.add(rightArrow);
 
-// Make only the arrow interactive
-rightArrow.setInteractive()
-    .on('pointerdown', () => {
-        this.sound.play('click');
-        if (this.isTyping) {
-            this.isTyping = false;
-            this.dialogueText.setText(this.currentDialogueText);
-        } else {
-            this.showNextDialogue();
-        }
-    });
+        rightArrow.setInteractive()
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                if (this.isTyping) {
+                    this.isTyping = false;
+                    this.dialogueText.setText(this.currentDialogueText);
+                } else {
+                    this.showNextDialogue();
+                }
+            });
 
         this.settingsButtonBg = this.add.graphics()
             .setDepth(10);
@@ -463,26 +451,7 @@ rightArrow.setInteractive()
         const dialogues = this.currentScene.dialogues;
 
         if (this.dialogueIndexInScene >= dialogues.length) {
-            if (this.currentScene.nextScene) {
-                console.log(`Transition to nextScene: ${this.currentScene.nextScene}`);
-                this.dialogueText.setText('');
-                this.speakerText.setText('');
-                this.currentDialogueText = '';
-                this.isTyping = false;
-                if (this.typewriterTimer) {
-                    this.typewriterTimer.remove();
-                    this.typewriterTimer = null;
-                }
-                this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
-                this.dialogueIndexInScene = 0;
-                this.saveProgress();
-                this.updateScene();
-                this.showDialogue();
-            } else {
-                console.log('End of story, showing ending');
-                this.showEnding();
-                return;
-            }
+            this.handleNextScene(); // Перенаправляем на handleNextScene для обработки мини-игры
         } else {
             const dialogue = dialogues[this.dialogueIndexInScene];
             console.log('ShowDialogue - Scene:', this.currentScene.id, 'Dialogue:', dialogue);
@@ -708,19 +677,25 @@ rightArrow.setInteractive()
                         });
 
                         if (choice.nextScene) {
-                            this.currentScene = this.story.dialogues.find(scene => scene.id === choice.nextScene) || this.currentScene;
-                            this.dialogueIndexInScene = choice.nextDialogue !== null ? choice.nextDialogue : 0;
+                            if (typeof choice.nextScene === 'object' && choice.nextScene.type === 'minigame') {
+                                const params = { ...choice.nextScene.params, energy: this.energy };
+                                this.scene.start(choice.nextScene.key, params);
+                            } else {
+                                this.currentScene = this.story.dialogues.find(scene => scene.id === choice.nextScene) || this.currentScene;
+                                this.dialogueIndexInScene = choice.nextDialogue !== null ? choice.nextDialogue : 0;
+                                await this.saveProgress();
+                                this.showDialogue();
+                            }
                         } else {
                             this.dialogueIndexInScene++;
+                            await this.saveProgress();
+                            this.showDialogue();
                         }
 
                         console.log('After choice:', {
                             currentScene: this.currentScene.id,
                             dialogueIndex: this.dialogueIndexInScene
                         });
-
-                        await this.saveProgress();
-                        this.showDialogue();
                     } else {
                         window.Telegram.WebApp.showAlert('Недостаточно энергии!');
                     }
@@ -749,6 +724,26 @@ rightArrow.setInteractive()
         this.showDialogue();
     }
 
+    handleNextScene() {
+        if (!this.currentScene.nextScene) {
+            console.log('End of story, showing ending');
+            this.showEnding();
+            return;
+        }
+
+        if (typeof this.currentScene.nextScene === 'object' && this.currentScene.nextScene.type === 'minigame') {
+            const params = { ...this.currentScene.nextScene.params, energy: this.energy };
+            console.log('Starting minigame:', this.currentScene.nextScene.key, params);
+            this.scene.start(this.currentScene.nextScene.key, params);
+        } else {
+            this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
+            this.dialogueIndexInScene = 0;
+            this.saveProgress();
+            this.updateScene();
+            this.showDialogue();
+        }
+    }
+
     saveProgress() {
         if (!this.currentScene) {
             console.error('Cannot save progress: currentScene is null');
@@ -761,7 +756,8 @@ rightArrow.setInteractive()
             this.dialogueIndexInScene,
             this.energy,
             this.stars,
-            this.registry
+            this.registry,
+            { minigameResults: this.minigameResults }
         );
     }
 
@@ -775,6 +771,7 @@ rightArrow.setInteractive()
                 this.dialogueIndexInScene = loadedData.dialogueIndex || 0;
                 this.energy = loadedData.energy || 100;
                 this.stars = loadedData.stars || 0;
+                this.minigameResults = loadedData.minigameResults || {};
                 console.log('Game loaded:', loadedData);
             });
         } else {
@@ -784,6 +781,16 @@ rightArrow.setInteractive()
             this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
             this.energy = saveData.energy || 100;
             this.stars = saveData.stars || 0;
+            this.minigameResults = saveData.minigameResults || {};
+        }
+
+        // Обработка результата мини-игры
+        if (saveData.success !== null && saveData.minigameId) {
+            const nextSceneId = saveData.success ? saveData.successSceneId : saveData.failSceneId;
+            this.currentScene = this.story.dialogues.find(scene => scene.id === nextSceneId) || this.currentScene;
+            this.dialogueIndexInScene = 0;
+            this.minigameResults[saveData.minigameId] = saveData.success;
+            this.saveProgress();
         }
     }
 
