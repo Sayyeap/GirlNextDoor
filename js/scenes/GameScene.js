@@ -34,65 +34,94 @@ class GameScene extends Phaser.Scene {
     }
 
     init(data) {
-        // Очистка всех ресурсов перед началом
-        console.log('GameScene init:', data);
-        this.cleanup();
+    console.log('GameScene init:', data);
 
-        this.storyId = data.storyId || 'story1';
-        this.story = stories.find(s => s.id === this.storyId);
-
-        if (!this.story) {
-            console.error('Story not found:', this.storyId);
-            this.scene.restart({ storyId: this.storyId });
-            return;
-        }
-
-        // Параметры для обработки результата мини-игры
-        this.minigameId = data.minigameId || null;
-        this.success = data.success || null;
-        this.successSceneId = data.successSceneId || null;
-        this.failSceneId = data.failSceneId || null;
-
-        this.loadGame(data);
+    if (this.sound) {
+        this.sound.stopAll();
+        console.log('All sounds stopped in GameScene init');
     }
+    
+    // Не вызываем cleanup здесь, так как он вызывается в shutdown()
+    this.storyId = data?.storyId || 'story1';
+    this.story = stories.find(s => s.id === this.storyId);
+
+    if (!this.story) {
+        console.error('Story not found:', this.storyId);
+        this.scene.restart({ storyId: this.storyId });
+        return;
+    }
+
+    // Параметры для обработки результата мини-игры
+    this.minigameId = data?.minigameId || null;
+    this.success = data?.success ?? null;
+    this.successSceneId = data?.successSceneId || null;
+    this.failSceneId = data?.failSceneId || null;
+
+    this.loadGame(data);
+}
 
     cleanup() {
-        // Полная очистка сцены
-        this.children.each(child => child.destroy());
-        if (this.tweens) this.tweens.killAll();
-        if (this.time) this.time.removeAllEvents();
-        if (this.sound) this.sound.stopAll();
-        if (this.choicesGroup) this.choicesGroup.clear(true, true);
-        if (this.load) this.load.reset();
-
-        // Сбрасываем состояние переменных
-        this.currentScene = null;
-        this.dialogueIndexInScene = 0;
-        this.currentMusic = null;
-        this.energy = 100;
-        this.stars = 0;
-        this.isLoaded = false;
-        this.isTyping = false;
-        this.currentDialogueText = '';
-        this.charShakeTween = null;
-        this.charBreathTween = null;
-        this.typewriterTimer = null;
-        this.loadingTimer = null;
-        this.bg = null;
-        this.char = null;
-        this.dialogueBox = null;
-        this.energyBg = null;
-        this.energyText = null;
-        this.energyIcon = null;
-        this.speakerText = null;
-        this.nameline = null;
-        this.dialogueText = null;
-        this.nextButtonContainer = null;
-        this.settingsButtonBg = null;
-        this.settingsButton = null;
-        this.clickSound = null;
-        this.minigameResults = {};
-    }
+    // Останавливаем все анимации и звуки
+    
+    if (this.tweens) this.tweens.killAll();
+    if (this.time) this.time.removeAllEvents();
+    if (this.sound) this.sound.stopAll();
+    
+    // Уничтожаем только существующие объекты
+    const safeDestroy = (obj) => {
+        if (obj && typeof obj.destroy === 'function') {
+            try {
+                obj.destroy();
+            } catch (e) {
+                console.error('Error destroying object:', e);
+            }
+        }
+    };
+    
+    safeDestroy(this.choicesGroup);
+    safeDestroy(this.charShakeTween);
+    safeDestroy(this.charBreathTween);
+    safeDestroy(this.typewriterTimer);
+    safeDestroy(this.loadingTimer);
+    safeDestroy(this.bg);
+    safeDestroy(this.char);
+    safeDestroy(this.dialogueBox);
+    safeDestroy(this.energyBg);
+    safeDestroy(this.energyText);
+    safeDestroy(this.energyIcon);
+    safeDestroy(this.speakerText);
+    safeDestroy(this.nameline);
+    safeDestroy(this.dialogueText);
+    safeDestroy(this.nextButtonContainer);
+    safeDestroy(this.settingsButtonBg);
+    safeDestroy(this.settingsButton);
+    
+    // Сбрасываем состояние переменных
+    this.currentScene = null;
+    this.dialogueIndexInScene = 0;
+    this.currentMusic = null;
+    this.isLoaded = false;
+    this.isTyping = false;
+    this.currentDialogueText = '';
+    this.choicesGroup = null;
+    this.charShakeTween = null;
+    this.charBreathTween = null;
+    this.typewriterTimer = null;
+    this.loadingTimer = null;
+    this.bg = null;
+    this.char = null;
+    this.dialogueBox = null;
+    this.energyBg = null;
+    this.energyText = null;
+    this.energyIcon = null;
+    this.speakerText = null;
+    this.nameline = null;
+    this.dialogueText = null;
+    this.nextButtonContainer = null;
+    this.settingsButtonBg = null;
+    this.settingsButton = null;
+    this.clickSound = null;
+}
 
     preload() {
         // Создаем экран загрузки до начала загрузки ресурсов
@@ -603,14 +632,19 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    shutdown() {
-        this.scale.off('resize', this.resize, this);
-        this.game.events.off('hidden');
-        this.game.events.off('visible');
-        document.removeEventListener('visibilitychange');
-        this.cleanup();
-        console.log('GameScene: Shutdown completed');
-    }
+   shutdown() {
+    this.scale.off('resize', this.resize, this);
+    this.game.events.off('hidden');
+    this.game.events.off('visible');
+    document.removeEventListener('visibilitychange');
+    
+    // Очищаем только ресурсы, не трогая состояние игры
+    if (this.tweens) this.tweens.killAll();
+    if (this.time) this.time.removeAllEvents();
+    if (this.sound) this.sound.stopAll();
+    
+    console.log('GameScene: Shutdown completed');
+}
 
     typewriterEffect(text) {
         if (!this.scene.isActive()) {

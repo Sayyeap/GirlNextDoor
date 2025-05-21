@@ -16,6 +16,7 @@ class SpyGameScene extends Phaser.Scene {
             zoneWidth: 1.0
         };
         console.log('SpyGameScene init:', data);
+       
     }
 
     preload() {
