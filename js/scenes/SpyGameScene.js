@@ -11,11 +11,12 @@ class SpyGameScene extends Phaser.Scene {
         this.failSceneId = data.failSceneId || 'scene4';
         this.storyId = data.storyId || 'story1'; // Добавляем storyId
         this.zoneConfig = data.zoneConfig || {
-            zoneY: 0.5,
-            zoneHeight: 100,
+            zoneY: 0.42,
+            zoneHeight: 230,
             zoneWidth: 1.0
         };
         console.log('SpyGameScene init:', data);
+        
        
     }
 
@@ -32,6 +33,7 @@ class SpyGameScene extends Phaser.Scene {
         this.load.image('office_pc_photo_game', 'assets/story1/images/backgrounds/office_pc_photo_game.jpg');
         this.load.image('cameraButton', 'assets/common/images/cameraButton.png');
         this.load.image('photophokus', 'assets/common/images/photophokus.png');
+        this.load.image('photophokusred', 'assets/common/images/photophokusred.png');
         this.load.image('trophy', 'assets/images/trophy.png');
 
         this.load.on('filecomplete', (key) => console.log(`SpyGameScene: File loaded: ${key}`));
@@ -48,7 +50,7 @@ class SpyGameScene extends Phaser.Scene {
         this.focusZoneWidth = this.cameras.main.width * this.zoneConfig.zoneWidth;
         this.focusIconY = this.cameras.main.height / 2;
         this.focusVelocity = 0;
-        this.gravity = 600;
+        this.gravity = 700;
         this.progress = 0;
         this.timer = 60;
         this.isGameOver = false;
@@ -61,20 +63,21 @@ class SpyGameScene extends Phaser.Scene {
             this.focusZoneWidth,
             this.focusZoneHeight,
             0x00ff00,
-            0.3
+            0.0
         ).setDepth(0);
 
-        this.focusIcon = this.add.image(this.cameras.main.centerX, this.focusIconY, 'photophokus')
-            .setScale(1)
+        this.focusIcon = this.add.image(this.cameras.main.centerX, this.focusIconY, 'photophokus','photophokusred')
+            .setScale(0.5)
             .setDepth(1);
 
-        this.cameraButton = this.add.image(this.cameras.main.centerX, this.cameras.main.height - 50, 'cameraButton')
+        this.cameraButton = this.add.image(this.cameras.main.centerX, this.cameras.main.height - 70, 'cameraButton')
             .setInteractive({ useHandCursor: true })
             .setDepth(2)
+            .setScale(0.5)
             .on('pointerdown', () => {
                 if (!this.isGameOver) {
                     console.log('Camera button clicked');
-                    this.focusVelocity = -500;
+                    this.focusVelocity = -450;
                     this.tweens.add({
                         targets: this.cameraButton,
                         scale: 0.8,
@@ -125,36 +128,44 @@ class SpyGameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (!this.isGameOver) {
-            this.focusVelocity += this.gravity * (delta / 1000);
-            this.focusIconY += this.focusVelocity * (delta / 1000);
-            this.focusIconY = Phaser.Math.Clamp(
-                this.focusIconY,
-                50,
-                this.cameras.main.height - 50
-            );
-            this.focusIcon.y = this.focusIconY;
+    if (!this.isGameOver) {
+        this.focusVelocity += this.gravity * (delta / 1000);
+        this.focusIconY += this.focusVelocity * (delta / 1000);
 
-            console.log('Update:', {
-                velocity: this.focusVelocity,
-                y: this.focusIconY,
-                delta: delta,
-                visible: this.focusIcon.visible
-            });
+        // Добавляем отступы (20% сверху, 10% снизу)
+        const topMargin = this.cameras.main.height * 0.2;
+        const bottomMargin = this.cameras.main.height * 0.17;
+        this.focusIconY = Phaser.Math.Clamp(
+            this.focusIconY,
+            topMargin,
+            this.cameras.main.height - bottomMargin
+        );
 
-            if (
-                this.focusIcon.y >= this.focusZoneY - this.focusZoneHeight / 2 &&
-                this.focusIcon.y <= this.focusZoneY + this.focusZoneHeight / 2
-            ) {
-                this.progress += 0.2;
-                if (this.progress >= 100) {
-                    this.gameOver(true);
-                }
+        this.focusIcon.y = this.focusIconY;
+
+        // Проверка нахождения в зоне и смена текстуры
+        const isInZone = (
+            this.focusIcon.y >= this.focusZoneY - this.focusZoneHeight / 2 &&
+            this.focusIcon.y <= this.focusZoneY + this.focusZoneHeight / 2
+        );
+
+        if (isInZone) {
+            if (this.focusIcon.texture.key !== 'photophokus') {
+                this.focusIcon.setTexture('photophokus');
             }
-
-            this.progressBar.width = (this.progress / 100) * (this.cameras.main.width - 60);
+            this.progress += 0.2;
+            if (this.progress >= 100) {
+                this.gameOver(true);
+            }
+        } else {
+            if (this.focusIcon.texture.key !== 'photophokusred') {
+                this.focusIcon.setTexture('photophokusred');
+            }
         }
+
+        this.progressBar.width = (this.progress / 100) * (this.cameras.main.width - 60);
     }
+}
 
     updateScene() {
         const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game'];
@@ -164,7 +175,7 @@ class SpyGameScene extends Phaser.Scene {
         if (!this.background) {
             this.background = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, bgKey)
                 .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-                .setAlpha(0.5)
+                .setAlpha(1)
                 .setDepth(0);
         } else {
             this.background.setTexture(bgKey);
