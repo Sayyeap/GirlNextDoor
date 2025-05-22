@@ -35,6 +35,7 @@ class SpyGameScene extends Phaser.Scene {
         this.load.image('photophokus', 'assets/common/images/photophokus.png');
         this.load.image('photophokusred', 'assets/common/images/photophokusred.png');
         this.load.image('trophy', 'assets/images/trophy.png');
+        this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
 
         this.load.on('filecomplete', (key) => console.log(`SpyGameScene: File loaded: ${key}`));
         this.load.on('fileerror', (file) => console.error(`SpyGameScene: File failed to load: ${file.key} (${file.src})`));
@@ -168,7 +169,7 @@ class SpyGameScene extends Phaser.Scene {
 }
 
     updateScene() {
-        const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game'];
+        const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game','sexphoto_office'];
         const bgKey = validBackgrounds.includes(this.imageKey) ? this.imageKey : 'image1';
         console.log('SpyGameScene: Setting background to:', bgKey);
 
@@ -183,12 +184,71 @@ class SpyGameScene extends Phaser.Scene {
     }
 
     gameOver(success) {
-        this.isGameOver = true;
-        this.time.paused = true;
+    this.isGameOver = true;
+    this.time.paused = true;
 
-        this.registry.set(`minigame_${this.minigameId}_result`, success);
+    this.registry.set(`minigame_${this.minigameId}_result`, success);
 
-        // Фон окна
+    if (success) {
+        // Удаляем все игровые элементы
+        this.children.each(child => {
+            if (!(child instanceof Phaser.GameObjects.Rectangle) && 
+                !(child instanceof Phaser.GameObjects.Text)) {
+                child.destroy();
+            }
+        });
+
+        // Определяем какое изображение показывать в зависимости от minigameId
+        let victoryImage;
+        switch(this.minigameId) {
+            case 'spygame1':
+                victoryImage = 'sexphoto_office';
+                break;
+            case 'spygame2':
+                victoryImage = 'image2'; // Замените на нужное изображение
+                break;
+            default:
+                victoryImage = 'office_pc_photo_game';
+        }
+
+        // Показываем полноэкранное изображение победы
+        this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, victoryImage)
+            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+            .setDepth(0);
+
+        // Добавляем кнопку "Далее"
+        const nextButton = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.height - 100,
+            'Далее',
+            { 
+                fontSize: '32px', 
+                color: '#ffffff',
+                backgroundColor: '#000000',
+                padding: { x: 20, y: 10 }
+            }
+        )
+        .setInteractive({ useHandCursor: true })
+        .setOrigin(0.5)
+        .setDepth(3);
+
+        nextButton.on('pointerdown', () => {
+            const params = {
+                storyId: this.storyId,
+                energy: this.energy,
+                minigameId: this.minigameId,
+                success: true,
+                successSceneId: this.successSceneId,
+                failSceneId: this.failSceneId
+            };
+            this.scene.start('GameScene', params);
+        });
+
+        // Можно добавить звуковой эффект
+        // this.sound.play('victory_sound');
+
+    } else {
+        // Старый код для проигрыша
         const resultWindow = this.add.rectangle(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
@@ -198,17 +258,13 @@ class SpyGameScene extends Phaser.Scene {
             0.8
         ).setDepth(3);
 
-        // Текст результата (только "Провал!" при проигрыше)
-        if (!success) {
-            this.add.text(
-                this.cameras.main.centerX,
-                this.cameras.main.centerY - 50,
-                'Провал!',
-                { fontSize: '24px', color: '#ffffff' }
-            ).setOrigin(0.5).setDepth(3);
-        }
+        this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 50,
+            'Провал!',
+            { fontSize: '24px', color: '#ffffff' }
+        ).setOrigin(0.5).setDepth(3);
 
-        // Кнопка "Продолжить" (слева)
         const continueButton = this.add.text(
             this.cameras.main.centerX - 100,
             this.cameras.main.centerY + 50,
@@ -221,16 +277,14 @@ class SpyGameScene extends Phaser.Scene {
                 storyId: this.storyId,
                 energy: this.energy,
                 minigameId: this.minigameId,
-                success,
+                success: false,
                 successSceneId: this.successSceneId,
                 failSceneId: this.failSceneId
             };
-            console.log('Continue button clicked, params:', params);
             this.scene.start('GameScene', params);
         });
 
-        // Кнопка "Переиграть" (справа, только при проигрыше и если есть энергия)
-        if (!success && this.energy > 0) {
+        if (this.energy > 0) {
             const retryButton = this.add.text(
                 this.cameras.main.centerX + 100,
                 this.cameras.main.centerY + 50,
@@ -248,9 +302,9 @@ class SpyGameScene extends Phaser.Scene {
                     failSceneId: this.failSceneId,
                     zoneConfig: this.zoneConfig
                 };
-                console.log('Retry button clicked, params:', params);
                 this.scene.start('SpyGameScene', params);
             });
         }
     }
+}
 }
