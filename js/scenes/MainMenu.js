@@ -5,10 +5,13 @@ class MainMenu extends Phaser.Scene {
 
     preload() {
         this.load.image('menu_bg', 'assets/common/images/menu_bg.jpg');
+        this.load.image('gradient_dot', 'assets/common/images/gradient_dot.png');
+        this.load.image('Button', 'assets/common/images/Button.png');
+        this.load.image('story1', 'assets/common/images/story2.jpg');
+        this.load.image('story2', 'assets/common/images/story2.jpg');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
         this.load.audio('click', 'assets/common/audio/click.wav');
-
         this.createFontPreload();
     }
 
@@ -23,11 +26,14 @@ class MainMenu extends Phaser.Scene {
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
 
-        // Фон (растягиваем на весь экран)
+        // Фон
         this.bg = this.add.image(width / 2, height / 2, 'menu_bg')
             .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setDepth(1);
+
+        // Эффект лавовой лампы
+        this.createLavaEffect(width, height);
 
         // Устанавливаем громкость
         this.game.sound.volume = 1.0;
@@ -44,7 +50,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height * 0.043}px`,
             color: '#fff',
-            resolution: 2 // Для четкости текста
+            resolution: 2
         }).setOrigin(0.5).setDepth(10);
 
         // Функция для запуска музыки
@@ -55,24 +61,72 @@ class MainMenu extends Phaser.Scene {
             }
         };
 
-        // Создаем кнопки с адаптивными размерами
+        // Создаем кнопки
         this.createButtons(width, height, playMusic);
 
         this.storyGroup = this.add.group();
     }
 
+    createLavaEffect(width, height) {
+        const spots = [];
+
+        // Создаем 6 пятен
+        for (let i = 0; i < 6; i++) {
+            const x = Phaser.Math.Between(0, width);
+            const y = Phaser.Math.Between(0, height);
+            const spot = this.add.image(x, y, 'gradient_dot')
+                .setDepth(2)
+                .setAlpha(Phaser.Math.FloatBetween(0.2, 0.4))
+                .setScale(Phaser.Math.FloatBetween(0.5, 1.5));
+            spots.push({
+                sprite: spot,
+                vx: Phaser.Math.Between(-2, 2) || 1,
+                vy: Phaser.Math.Between(-2, 2) || 1
+            });
+
+            // Анимация изменения размера
+            this.tweens.add({
+                targets: spot,
+                scale: { from: spot.scale * 0.8, to: spot.scale * 1.2 },
+                alpha: { from: spot.alpha * 0.8, to: spot.alpha },
+                duration: Phaser.Math.Between(2000, 4000),
+                yoyo: true,
+                loop: -1,
+                ease: 'Sine.easeInOut'
+            });
+        }
+
+        // Анимация движения
+        this.time.addEvent({
+            delay: 16, // ~60 FPS
+            loop: true,
+            callback: () => {
+                spots.forEach(spot => {
+                    // Обновляем позиции
+                    spot.sprite.x += spot.vx;
+                    spot.sprite.y += spot.vy;
+
+                    // Ограничиваем движение в пределах экрана
+                    const bounds = spot.sprite.getBounds();
+                    if (bounds.left < 0 || bounds.right > width) spot.vx *= -1;
+                    if (bounds.top < 0 || bounds.bottom > height) spot.vy *= -1;
+                });
+            }
+        });
+    }
+
     createButtons(width, height, playMusic) {
         // Размеры и отступы кнопок
-        const buttonWidth = width * 0.45; // Уменьшили ширину кнопок
-        const buttonHeight = height * 0.055; // Уменьшили высоту кнопок
-        const verticalSpacing = height * 0.07; // Уменьшили расстояние между кнопками
+        const buttonWidth = width * 0.45;
+        const buttonHeight = height * 0.055;
+        const verticalSpacing = height * 0.07;
 
-        // Позиции кнопок (подняли выше)
+        // Позиции кнопок
         const positions = [
-            height * 0.68, // Новая игра (было 0.72)
-            height * 0.75, // Продолжить (было 0.79)
-            height * 0.82, // Настройки (было 0.86)
-            height * 0.89  // Галерея (было 0.93)
+            height * 0.68, // Новая игра
+            height * 0.75, // Продолжить
+            height * 0.82, // Настройки
+            height * 0.89  // Галерея
         ];
 
         // Новая игра
@@ -182,7 +236,7 @@ class MainMenu extends Phaser.Scene {
         const width = this.scale.width;
         const height = this.scale.height;
         const textColor = window.gameConfig?.colorScheme === 'dark' ? '#ffffff' : '#000000';
-        
+
         stories.forEach((story, i) => {
             const storyContainer = this.add.container(width / 2, height * 0.3 + i * (height * 0.1)).setDepth(10);
             const btn = this.add.rectangle(0, 0, width * 0.7, height * 0.06, 0x333333, 0.8)
@@ -252,19 +306,17 @@ class MainMenu extends Phaser.Scene {
                 container.setPosition(width / 2, positions[i]);
                 const rect = container.list.find(obj => obj.type === 'Rectangle');
                 const text = container.list.find(obj => obj.type === 'Text');
-                
                 if (rect) rect.setSize(buttonWidth, buttonHeight);
                 if (text) text.setFontSize(buttonHeight * 0.45);
             }
         });
 
-        // История (если есть)
+        // История
         if (this.storyGroup) {
             this.storyGroup.getChildren().forEach((container, i) => {
                 container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
                 const rect = container.list.find(obj => obj.type === 'Rectangle');
                 const text = container.list.find(obj => obj.type === 'Text');
-                
                 if (rect) rect.setSize(width * 0.7, height * 0.06);
                 if (text) text.setFontSize(height * 0.0258);
             });
