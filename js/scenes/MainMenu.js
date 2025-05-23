@@ -6,8 +6,14 @@ class MainMenu extends Phaser.Scene {
     preload() {
         this.load.image('menu_bg', 'assets/common/images/menu_bg.jpg');
         this.load.image('gradient_dot', 'assets/common/images/gradient_dot.png');
+        this.load.image('calendar', 'assets/common/images/calendar.png');
+        this.load.image('reset', 'assets/common/images/reset.png');
+        this.load.image('gallery', 'assets/common/images/gallery.png');
+        this.load.image('close', 'assets/common/images/close.png');
+        this.load.image('settings_box', 'assets/common/images/settings_box.png');
+        this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('Button', 'assets/common/images/Button.png');
-        this.load.image('story1', 'assets/common/images/story2.jpg');
+        this.load.image('story1', 'assets/common/images/story1.jpg');
         this.load.image('story2', 'assets/common/images/story2.jpg');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
@@ -19,33 +25,27 @@ class MainMenu extends Phaser.Scene {
         const width = this.scale.width;
         const height = this.scale.height;
 
-        // Настройки масштабирования
         this.scale.on('resize', this.resize, this);
         this.scale.refresh();
 
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
 
-        // Фон
         this.bg = this.add.image(width / 2, height / 2, 'menu_bg')
             .setDisplaySize(width, height)
             .setOrigin(0.5)
             .setDepth(1);
 
-        // Эффект лавовой лампы
         this.createLavaEffect(width, height);
 
-        // Устанавливаем громкость
         this.game.sound.volume = 1.0;
 
-        // Музыка
         this.menuMusic = this.sound.add('menu_music', { loop: true });
         console.log('MainMenu: Music initialized');
 
         await document.fonts.ready;
         console.log('MainMenu: Fonts loaded');
 
-        // Заголовок
         this.titleText = this.add.text(width / 2, height * 0.1, '', {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height * 0.043}px`,
@@ -53,7 +53,6 @@ class MainMenu extends Phaser.Scene {
             resolution: 2
         }).setOrigin(0.5).setDepth(10);
 
-        // Функция для запуска музыки
         const playMusic = () => {
             if (!this.menuMusic.isPlaying) {
                 this.menuMusic.play();
@@ -61,8 +60,54 @@ class MainMenu extends Phaser.Scene {
             }
         };
 
-        // Создаем кнопки
-        this.createButtons(width, height, playMusic);
+        this.currentStoryIndex = 0;
+        this.stories = [
+            { id: 'story1', image: 'story1', title: 'Эффект наблюдателя', active: true },
+            { id: 'story2', image: 'story2', title: 'Вторая История', active: false }
+        ];
+        this.createStoryInterface(width, height, playMusic);
+
+        this.input.on('pointerdown', (pointer) => this.startSwipe = { x: pointer.x, y: pointer.y });
+        this.input.on('pointerup', (pointer) => this.handleSwipe(pointer));
+        this.input.on('gameout', () => {    this.input.stopPropagation();
+});
+
+// Добавляем обработчики только для картинки
+    this.storyImage.on('pointerdown', (pointer) => {
+        this.startSwipe = { x: pointer.x, y: pointer.y };
+    });
+    
+    this.storyImage.on('pointerup', (pointer) => {
+        if (this.startSwipe) {
+            this.handleSwipe(pointer);
+        }
+    });
+
+      // Также добавим обработчики для боковых картинок, если они есть
+    if (this.leftStoryImage) {
+        this.leftStoryImage.setInteractive()
+            .on('pointerdown', (pointer) => {
+                this.startSwipe = { x: pointer.x, y: pointer.y };
+            })
+            .on('pointerup', (pointer) => {
+                if (this.startSwipe) {
+                    this.handleSwipe(pointer);
+                }
+            });
+    }
+
+    if (this.rightStoryImage) {
+        this.rightStoryImage.setInteractive()
+            .on('pointerdown', (pointer) => {
+                this.startSwipe = { x: pointer.x, y: pointer.y };
+            })
+            .on('pointerup', (pointer) => {
+                if (this.startSwipe) {
+                    this.handleSwipe(pointer);
+                }
+            });
+    }
+
 
         this.storyGroup = this.add.group();
     }
@@ -70,7 +115,6 @@ class MainMenu extends Phaser.Scene {
     createLavaEffect(width, height) {
         const spots = [];
 
-        // Создаем 6 пятен
         for (let i = 0; i < 6; i++) {
             const x = Phaser.Math.Between(0, width);
             const y = Phaser.Math.Between(0, height);
@@ -84,7 +128,6 @@ class MainMenu extends Phaser.Scene {
                 vy: Phaser.Math.Between(-2, 2) || 1
             });
 
-            // Анимация изменения размера
             this.tweens.add({
                 targets: spot,
                 scale: { from: spot.scale * 0.8, to: spot.scale * 1.2 },
@@ -96,17 +139,13 @@ class MainMenu extends Phaser.Scene {
             });
         }
 
-        // Анимация движения
         this.time.addEvent({
-            delay: 16, // ~60 FPS
+            delay: 16,
             loop: true,
             callback: () => {
                 spots.forEach(spot => {
-                    // Обновляем позиции
                     spot.sprite.x += spot.vx;
                     spot.sprite.y += spot.vy;
-
-                    // Ограничиваем движение в пределах экрана
                     const bounds = spot.sprite.getBounds();
                     if (bounds.left < 0 || bounds.right > width) spot.vx *= -1;
                     if (bounds.top < 0 || bounds.bottom > height) spot.vy *= -1;
@@ -115,21 +154,363 @@ class MainMenu extends Phaser.Scene {
         });
     }
 
+    createStoryInterface(width, height, playMusic) {
+    const storyWidth = width * 0.7;
+    const storyHeight = height * 0.5;
+
+    this.storyImage = this.add.image(width / 2, height * 0.4, this.stories[this.currentStoryIndex].image)
+        .setDisplaySize(storyWidth, storyHeight)
+        .setDepth(10)
+        .setInteractive();
+
+        this.leftStoryImage = this.currentStoryIndex > 0
+            ? this.add.image(width * 0.2, height * 0.4, this.stories[this.currentStoryIndex - 1].image)
+                .setDisplaySize(storyWidth, storyHeight)
+                .setDepth(9)
+                .setAlpha(0.5)
+            : null;
+
+        this.rightStoryImage = this.currentStoryIndex < this.stories.length - 1
+            ? this.add.image(width * 0.8, height * 0.4, this.stories[this.currentStoryIndex + 1].image)
+                .setDisplaySize(storyWidth, storyHeight)
+                .setDepth(9)
+                .setAlpha(0.5)
+            : null;
+
+        this.swipeDots = this.add.group();
+        for (let i = 0; i < 2; i++) {
+            const dot = this.add.circle(width * (0.48 + i * 0.05), height * 0.68, 3.3, 0xffffff, i === this.currentStoryIndex ? 1 : 0.3)
+                .setDepth(10);
+            this.swipeDots.add(dot);
+        }
+
+    this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
+    .setDisplaySize(width * 0.45, height * 0.05)
+    .setDepth(20) // Увеличиваем глубину
+    .setInteractive({ useHandCursor: true }) // Добавляем курсор-руку
+    .on('pointerdown', () => {
+        console.log('Button pressed'); // Debug
+        playMusic();
+        this.sound.play('click');
+        this.createPopup(width, height, playMusic);
+    })
+    .on('pointerover', () => this.openButton.setAlpha(0.8))
+    .on('pointerout', () => this.openButton.setAlpha(1));
+        this.openButtonText = this.add.text(width / 2, height * 0.73, 'Открыть', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.024}px`,
+            color: '#fff',
+            resolution: 2
+        }).setOrigin(0.5).setDepth(21);
+
+        this.description1 = this.add.text(width / 2, height * 0.78, 'В разработке', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.016}px`,
+            color: '#fff',
+            backgroundColor: '#00bfff',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(20);
+
+        this.description2 = this.add.text(width / 2, height * 0.85, 'Примерьте шкуру цифрового стакера и вуайриста и разгадайте тайну новой соседки', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.018}px`,
+            color: '#fff',
+            align: 'center',
+            wordWrap: { width: width * 0.7 }
+        }).setOrigin(0.5).setDepth(10);
+    }
+
+   createPopup(width, height, playMusic) {
+    // Оверлей
+    this.overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+        .setDepth(30)
+        .setInteractive();
+
+    // Картинка истории
+    this.popupImage = this.add.image(width / 2, height * 0.42, this.stories[this.currentStoryIndex].image)
+        .setDisplaySize(width * 0.8, height * 0.6)
+        .setDepth(31);
+
+    // Кнопка "Начать" (центр, как было раньше)
+    this.startButton = this.add.image(width / 2, height * 0.8, 'Button')
+        .setDisplaySize(width * 0.4, height * 0.08)
+        .setDepth(32)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            playMusic();
+            this.sound.play('click');
+            window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
+                this.scene.start('GameScene', {
+                    storyId: this.stories[this.currentStoryIndex].id,
+                    sceneId: progress.sceneId,
+                    dialogueIndexInScene: progress.dialogueIndex,
+                    energy: progress.energy,
+                    stars: progress.stars
+                });
+            });
+        });
+
+    this.startButtonText = this.add.text(width / 2, height * 0.8, 'Начать', {
+        fontFamily: 'IBM Plex Sans',
+        fontSize: `${height * 0.03}px`,
+        color: '#fff',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(33);
+
+    // Нижний блок с 3 кнопками
+    const buttonY = height * 0.9;
+    const buttonSpacing = width * 0.15;
+
+    // Рестарт
+    this.resetButton = this.add.image(width / 2 - buttonSpacing, buttonY, 'reset')
+        .setDisplaySize(width * 0.1, width * 0.1)
+        .setDepth(32)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            playMusic();
+            this.sound.play('click');
+            localStorage.removeItem(`progress_${this.stories[this.currentStoryIndex].id}`);
+            this.scene.start('GameScene', {
+                storyId: this.stories[this.currentStoryIndex].id,
+                sceneId: 'scene1',
+                dialogueIndexInScene: 0,
+                energy: 100,
+                stars: 0
+            });
+        });
+
+    this.resetText = this.add.text(width / 2 - buttonSpacing, buttonY + height * 0.05, 'Рестарт', {
+        fontFamily: 'IBM Plex Sans',
+        fontSize: `${height * 0.018}px`,
+        color: '#fff',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(33);
+
+    // Галерея
+    this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
+        .setDisplaySize(width * 0.1, width * 0.1)
+        .setDepth(32)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            playMusic();
+            this.sound.play('click');
+            console.log('Gallery opened');
+        });
+
+    this.galleryText = this.add.text(width / 2, buttonY + height * 0.05, 'Галерея', {
+        fontFamily: 'IBM Plex Sans',
+        fontSize: `${height * 0.018}px`,
+        color: '#fff',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(33);
+
+    // Закрыть
+    this.closeButton = this.add.image(width / 2 + buttonSpacing, buttonY, 'close')
+        .setDisplaySize(width * 0.1, width * 0.1)
+        .setDepth(32)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            playMusic();
+            this.sound.play('click');
+            this.closePopup();
+        });
+
+    this.closeText = this.add.text(width / 2 + buttonSpacing, buttonY + height * 0.05, 'Закрыть', {
+        fontFamily: 'IBM Plex Sans',
+        fontSize: `${height * 0.018}px`,
+        color: '#fff',
+        resolution: 2
+    }).setOrigin(0.5).setDepth(33);
+}
+
+ closePopup() {
+    const elements = [
+        this.overlay, this.popupImage, this.startButton, this.startButtonText,
+        this.resetButton, this.resetText, this.galleryButton, this.galleryText,
+        this.closeButton, this.closeText
+    ];
+    
+    elements.forEach(element => {
+        if (element) element.destroy();
+    });
+}
+
+    handleSwipe(pointer) {
+        if (!this.startSwipe) return;
+        const swipeDistance = pointer.x - this.startSwipe.x;
+        if (swipeDistance > 50 && this.currentStoryIndex > 0) {
+            this.currentStoryIndex--;
+            this.animateStoryTransition('right');
+        } else if (swipeDistance < -50 && this.currentStoryIndex < this.stories.length - 1) {
+            this.currentStoryIndex++;
+            this.animateStoryTransition('left');
+        }
+        this.startSwipe = null;
+    }
+
+    animateStoryTransition(direction) {
+        const width = this.scale.width;
+        const height = this.scale.height;
+        const storyWidth = width * 0.7;
+        const storyHeight = height * 0.5;
+
+        const currentImage = this.storyImage;
+        const newImage = this.add.image(width / 2, height * 0.4, this.stories[this.currentStoryIndex].image)
+            .setDisplaySize(storyWidth, storyHeight)
+            .setDepth(10)
+            .setAlpha(0);
+
+        if (direction === 'left') {
+            this.tweens.add({
+                targets: currentImage,
+                x: width * 1,
+                alpha: 0.5,
+                duration: 50,
+                ease: 'Power2',
+                onComplete: () => {
+                    currentImage.destroy();
+                    this.storyImage = newImage;
+                    this.updateStoryInterface();
+                }
+            });
+            this.tweens.add({
+                targets: newImage,
+                x: width / 2,
+                alpha: 1,
+                duration: 50,
+                ease: 'Power2'
+            });
+        } else {
+            this.tweens.add({
+                targets: currentImage,
+                x: width * 1,
+                alpha: 0.5,
+                duration: 50,
+                ease: 'Power2',
+                onComplete: () => {
+                    currentImage.destroy();
+                    this.storyImage = newImage;
+                    this.updateStoryInterface();
+                }
+            });
+            this.tweens.add({
+                targets: newImage,
+                x: width / 2,
+                alpha: 1,
+                duration: 500,
+                ease: 'Power2'
+            });
+        }
+    }
+
+   updateStoryInterface() {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const storyWidth = width * 0.7;
+    const storyHeight = height * 0.5;
+
+    this.swipeDots.getChildren().forEach((dot, i) => dot.setFillStyle(0xffffff, i === this.currentStoryIndex ? 1 : 0.3));
+
+    if (this.leftStoryImage) this.leftStoryImage.destroy();
+    if (this.rightStoryImage) this.rightStoryImage.destroy();
+
+    // Обновляем боковые картинки
+    this.leftStoryImage = this.currentStoryIndex > 0
+        ? this.add.image(width * 0.3, height * 0.4, this.stories[this.currentStoryIndex - 1].image)
+            .setDisplaySize(storyWidth, storyHeight)
+            .setDepth(9)
+            .setAlpha(0.5)
+            .setInteractive()
+            .on('pointerdown', (pointer) => {
+                this.startSwipe = { x: pointer.x, y: pointer.y };
+            })
+            .on('pointerup', (pointer) => {
+                if (this.startSwipe) {
+                    this.handleSwipe(pointer);
+                }
+            })
+        : null;
+
+    this.rightStoryImage = this.currentStoryIndex < this.stories.length - 1
+        ? this.add.image(width * 0.8, height * 0.4, this.stories[this.currentStoryIndex + 1].image)
+            .setDisplaySize(storyWidth, storyHeight)
+            .setDepth(9)
+            .setAlpha(0.5)
+            .setInteractive()
+            .on('pointerdown', (pointer) => {
+                this.startSwipe = { x: pointer.x, y: pointer.y };
+            })
+            .on('pointerup', (pointer) => {
+                if (this.startSwipe) {
+                    this.handleSwipe(pointer);
+                }
+            })
+        : null;
+
+    // Восстанавливаем интерактивность основной картинки
+    this.storyImage.setTexture(this.stories[this.currentStoryIndex].image)
+        .setDisplaySize(storyWidth, storyHeight)
+        .setInteractive()
+        .on('pointerdown', (pointer) => {
+            this.startSwipe = { x: pointer.x, y: pointer.y };
+        })
+        .on('pointerup', (pointer) => {
+            if (this.startSwipe) {
+                this.handleSwipe(pointer);
+            }
+        });
+
+    // Важное исправление: полностью пересоздаем кнопку
+    if (this.openButton) {
+        this.openButton.destroy();
+    }
+    if (this.openButtonText) {
+        this.openButtonText.destroy();
+    }
+
+    // Создаем новую кнопку
+    this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
+        .setDisplaySize(width * 0.45, height * 0.05)
+        .setDepth(20)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            console.log('Button pressed after swipe');
+            this.sound.play('click');
+            this.createPopup(width, height, () => {
+                if (!this.menuMusic.isPlaying) {
+                    this.menuMusic.play();
+                }
+            });
+        })
+        .on('pointerover', () => this.openButton.setAlpha(0.8))
+        .on('pointerout', () => this.openButton.setAlpha(1));
+
+    this.openButtonText = this.add.text(width / 2, height * 0.73, 
+        this.stories[this.currentStoryIndex].active ? 'Открыть' : 'В разработке', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.024}px`,
+            color: '#fff',
+            resolution: 2
+        }).setOrigin(0.5).setDepth(21);
+
+    // Обновляем тексты
+    this.description1.setText(this.stories[this.currentStoryIndex].active ? 'В разработке' : 'В разработке');
+    this.description2.setText(this.stories[this.currentStoryIndex].active ? 
+        'Примерьте шкуру цифрового стакера и вуайриста и разгадайте тайну новой соседки' : 
+        'Эта история пока в разработке.');
+}
+
+
     createButtons(width, height, playMusic) {
-        // Размеры и отступы кнопок
         const buttonWidth = width * 0.45;
         const buttonHeight = height * 0.055;
-        const verticalSpacing = height * 0.07;
-
-        // Позиции кнопок
         const positions = [
-            height * 0.68, // Новая игра
-            height * 0.75, // Продолжить
-            height * 0.82, // Настройки
-            height * 0.89  // Галерея
+            height * 0.68,
+            height * 0.75,
+            height * 0.82,
+            height * 0.89
         ];
 
-        // Новая игра
         this.newGameContainer = this.add.container(width / 2, positions[0]).setDepth(10);
         const newGameButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
             .setInteractive()
@@ -169,7 +550,6 @@ class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
         this.newGameContainer.add([newGameButton, newGameText]);
 
-        // Продолжить
         this.continueContainer = this.add.container(width / 2, positions[1]).setDepth(10);
         const continueButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
             .setInteractive()
@@ -195,7 +575,6 @@ class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
         this.continueContainer.add([continueButton, continueText]);
 
-        // Настройки
         this.settingsContainer = this.add.container(width / 2, positions[2]).setDepth(10);
         const settingsButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
             .setInteractive()
@@ -213,8 +592,7 @@ class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
         this.settingsContainer.add([settingsButton, settingsText]);
 
-        // Галерея
-        this.galleryContainer = this.add.container(width / 2, positions[3]).setDepth(10);
+        this.galleryContainer = this.add.container(width / 2, positions[3]).setDepth(20);
         const galleryButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
             .setInteractive()
             .on('pointerdown', () => {
@@ -272,19 +650,16 @@ class MainMenu extends Phaser.Scene {
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
 
-        // Фон
         if (this.bg) {
             this.bg.setDisplaySize(width, height)
                 .setPosition(width / 2, height / 2);
         }
 
-        // Заголовок
         if (this.titleText) {
             this.titleText.setPosition(width / 2, height * 0.1)
                 .setFontSize(height * 0.043);
         }
 
-        // Кнопки
         const buttonWidth = width * 0.45;
         const buttonHeight = height * 0.055;
         const positions = [
@@ -311,7 +686,6 @@ class MainMenu extends Phaser.Scene {
             }
         });
 
-        // История
         if (this.storyGroup) {
             this.storyGroup.getChildren().forEach((container, i) => {
                 container.setPosition(width / 2, height * 0.3 + i * (height * 0.1));
@@ -319,6 +693,35 @@ class MainMenu extends Phaser.Scene {
                 const text = container.list.find(obj => obj.type === 'Text');
                 if (rect) rect.setSize(width * 0.7, height * 0.06);
                 if (text) text.setFontSize(height * 0.0258);
+            });
+        }
+
+        if (this.storyImage) {
+            const storyWidth = width * 0.7;
+            const storyHeight = height * 0.5;
+
+            this.storyImage.setDisplaySize(storyWidth, storyHeight)
+                .setPosition(width / 2, height * 0.4);
+            if (this.leftStoryImage) {
+                this.leftStoryImage.setDisplaySize(storyWidth, storyHeight)
+                    .setPosition(width * 0.2, height * 0.4);
+            }
+            if (this.rightStoryImage) {
+                this.rightStoryImage.setDisplaySize(storyWidth, storyHeight)
+                    .setPosition(width * 0.8, height * 0.4);
+            }
+            this.openButton.setDisplaySize(width * 0.4, height * 0.08)
+                .setPosition(width / 2, height * 0.85);
+            this.openButtonText.setPosition(width / 2, height * 0.85)
+                .setFontSize(height * 0.03);
+            this.description1.setPosition(width / 2, height * 0.9)
+                .setFontSize(height * 0.02);
+            this.description2.setPosition(width / 2, height * 0.95)
+                .setFontSize(height * 0.018)
+                .setWordWrapWidth(width * 0.7);
+            this.swipeDots.getChildren().forEach((dot, i) => {
+                dot.setPosition(width * (0.45 + i * 0.05), height * 0.55)
+                    .setRadius(3.3);
             });
         }
     }
