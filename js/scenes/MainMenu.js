@@ -5,6 +5,7 @@ class MainMenu extends Phaser.Scene {
 
     preload() {
         this.load.image('menu_bg', 'assets/common/images/menu_bg.jpg');
+        this.load.image('tap_to_play', 'assets/common/images/tap_to_play.jpg');
         this.load.image('gradient_dot', 'assets/common/images/gradient_dot.png');
         this.load.image('calendar', 'assets/common/images/calendar.png');
         this.load.image('reset', 'assets/common/images/reset.png');
@@ -18,6 +19,8 @@ class MainMenu extends Phaser.Scene {
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
         this.load.audio('click', 'assets/common/audio/click.wav');
+
+        
         this.createFontPreload();
     }
 
@@ -25,8 +28,14 @@ class MainMenu extends Phaser.Scene {
         const width = this.scale.width;
         const height = this.scale.height;
 
+         // Создаем музыку меню (но не запускаем ее сразу)
+    this.menuMusic = this.sound.add('menu_music', { loop: true });
+        
         this.scale.on('resize', this.resize, this);
         this.scale.refresh();
+
+         // Сначала показываем splash-экран
+    this.showSplashScreen(width, height);
 
         this.cameras.main.setViewport(0, 0, width, height);
         this.cameras.main.setBounds(0, 0, width, height);
@@ -72,6 +81,8 @@ class MainMenu extends Phaser.Scene {
         this.input.on('gameout', () => {    this.input.stopPropagation();
 });
 
+
+
 // Добавляем обработчики только для картинки
     this.storyImage.on('pointerdown', (pointer) => {
         this.startSwipe = { x: pointer.x, y: pointer.y };
@@ -111,7 +122,58 @@ class MainMenu extends Phaser.Scene {
 
         this.storyGroup = this.add.group();
     }
+showSplashScreen(width, height) {
+    // Создаем звук клика заранее
+    this.clickSound = this.sound.add('click');
+    
+    // Фоновая картинка
+    this.splashBg = this.add.image(width/2, height/2, 'tap_to_play')
+        .setDisplaySize(width, height)
+        .setDepth(1000)
+        .setInteractive();
+    
+    // Текст "Нажми чтобы начать"
+    this.splashText = this.add.text(width/2, height * 0.7, 'НАЖМИ ЧТО БЫ НАЧАТЬ', {
+        fontFamily: 'IBM Plex Sans',
+        fontSize: `${height * 0.02}px`,
+        color: '#ffffff',
+       
+        padding: { x: 20, y: 10 }
+    })
+    .setOrigin(0.5)
+    .setDepth(1001);
 
+    // Обработчик клика
+    this.splashBg.on('pointerdown', () => {
+        // Проигрываем звук клика
+        this.clickSound.play();
+        
+        // Запускаем музыку меню
+        if (!this.menuMusic.isPlaying) {
+            this.menuMusic.play();
+        }
+        
+        // Удаляем splash-экран
+        this.splashBg.destroy();
+        this.splashText.destroy();
+        
+        // Инициализируем главное меню
+        this.initMainMenu(width, height);
+    })
+
+    .setOrigin(0.5)
+    .setDepth(1001);
+
+    // Обработчик клика
+    this.splashBg.on('pointerdown', () => {
+        // Удаляем splash-экран
+        this.splashBg.destroy();
+        this.splashText.destroy();
+        
+        // Инициализируем главное меню
+        this.initMainMenu(width, height);
+    });
+}
     createLavaEffect(width, height) {
         const spots = [];
 
@@ -158,7 +220,7 @@ class MainMenu extends Phaser.Scene {
     const storyWidth = width * 0.7;
     const storyHeight = height * 0.5;
 
-    this.storyImage = this.add.image(width / 2, height * 0.4, this.stories[this.currentStoryIndex].image)
+  this.storyImage = this.add.image(width / 2, height * 0.4, this.stories[this.currentStoryIndex].image)
         .setDisplaySize(storyWidth, storyHeight)
         .setDepth(10)
         .setInteractive();
@@ -185,8 +247,10 @@ class MainMenu extends Phaser.Scene {
         }
 
     this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
-    .setDisplaySize(width * 0.45, height * 0.05)
+    .setDisplaySize(width * 0.65, height * 0.06)
     .setDepth(20) // Увеличиваем глубину
+
+    
     .setInteractive({ useHandCursor: true }) // Добавляем курсор-руку
     .on('pointerdown', () => {
         console.log('Button pressed'); // Debug
@@ -203,7 +267,7 @@ class MainMenu extends Phaser.Scene {
             resolution: 2
         }).setOrigin(0.5).setDepth(21);
 
-        this.description1 = this.add.text(width / 2, height * 0.78, 'В разработке', {
+        this.description1 = this.add.text(width / 2, height * 0.78, 'Готова глава 1', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.016}px`,
             color: '#fff',
@@ -279,9 +343,9 @@ class MainMenu extends Phaser.Scene {
             });
         });
 
-    this.resetText = this.add.text(width / 2 - buttonSpacing, buttonY + height * 0.05, 'Рестарт', {
+    this.resetText = this.add.text(width / 2 - buttonSpacing, buttonY + height * 0.04, 'Рестарт', {
         fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.018}px`,
+        fontSize: `${height * 0.012}px`,
         color: '#fff',
         resolution: 2
     }).setOrigin(0.5).setDepth(33);
@@ -297,9 +361,9 @@ class MainMenu extends Phaser.Scene {
             console.log('Gallery opened');
         });
 
-    this.galleryText = this.add.text(width / 2, buttonY + height * 0.05, 'Галерея', {
+    this.galleryText = this.add.text(width / 2, buttonY + height * 0.04, 'Галерея', {
         fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.018}px`,
+        fontSize: `${height * 0.012}px`,
         color: '#fff',
         resolution: 2
     }).setOrigin(0.5).setDepth(33);
@@ -315,9 +379,9 @@ class MainMenu extends Phaser.Scene {
             this.closePopup();
         });
 
-    this.closeText = this.add.text(width / 2 + buttonSpacing, buttonY + height * 0.05, 'Закрыть', {
+    this.closeText = this.add.text(width / 2 + buttonSpacing, buttonY + height * 0.04, 'Закрыть', {
         fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.018}px`,
+        fontSize: `${height * 0.012}px`,
         color: '#fff',
         resolution: 2
     }).setOrigin(0.5).setDepth(33);
@@ -468,36 +532,36 @@ class MainMenu extends Phaser.Scene {
         this.openButtonText.destroy();
     }
 
-    // Создаем новую кнопку
-    this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
-        .setDisplaySize(width * 0.45, height * 0.05)
-        .setDepth(20)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => {
-            console.log('Button pressed after swipe');
-            this.sound.play('click');
-            this.createPopup(width, height, () => {
-                if (!this.menuMusic.isPlaying) {
-                    this.menuMusic.play();
-                }
-            });
-        })
-        .on('pointerover', () => this.openButton.setAlpha(0.8))
-        .on('pointerout', () => this.openButton.setAlpha(1));
+    // Создаём кнопку только для активной истории
+    if (this.stories[this.currentStoryIndex].active) {
+        this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
+            .setDisplaySize(width * 0.65, height * 0.06)
+            .setDepth(20)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                console.log('Button pressed after swipe');
+                this.sound.play('click');
+                this.createPopup(width, height, () => {
+                    if (!this.menuMusic.isPlaying) {
+                        this.menuMusic.play();
+                    }
+                });
+            })
+            .on('pointerover', () => this.openButton.setAlpha(0.8))
+            .on('pointerout', () => this.openButton.setAlpha(1));
 
-    this.openButtonText = this.add.text(width / 2, height * 0.73, 
-        this.stories[this.currentStoryIndex].active ? 'Открыть' : 'В разработке', {
+        this.openButtonText = this.add.text(width / 2, height * 0.73, 'Открыть', {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.024}px`,
             color: '#fff',
             resolution: 2
         }).setOrigin(0.5).setDepth(21);
+    }
 
-    // Обновляем тексты
-    this.description1.setText(this.stories[this.currentStoryIndex].active ? 'В разработке' : 'В разработке');
-    this.description2.setText(this.stories[this.currentStoryIndex].active ? 
-        'Примерьте шкуру цифрового стакера и вуайриста и разгадайте тайну новой соседки' : 
-        'Эта история пока в разработке.');
+    this.description1.setText(this.stories[this.currentStoryIndex].active ? 'Готова Глава 1' : 'В разработке');
+    this.description2.setText(this.stories[this.currentStoryIndex].active 
+        ? 'Примерьте шкуру цифрового стакера и вуайриста и разгадайте тайну новой соседки' 
+        : 'Эта история пока в разработке.');
 }
 
 
@@ -659,6 +723,17 @@ class MainMenu extends Phaser.Scene {
             this.titleText.setPosition(width / 2, height * 0.1)
                 .setFontSize(height * 0.043);
         }
+        // Если есть splash-экран - обновляем его размеры
+    if (this.splashBg) {
+        this.splashBg.setDisplaySize(width, height)
+            .setPosition(width/2, height/2);
+        
+        // Обновляем текст
+        if (this.splashText) {
+            this.splashText.setPosition(width/2, height * 0.7)
+                .setFontSize(height * 0.04);
+        }
+    }
 
         const buttonWidth = width * 0.45;
         const buttonHeight = height * 0.055;
