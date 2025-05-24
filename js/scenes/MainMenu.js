@@ -14,6 +14,7 @@ class MainMenu extends Phaser.Scene {
         this.load.image('settings_box', 'assets/common/images/settings_box.png');
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('Button', 'assets/common/images/Button.png');
+        this.load.image('Button_wide', 'assets/common/images/Button_wide.png');
         this.load.image('story1', 'assets/common/images/story1.jpg');
         this.load.image('story2', 'assets/common/images/story2.jpg');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
@@ -246,7 +247,7 @@ showSplashScreen(width, height) {
             this.swipeDots.add(dot);
         }
 
-    this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
+    this.openButton = this.add.image(width / 2, height * 0.73, 'Button_wide')
     .setDisplaySize(width * 0.65, height * 0.06)
     .setDepth(20) // Увеличиваем глубину
 
@@ -286,18 +287,18 @@ showSplashScreen(width, height) {
 
    createPopup(width, height, playMusic) {
     // Оверлей
-    this.overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+    this.overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9)
         .setDepth(30)
         .setInteractive();
 
     // Картинка истории
     this.popupImage = this.add.image(width / 2, height * 0.42, this.stories[this.currentStoryIndex].image)
-        .setDisplaySize(width * 0.8, height * 0.6)
+        .setDisplaySize(width * 0.75, height * 0.55)
         .setDepth(31);
 
     // Кнопка "Начать" (центр, как было раньше)
-    this.startButton = this.add.image(width / 2, height * 0.8, 'Button')
-        .setDisplaySize(width * 0.4, height * 0.08)
+    this.startButton = this.add.image(width / 2, height * 0.74, 'Button_wide')
+        .setDisplaySize(width * 0.75, height * 0.06)
         .setDepth(32)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
@@ -314,7 +315,7 @@ showSplashScreen(width, height) {
             });
         });
 
-    this.startButtonText = this.add.text(width / 2, height * 0.8, 'Начать', {
+    this.startButtonText = this.add.text(width / 2, height * 0.74, 'Начать', {
         fontFamily: 'IBM Plex Sans',
         fontSize: `${height * 0.03}px`,
         color: '#fff',
@@ -534,7 +535,7 @@ showSplashScreen(width, height) {
 
     // Создаём кнопку только для активной истории
     if (this.stories[this.currentStoryIndex].active) {
-        this.openButton = this.add.image(width / 2, height * 0.73, 'Button')
+        this.openButton = this.add.image(width / 2, height * 0.73, 'Button_wide')
             .setDisplaySize(width * 0.65, height * 0.06)
             .setDepth(20)
             .setInteractive({ useHandCursor: true })
