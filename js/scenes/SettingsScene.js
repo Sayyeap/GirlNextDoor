@@ -85,7 +85,7 @@ class SettingsScene extends Phaser.Scene {
         this.elements.closeText = this.add.text(
             width/2, 
             height*0.6, 
-            'ЗАКРЫТЬ', 
+            'ЗАКРЫТЬ000', 
             {
                 fontFamily: 'Dela Gothic One',
                 fontSize: `${height*0.025}px`,
