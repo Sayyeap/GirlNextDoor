@@ -20,7 +20,6 @@
             font-family: 'IBM Plex Sans', sans-serif;
              -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    -moz-osx-font-smoothing: grayscale;
         }
       
         canvas {
@@ -28,9 +27,6 @@
             transform: none !important;
             scale: 1 !important;
             will-change: transform;
-            image-rendering: -moz-crisp-edges;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
         }
 
         /* Локальные шрифты */
@@ -98,9 +94,7 @@
                 autoCenter: Phaser.Scale.CENTER_BOTH
             },
             scene: [MainMenu, GameScene, SettingsScene, progress],
-            parent: 'game-container',
-             resolution: window.devicePixelRatio || 1,
-    autoRound: false
+            parent: 'game-container'
         };
 
         const game = new Phaser.Game(config);

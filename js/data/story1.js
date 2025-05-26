@@ -6,9 +6,9 @@ const story1Dialogues = [
         nextScene: "scene2",
         dialogues: [
             {
-                speaker: "Девушка",
+                speaker: "Ltdeirf",
                 text: "Туман обволакивает, густой, почти живой, будто мир растворяется в молочной дымке. В центре — она",
-                charSprite: null,
+                charSprite: 'mia_tshirt_shy',
                 shake: null,
                 sfx: null,
                 choices: [
@@ -28,13 +28,13 @@ const story1Dialogues = [
     },
     {
       text: "Пропустить",
-      energyCost: 0,
+      energyCost: 20,
       nextScene: "scene2"
     }
   ]
             },
             {
-                 speaker: " ",
+                 speaker: "self",
                 text: "Тёмные волосы струятся по плечам, зелёные глаза горят, как изумруды",
                 charSprite: null,
                 shake: null,
@@ -84,7 +84,7 @@ const story1Dialogues = [
         nextScene: "scene3",
         dialogues: [
             {
-                speaker: " ",
+                speaker: "self",
                 text: "Резкий звон будильника iPhone вонзается в тишину, как нож. Глаза распахиваются, но сон ускользает, оставляя лишь жар в груди и смутное чувство потери",
                 charSprite: null,
                 shake: null,

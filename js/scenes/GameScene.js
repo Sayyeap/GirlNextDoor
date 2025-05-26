@@ -5,7 +5,7 @@ class GameScene extends Phaser.Scene {
         this.currentScene = null;
         this.dialogueIndexInScene = 0;
         this.currentMusic = null;
-        this.energy = 100;
+        this.energy = 0;
         this.stars = 0;
         this.choicesGroup = null;
         this.charShakeTween = null;
@@ -310,7 +310,8 @@ class GameScene extends Phaser.Scene {
             fontSize: `${height * 0.0258}px`,
             color: '#bcff64',
             fontFamily: 'Dela Gothic One'
-        }).setDepth(11);
+        })
+        .setDepth(11);
 
         this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
             .setDisplaySize(height * 0.037, height * 0.037)
@@ -573,7 +574,7 @@ class GameScene extends Phaser.Scene {
         const height = this.scale.height;
         const textColor = '#ffffff';
 
-        this.energy += 100;
+        this.energy += 0;
         this.energyText.setText(this.energy);
         await this.saveProgress();
 
@@ -803,7 +804,7 @@ class GameScene extends Phaser.Scene {
                     scene => scene.id === loadedData.sceneId
                 ) || this.story.dialogues[0];
                 this.dialogueIndexInScene = loadedData.dialogueIndex || 0;
-                this.energy = loadedData.energy || 100;
+                this.energy = loadedData.energy || 0;
                 this.stars = loadedData.stars || 0;
                 this.minigameResults = loadedData.minigameResults || {};
                 console.log('Game loaded:', loadedData);
@@ -813,7 +814,7 @@ class GameScene extends Phaser.Scene {
                 scene => scene.id === saveData.sceneId
             ) || this.story.dialogues[0];
             this.dialogueIndexInScene = saveData.dialogueIndexInScene || 0;
-            this.energy = saveData.energy || 100;
+            this.energy = saveData.energy || 0;
             this.stars = saveData.stars || 0;
             this.minigameResults = saveData.minigameResults || {};
         }

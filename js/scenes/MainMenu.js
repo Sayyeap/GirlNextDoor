@@ -60,7 +60,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height * 0.043}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5).setDepth(10);
 
         const playMusic = () => {
@@ -265,7 +265,7 @@ showSplashScreen(width, height) {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.024}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5).setDepth(21);
 
         this.description1 = this.add.text(width / 2, height * 0.78, 'Готова глава 1', {
@@ -319,7 +319,7 @@ showSplashScreen(width, height) {
         fontFamily: 'IBM Plex Sans',
         fontSize: `${height * 0.03}px`,
         color: '#fff',
-        resolution: 2
+        resolution: 4
     }).setOrigin(0.5).setDepth(33);
 
     // Нижний блок с 3 кнопками
@@ -348,7 +348,7 @@ showSplashScreen(width, height) {
         fontFamily: 'IBM Plex Sans',
         fontSize: `${height * 0.012}px`,
         color: '#fff',
-        resolution: 2
+        resolution: 4
     }).setOrigin(0.5).setDepth(33);
 
     // Галерея
@@ -366,7 +366,7 @@ showSplashScreen(width, height) {
         fontFamily: 'IBM Plex Sans',
         fontSize: `${height * 0.012}px`,
         color: '#fff',
-        resolution: 2
+        resolution: 4
     }).setOrigin(0.5).setDepth(33);
 
     // Закрыть
@@ -384,7 +384,7 @@ showSplashScreen(width, height) {
         fontFamily: 'IBM Plex Sans',
         fontSize: `${height * 0.012}px`,
         color: '#fff',
-        resolution: 2
+        resolution: 4
     }).setOrigin(0.5).setDepth(33);
 }
 
@@ -555,7 +555,7 @@ showSplashScreen(width, height) {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.024}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5).setDepth(21);
     }
 
@@ -611,7 +611,7 @@ showSplashScreen(width, height) {
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
             textTransform: 'uppercase',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5);
         this.newGameContainer.add([newGameButton, newGameText]);
 
@@ -636,7 +636,7 @@ showSplashScreen(width, height) {
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
             textTransform: 'uppercase',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5);
         this.continueContainer.add([continueButton, continueText]);
 
@@ -653,7 +653,7 @@ showSplashScreen(width, height) {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5);
         this.settingsContainer.add([settingsButton, settingsText]);
 
@@ -669,7 +669,7 @@ showSplashScreen(width, height) {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 4
         }).setOrigin(0.5);
         this.galleryContainer.add([galleryButton, galleryText]);
     }
@@ -699,7 +699,7 @@ showSplashScreen(width, height) {
                 fontFamily: 'IBM Plex Sans',
                 fontSize: `${height * 0.0258}px`,
                 color: '#fff',
-                resolution: 2
+                resolution: 4
             }).setOrigin(0.5);
             storyContainer.add([btn, storyText]);
             this.storyGroup.add(storyContainer);
