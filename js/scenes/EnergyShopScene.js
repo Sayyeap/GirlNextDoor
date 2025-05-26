@@ -28,7 +28,7 @@ class EnergyShopScene extends Phaser.Scene {
 
         // Фон окна
         const popupWidth = width * 0.8;
-        const popupHeight = height * 0.6;
+        const popupHeight = height * 0.5;
         const popupX = width / 2;
         const popupY = height / 2;
 
@@ -57,10 +57,10 @@ class EnergyShopScene extends Phaser.Scene {
         ];
 
         const blockWidth = width * 0.35;
-        const blockHeight = blockWidth * (3 / 4);
-        const spacingX = width * 0.05;
-        const spacingY = height * 0.05;
-        const startX = width * 0.15;
+        const blockHeight = blockWidth * (3 / 2.4);
+        const spacingX = width * 0.02;
+        const spacingY = height * 0.01;
+        const startX = width * 0.14;
         const startY = height * 0.3;
 
         blockData.forEach((data, index) => {
@@ -70,30 +70,30 @@ class EnergyShopScene extends Phaser.Scene {
             const blockY = startY + row * (blockHeight + spacingY);
 
             // Подложка блока
-            const blockBg = this.add.rectangle(blockX + blockWidth / 2, blockY + blockHeight / 2, blockWidth, blockHeight, 0x333333, 0.8)
+            const blockBg = this.add.rectangle(blockX + blockWidth / 2, blockY + blockHeight / 2, blockWidth, blockHeight, 0x0b0e13, 0.3)
                 .setDepth(32);
-            blockBg.setStrokeStyle(2, 0xffffff, 0.5);
+            blockBg.setStrokeStyle(1, 0xe3e8ea, 0.5);
 
             // Большая иконка
-            const largeIcon = this.add.image(blockX + blockWidth / 2, blockY + blockHeight * 0.4, data.icon)
+            const largeIcon = this.add.image(blockX + blockWidth / 2, blockY + blockHeight * 0.27, data.icon)
                 .setDisplaySize(blockWidth * 0.6, blockWidth * 0.6)
                 .setDepth(33);
 
             // Маленькая иконка и текст энергии
-            const smallIcon = this.add.image(blockX + blockWidth * 0.35, blockY + blockHeight * 0.7, 'energyIcon')
-                .setDisplaySize(blockWidth * 0.15, blockWidth * 0.15)
+            const smallIcon = this.add.image(blockX + blockWidth * 0.31, blockY + blockHeight * 0.63, 'energyIcon')
+                .setDisplaySize(blockWidth * 0.19, blockWidth * 0.19)
                 .setDepth(33);
 
-            const energyText = this.add.text(blockX + blockWidth * 0.55, blockY + blockHeight * 0.7, `${data.energy}`, {
-                fontFamily: 'IBM Plex Sans',
-                fontSize: `${blockHeight * 0.15}px`,
+            const energyText = this.add.text(blockX + blockWidth * 0.59, blockY + blockHeight * 0.63, `${data.energy}`, {
+                fontFamily: "Dela Gothic One",
+                fontSize: `${blockHeight * 0.13}px`,
                 color: '#ffffff',
                 resolution: 4
             }).setOrigin(0.5).setDepth(33);
 
             // Кнопка покупки
-            const button = this.add.image(blockX + blockWidth / 2, blockY + blockHeight * 0.9, 'Button')
-                .setDisplaySize(blockWidth * 0.8, blockHeight * 0.2)
+            const button = this.add.image(blockX + blockWidth / 2, blockY + blockHeight * 0.85, 'Button')
+                .setDisplaySize(blockWidth * 0.9, blockHeight * 0.2)
                 .setDepth(33)
                 .setInteractive({ useHandCursor: true })
                 .on('pointerdown', () => this.handlePurchase(data.energy, data.stars))
@@ -101,12 +101,12 @@ class EnergyShopScene extends Phaser.Scene {
                 .on('pointerout', () => button.setAlpha(1));
 
             // Иконка звезд и цена
-            const starIcon = this.add.image(blockX + blockWidth * 0.3, blockY + blockHeight * 0.9, 'tgstars')
+            const starIcon = this.add.image(blockX + blockWidth * 0.33, blockY + blockHeight * 0.85, 'tgstars')
                 .setDisplaySize(blockHeight * 0.15, blockHeight * 0.15)
                 .setDepth(34);
 
-            const priceText = this.add.text(blockX + blockWidth * 0.55, blockY + blockHeight * 0.9, `${data.stars}`, {
-                fontFamily: 'IBM Plex Sans',
+            const priceText = this.add.text(blockX + blockWidth * 0.55, blockY + blockHeight * 0.85, `${data.stars}`, {
+                fontFamily: 'Dela Gothic One',
                 fontSize: `${blockHeight * 0.12}px`,
                 color: '#ffffff',
                 resolution: 4
@@ -131,32 +131,33 @@ class EnergyShopScene extends Phaser.Scene {
           });
     }
 
-    handlePurchase(energy, starsCost) {
-        this.sound.play('click');
-        window.gameStorage.loadProgress('story1', this.registry, (progress) => {
-            if (progress.stars >= starsCost) {
-                progress.energy += energy;
-                progress.stars -= starsCost;
-                window.gameStorage.saveProgress(
-                    'story1',
-                    progress.sceneId,
-                    progress.dialogueIndex,
-                    progress.energy,
-                    progress.stars,
-                    this.registry
-                );
-                // Обновляем отображение энергии в MainMenu
-                const mainMenuScene = this.scene.get('MainMenu');
-                if (mainMenuScene && mainMenuScene.energyText) {
-                    mainMenuScene.energyText.setText(`${progress.energy}`);
-                }
-                console.log(`Purchased ${energy} energy for ${starsCost} stars. New balance: ${progress.energy} energy, ${progress.stars} stars`);
-            } else {
-                // Показываем уведомление о недостатке звезд
-                this.showNotEnoughStars(width, height);
+ handlePurchase(energy, starsCost) {
+    this.sound.play('click');
+    window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+        // if (progress.stars >= starsCost) {
+            progress.energy += energy;
+            // progress.stars -= starsCost;
+            window.gameStorage.saveProgress(
+                'story1',
+                progress.sceneId,
+                progress.dialogueIndex,
+                progress.energy,
+                progress.stars,
+                this.registry
+            );
+            // Обновляем отображение энергии в MainMenu
+            const mainMenuScene = this.scene.get('MainMenu');
+            if (mainMenuScene && mainMenuScene.energyText) {
+                mainMenuScene.energyText.setText(`${progress.energy}`);
             }
-        });
-    }
+            console.log(`Added ${energy} energy. New balance: ${progress.energy} energy, ${progress.stars} stars`);
+        // } else {
+        //     // Показываем уведомление о недостатке звезд
+        //     this.showNotEnoughStars(width, height);
+        // }
+    });
+}
+    
 
     showNotEnoughStars(width, height) {
         if (this.elements.notification) {
