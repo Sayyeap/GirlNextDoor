@@ -17,7 +17,7 @@
             width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            font-family: 'IBM Plex Sans','Dela Gothic One';
+            font-family: 'IBM Plex Sans', sans-serif;
              -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
         }
@@ -73,6 +73,7 @@
     <script src="js/scenes/GameScene.js"></script>
     <script src="js/scenes/SpyGameScene.js"></script>
     <script src="js/scenes/SettingsScene.js"></script>
+    <script src="js/scenes/EnergyShopScene.js"></script>
     <script src="js/scenes/FullscreenScene.js"></script>
     <script src="js/scenes/InteractiveScene.js"></script>
     <script src="js/utils.js"></script>
@@ -93,7 +94,7 @@
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH
             },
-            scene: [MainMenu, GameScene, SettingsScene, progress],
+            scene: [MainMenu, GameScene, SettingsScene, progress,EnergyShopScene],
             parent: 'game-container'
         };
 

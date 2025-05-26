@@ -21,18 +21,22 @@ class MainMenu extends Phaser.Scene {
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
         this.load.audio('click', 'assets/common/audio/click.wav');
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
-
+        this.load.image('manyicons', 'assets/common/images/manyicons.png');
+        this.load.image('aloticons', 'assets/common/images/aloticons.png');
+        this.load.image('fullofIcon', 'assets/common/images/fullofIcon.png');
+        this.load.image('tgstars', 'assets/common/images/tgstars.png');
+        
         this.createFontPreload();
     }
 
     async create() {
-         // Проверка загрузки шрифта
-    try {
-        await document.fonts.load('16px "Dela Gothic One"');
-        console.log('Dela Gothic One font loaded');
-    } catch (e) {
-        console.error('Font loading error:', e);
-    }
+        try {
+            await document.fonts.load('16px "Dela Gothic One"');
+            console.log('Dela Gothic One font loaded');
+        } catch (e) {
+            console.error('Font loading error:', e);
+        }
+        
         const width = this.scale.width;
         const height = this.scale.height;
 
@@ -79,10 +83,10 @@ class MainMenu extends Phaser.Scene {
         ];
         this.createStoryInterface(width, height, playMusic);
 
-        // Добавляем блок энергии в верхней части
+        // Добавляем блок энергии
         this.createEnergyDisplay(width, height);
 
-        // Добавляем кнопку настроек внизу
+        // Добавляем кнопку настроек
         this.createSettingsButton(width, height);
 
         this.input.on('pointerdown', (pointer) => this.startSwipe = { x: pointer.x, y: pointer.y });
@@ -128,56 +132,57 @@ class MainMenu extends Phaser.Scene {
         this.storyGroup = this.add.group();
     }
 
-  createEnergyDisplay(width, height) {
-    // Размеры элементов
-    const bgWidth = width * 0.26;
-    const bgHeight = height * 0.04;
-    const borderRadius = 5;
-    
-    // Центральные координаты
-    const centerX = width / 2;
-    const centerY = height * 0.12; // 10% от высоты экрана от верхнего края
+    createEnergyDisplay(width, height) {
+        // Размеры элементов
+        const bgWidth = width * 0.26;
+        const bgHeight = height * 0.04;
+        const borderRadius = 5;
+        
+        // Центральные координаты
+        const centerX = width / 2;
+        const centerY = height * 0.12;
 
-    // Фон для энергии (по центру)
-    this.energyBg = this.add.graphics()
-        .setDepth(10);
-    this.energyBg.fillStyle(0x000000, 0.9);
-    this.energyBg.fillRoundedRect(
-        centerX - bgWidth / 2,  // X - центрируем по ширине
-        centerY - bgHeight / 2, // Y - центрируем по высоте
-        bgWidth,
-        bgHeight,
-        borderRadius
-    );
+        // Фон для энергии
+        this.energyBg = this.add.graphics()
+            .setDepth(10);
+        this.energyBg.fillStyle(0x000000, 0.9);
+        this.energyBg.fillRoundedRect(
+            centerX - bgWidth / 2,
+            centerY - bgHeight / 2,
+            bgWidth,
+            bgHeight,
+            borderRadius
+        );
 
-    // Текст энергии (по центру относительно блока)
-    this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, '100', {
-        fontSize: `${height * 0.0258}px`,
-        color: '#57b9ff',
-        fontFamily: 'Dela Gothic One',
-    })
-    .setOrigin(0.5) // Центрируем текст
-    .setDepth(31);
-
-    // Иконка энергии (слева от текста)
-    this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
-        .setDisplaySize(height * 0.037, height * 0.037)
-        .setDepth(11)
-        .setInteractive()
-        .on('pointerdown', () => {
-            this.sound.play('click');
-            console.log('Energy icon clicked, show modal');
+        // Загружаем текущую энергию
+        window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+            this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${progress.energy || 0}`, {
+                fontSize: `${height * 0.0258}px`,
+                color: '#57b9ff',
+                fontFamily: 'Dela Gothic One',
+            }).setOrigin(0.5).setDepth(31);
         });
+
+        // Иконка энергии
+        this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
+            .setDisplaySize(height * 0.037, height * 0.037)
+            .setDepth(11)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                console.log('EnergyShop button clicked');
+                this.scene.launch('EnergyShopScene');
+            });
     }
 
+    // Остальные методы остаются без изменений
     createSettingsButton(width, height) {
-        // Кнопка настроек внизу по центру
         this.settingsButton = this.add.image(width / 2, height * 0.95, 'settings')
             .setDisplaySize(height * 0.03, height * 0.03)
             .setDepth(11)
             .setInteractive()
             .on('pointerdown', () => {
-                this.sound.play('click'); // Звук клика
+                this.sound.play('click');
                 console.log('Settings button clicked');
                 this.scene.launch('SettingsScene');
             });
@@ -212,7 +217,7 @@ class MainMenu extends Phaser.Scene {
     }
 
     initMainMenu(width, height) {
-        // Этот метод можно оставить пустым или добавить дополнительные инициализации
+        // Дополнительные инициализации, если нужны
     }
 
     createLavaEffect(width, height) {
@@ -345,8 +350,8 @@ class MainMenu extends Phaser.Scene {
                         storyId: this.stories[this.currentStoryIndex].id,
                         sceneId: progress.sceneId,
                         dialogueIndexInScene: progress.dialogueIndex,
-                        energy: progress.energy,
-                        stars: progress.stars
+                        energy: progress.energy || 0,
+                        stars: progress.stars || 0
                     });
                 });
             });
@@ -368,7 +373,7 @@ class MainMenu extends Phaser.Scene {
             .on('pointerdown', () => {
                 playMusic();
                 this.sound.play('click');
-                localStorage.removeItem(`progress_${this.stories[this.currentStoryIndex].id}`);
+                window.gameStorage.saveProgress(this.stories[this.currentStoryIndex].id, 'scene1', 0, 100, 0, this.registry);
                 this.scene.start('GameScene', {
                     storyId: this.stories[this.currentStoryIndex].id,
                     sceneId: 'scene1',
@@ -606,25 +611,10 @@ class MainMenu extends Phaser.Scene {
         this.newGameContainer = this.add.container(width / 2, positions[0]).setDepth(10);
         const newGameButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
             .setInteractive()
-            .on('pointerdown', async () => {
+            .on('pointerdown', () => {
                 playMusic();
                 this.sound.play('click');
-                if (window.Telegram?.WebApp) {
-                    const userId = window.gameConfig?.userId;
-                    if (userId) {
-                        try {
-                            await Telegram.WebApp.CloudStorage.removeItem(`progress_${userId}_story1`);
-                            console.log('MainMenu: Progress reset for story1 via CloudStorage');
-                        } catch (error) {
-                            console.error('MainMenu: Failed to reset progress', error);
-                            localStorage.removeItem(`progress_story1`);
-                        }
-                    } else {
-                        localStorage.removeItem(`progress_story1`);
-                    }
-                } else {
-                    localStorage.removeItem(`progress_story1`);
-                }
+                window.gameStorage.saveProgress('story1', 'scene1', 0, 100, 0, this.registry);
                 this.scene.start('GameScene', {
                     storyId: 'story1',
                     sceneId: 'scene1',
@@ -653,8 +643,8 @@ class MainMenu extends Phaser.Scene {
                         storyId: 'story1',
                         sceneId: progress.sceneId,
                         dialogueIndexInScene: progress.dialogueIndex,
-                        energy: progress.energy,
-                        stars: progress.stars
+                        energy: progress.energy || 0,
+                        stars: progress.stars || 0
                     });
                 });
             });
@@ -711,13 +701,14 @@ class MainMenu extends Phaser.Scene {
                 .setInteractive()
                 .on('pointerdown', () => {
                     this.sound.play('click');
-                    const progress = { sceneId: 'scene1', dialogueIndexInScene: 0, energy: 100, stars: 0 };
-                    this.scene.start('GameScene', {
-                        storyId: story.id,
-                        sceneId: progress.sceneId,
-                        dialogueIndexInScene: progress.dialogueIndexInScene,
-                        energy: progress.energy,
-                        stars: progress.stars
+                    window.gameStorage.loadProgress(story.id, this.registry, (progress) => {
+                        this.scene.start('GameScene', {
+                            storyId: story.id,
+                            sceneId: progress.sceneId,
+                            dialogueIndexInScene: progress.dialogueIndex,
+                            energy: progress.energy || 0,
+                            stars: progress.stars || 0
+                        });
                     });
                 });
             const storyText = this.add.text(0, 0, story.title, {
@@ -761,23 +752,23 @@ class MainMenu extends Phaser.Scene {
 
         if (this.energyBg) {
             this.energyBg.clear();
-            this.energyBg.fillStyle(0x000000, 0.3);
+            this.energyBg.fillStyle(0x000000, 0.9);
             this.energyBg.fillRoundedRect(
-                width * 0.15 - (width * 0.26) / 2,
-                height * 0.15 - (height * 0.04) / 2,
+                width / 2 - (width * 0.26) / 2,
+                height * 0.12 - (height * 0.04) / 2,
                 width * 0.26,
                 height * 0.04,
                 5
             );
-            this.energyText.setPosition(width * 0.11, height * 0.135)
-                .setFontSize(height * 0.0258);
-            this.energyIcon.setPosition(width * 0.064, height * 0.15)
-                .setDisplaySize(height * 0.037, height * 0.037);
+            this.energyText?.setPosition(width / 2 + (width * 0.26) * 0.15, height * 0.12)
+                           .setFontSize(height * 0.0258);
+            this.energyIcon?.setPosition(width / 2 - (width * 0.26) * 0.35, height * 0.12)
+                           .setDisplaySize(height * 0.037, height * 0.037);
         }
 
         if (this.settingsButton) {
             this.settingsButton.setPosition(width / 2, height * 0.95)
-                .setDisplaySize(height * 0.08, height * 0.08);
+                .setDisplaySize(height * 0.03, height * 0.03);
         }
 
         const buttonWidth = width * 0.45;
@@ -852,7 +843,7 @@ class MainMenu extends Phaser.Scene {
 
     createFontPreload() {
         const div = document.createElement('div');
-        div.style.fontFamily = ' IBM Plex Sans, Dela Gothic One,';
+        div.style.fontFamily = 'IBM Plex Sans, Dela Gothic One';
         div.style.position = 'absolute';
         div.style.opacity = '0';
         div.style.pointerEvents = 'none';
