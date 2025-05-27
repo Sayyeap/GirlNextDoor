@@ -175,7 +175,6 @@ class MainMenu extends Phaser.Scene {
             });
     }
 
-    // Остальные методы остаются без изменений
     createSettingsButton(width, height) {
         this.settingsButton = this.add.image(width / 2, height * 0.95, 'settings')
             .setDisplaySize(height * 0.03, height * 0.03)
@@ -330,196 +329,85 @@ class MainMenu extends Phaser.Scene {
     }
 
     createPopup(width, height, playMusic) {
-    this.overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9)
-        .setDepth(30)
-        .setInteractive();
+        this.overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9)
+            .setDepth(30)
+            .setInteractive();
 
-    this.popupImage = this.add.image(width / 2, height * 0.42, this.stories[this.currentStoryIndex].image)
-        .setDisplaySize(width * 0.75, height * 0.55)
-        .setDepth(31);
+        this.popupImage = this.add.image(width / 2, height * 0.42, this.stories[this.currentStoryIndex].image)
+            .setDisplaySize(width * 0.75, height * 0.55)
+            .setDepth(31);
 
-    this.startButton = this.add.image(width / 2, height * 0.74, 'Button_wide')
-        .setDisplaySize(width * 0.75, height * 0.06)
-        .setDepth(32)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
-                this.scene.start('GameScene', {
-                    storyId: this.stories[this.currentStoryIndex].id,
-                    sceneId: progress.sceneId,
-                    dialogueIndexInScene: progress.dialogueIndex,
-                    energy: progress.energy || 0,
-                    stars: progress.stars || 0
+        this.startButton = this.add.image(width / 2, height * 0.74, 'Button_wide')
+            .setDisplaySize(width * 0.75, height * 0.06)
+            .setDepth(32)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
+                    this.scene.start('GameScene', {
+                        storyId: this.stories[this.currentStoryIndex].id,
+                        sceneId: progress.sceneId,
+                        dialogueIndexInScene: progress.dialogueIndex,
+                        energy: progress.energy || 0,
+                        stars: progress.stars || 0
+                    });
                 });
             });
-        });
 
-    this.startButtonText = this.add.text(width / 2, height * 0.74, 'Начать', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.03}px`,
-        color: '#fff',
-        resolution: 4
-    }).setOrigin(0.5).setDepth(33);
+        this.startButtonText = this.add.text(width / 2, height * 0.74, 'Начать', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.03}px`,
+            color: '#fff',
+            resolution: 4
+        }).setOrigin(0.5).setDepth(33);
 
-    const buttonY = height * 0.9;
-    const buttonSpacing = width * 0.15;
+        const buttonY = height * 0.9;
+        const buttonSpacing = width * 0.15;
 
-    this.resetButton = this.add.image(width / 2 - buttonSpacing, buttonY, 'reset')
-        .setDisplaySize(width * 0.1, width * 0.1)
-        .setDepth(32)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
-                const currentEnergy = progress.energy || 0; // Загружаем текущую энергию
-                window.gameStorage.saveProgress(this.stories[this.currentStoryIndex].id, 'scene1', 0, currentEnergy, 0, this.registry);
-                this.scene.start('GameScene', {
-                    storyId: this.stories[this.currentStoryIndex].id,
-                    sceneId: 'scene1',
-                    dialogueIndexInScene: 0,
-                    energy: currentEnergy,
-                    stars: 0
+        this.resetButton = this.add.image(width / 2 - buttonSpacing, buttonY, 'reset')
+            .setDisplaySize(width * 0.1, width * 0.1)
+            .setDepth(32)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
+                    const currentEnergy = progress.energy || 0;
+                    const currentStars = progress.stars || 0;
+                    window.gameStorage.saveProgress(this.stories[this.currentStoryIndex].id, 'scene1', 0, currentEnergy, currentStars, this.registry);
+                    this.scene.start('GameScene', {
+                        storyId: this.stories[this.currentStoryIndex].id,
+                        sceneId: 'scene1',
+                        dialogueIndexInScene: 0,
+                        energy: currentEnergy,
+                        stars: currentStars
+                    });
                 });
             });
-        });
 
-    this.resetText = this.add.text(width / 2 - buttonSpacing, buttonY + height * 0.04, 'Рестарт', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.012}px`,
-        color: '#fff',
-        resolution: 4
-    }).setOrigin(0.5).setDepth(33);
+        this.resetText = this.add.text(width / 2 - buttonSpacing, buttonY + height * 0.04, 'Рестарт', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.012}px`,
+            color: '#fff',
+            resolution: 4
+        }).setOrigin(0.5).setDepth(33);
 
-    this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
-        .setDisplaySize(width * 0.1, width * 0.1)
-        .setDepth(32)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            console.log('Gallery opened');
-        });
-
-    this.galleryText = this.add.text(width / 2, buttonY + height * 0.04, 'Галерея', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.012}px`,
-        color: '#fff',
-        resolution: 4
-    }).setOrigin(0.5).setDepth(33);
-
-    this.closeButton = this.add.image(width / 2 + buttonSpacing, buttonY, 'close')
-        .setDisplaySize(width * 0.1, width * 0.1)
-        .setDepth(32)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            this.closePopup();
-        });
-
-    this.closeText = this.add.text(width / 2 + buttonSpacing, buttonY + height * 0.04, 'Закрыть', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${height * 0.012}px`,
-        color: '#fff',
-        resolution: 4
-    }).setOrigin(0.5).setDepth(33);
-}
-
-createButtons(width, height, playMusic) {
-    const buttonWidth = width * 0.45;
-    const buttonHeight = height * 0.055;
-    const positions = [
-        height * 0.68,
-        height * 0.75,
-        height * 0.82,
-        height * 0.89
-    ];
-
-    this.newGameContainer = this.add.container(width / 2, positions[0]).setDepth(10);
-    const newGameButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-        .setInteractive()
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            window.gameStorage.loadProgress('story1', this.registry, (progress) => {
-                const currentEnergy = progress.energy || 0; // Загружаем текущую энергию
-                window.gameStorage.saveProgress('story1', 'scene1', 0, currentEnergy, 0, this.registry);
-                this.scene.start('GameScene', {
-                    storyId: 'story1',
-                    sceneId: 'scene1',
-                    dialogueIndexInScene: 0,
-                    energy: currentEnergy,
-                    stars: 0
-                });
+        this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
+            .setDisplaySize(width * 0.1, width * 0.1)
+            .setDepth(32)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                console.log('Gallery opened');
             });
-        });
-    const newGameText = this.add.text(0, 0, 'Новая игра', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${buttonHeight * 0.45}px`,
-        color: '#fff',
-        textTransform: 'uppercase',
-        resolution: 4
-    }).setOrigin(0.5);
-    this.newGameContainer.add([newGameButton, newGameText]);
 
-    this.continueContainer = this.add.container(width / 2, positions[1]).setDepth(10);
-    const continueButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-        .setInteractive()
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            window.gameStorage.loadProgress('story1', this.registry, (progress) => {
-                this.scene.start('GameScene', {
-                    storyId: 'story1',
-                    sceneId: progress.sceneId,
-                    dialogueIndexInScene: progress.dialogueIndex,
-                    energy: progress.energy || 0,
-                    stars: progress.stars || 0
-                });
-            });
-        });
-    const continueText = this.add.text(0, 0, 'Продолжить', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${buttonHeight * 0.45}px`,
-        color: '#fff',
-        textTransform: 'uppercase',
-        resolution: 4
-    }).setOrigin(0.5);
-    this.continueContainer.add([continueButton, continueText]);
-
-    this.settingsContainer = this.add.container(width / 2, positions[2]).setDepth(10);
-    const settingsButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-        .setInteractive()
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            this.scene.launch('SettingsScene');
-        });
-    const settingsText = this.add.text(0, 0, 'Настройки', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${buttonHeight * 0.45}px`,
-        color: '#fff',
-        resolution: 4
-    }).setOrigin(0.5);
-    this.settingsContainer.add([settingsButton, settingsText]);
-
-    this.galleryContainer = this.add.container(width / 2, positions[3]).setDepth(20);
-    const galleryButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-        .setInteractive()
-        .on('pointerdown', () => {
-            playMusic();
-            this.sound.play('click');
-            console.log('Gallery TBD');
-        });
-    const galleryText = this.add.text(0, 0, 'Галерея', {
-        fontFamily: 'IBM Plex Sans',
-        fontSize: `${buttonHeight * 0.45}px`,
-        color: '#fff',
-        resolution: 4
-   
+        this.galleryText = this.add.text(width / 2, buttonY + height * 0.04, 'Галерея', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${height * 0.012}px`,
+            color: '#fff',
+            resolution: 4
         }).setOrigin(0.5).setDepth(33);
 
         this.closeButton = this.add.image(width / 2 + buttonSpacing, buttonY, 'close')
@@ -538,6 +426,102 @@ createButtons(width, height, playMusic) {
             color: '#fff',
             resolution: 4
         }).setOrigin(0.5).setDepth(33);
+    }
+
+    createButtons(width, height, playMusic) {
+        const buttonWidth = width * 0.45;
+        const buttonHeight = height * 0.055;
+        const positions = [
+            height * 0.68,
+            height * 0.75,
+            height * 0.82,
+            height * 0.89
+        ];
+
+        this.newGameContainer = this.add.container(width / 2, positions[0]).setDepth(10);
+        const newGameButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+                    const currentEnergy = progress.energy || 0;
+                    const currentStars = progress.stars || 0;
+                    window.gameStorage.saveProgress('story1', 'scene1', 0, currentEnergy, currentStars, this.registry);
+                    this.scene.start('GameScene', {
+                        storyId: 'story1',
+                        sceneId: 'scene1',
+                        dialogueIndexInScene: 0,
+                        energy: currentEnergy,
+                        stars: currentStars
+                    });
+                });
+            });
+        const newGameText = this.add.text(0, 0, 'Новая игра', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${buttonHeight * 0.45}px`,
+            color: '#fff',
+            textTransform: 'uppercase',
+            resolution: 4
+        }).setOrigin(0.5);
+        this.newGameContainer.add([newGameButton, newGameText]);
+
+        this.continueContainer = this.add.container(width / 2, positions[1]).setDepth(10);
+        const continueButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+                    this.scene.start('GameScene', {
+                        storyId: 'story1',
+                        sceneId: progress.sceneId,
+                        dialogueIndexInScene: progress.dialogueIndex,
+                        energy: progress.energy || 0,
+                        stars: progress.stars || 0
+                    });
+                });
+            });
+        const continueText = this.add.text(0, 0, 'Продолжить', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${buttonHeight * 0.45}px`,
+            color: '#fff',
+            textTransform: 'uppercase',
+            resolution: 4
+        }).setOrigin(0.5);
+        this.continueContainer.add([continueButton, continueText]);
+
+        this.settingsContainer = this.add.container(width / 2, positions[2]).setDepth(10);
+        const settingsButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                this.scene.launch('SettingsScene');
+            });
+        const settingsText = this.add.text(0, 0, 'Настройки', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${buttonHeight * 0.45}px`,
+            color: '#fff',
+            resolution: 4
+        }).setOrigin(0.5);
+        this.settingsContainer.add([settingsButton, settingsText]);
+
+        this.galleryContainer = this.add.container(width / 2, positions[3]).setDepth(20);
+        const galleryButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
+            .setInteractive()
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                console.log('Gallery TBD');
+            });
+        const galleryText = this.add.text(0, 0, 'Галерея', {
+            fontFamily: 'IBM Plex Sans',
+            fontSize: `${buttonHeight * 0.45}px`,
+            color: '#fff',
+            resolution: 4
+        }).setOrigin(0.5);
+        this.galleryContainer.add([galleryButton, galleryText]);
     }
 
     closePopup() {
@@ -711,98 +695,6 @@ createButtons(width, height, playMusic) {
         this.description2.setText(this.stories[this.currentStoryIndex].active 
             ? 'Примерьте шкуру цифрового стакера и вуайриста и разгадайте тайну новой соседки' 
             : 'Эта история пока в разработке.');
-    }
-
-    createButtons(width, height, playMusic) {
-        const buttonWidth = width * 0.45;
-        const buttonHeight = height * 0.055;
-        const positions = [
-            height * 0.68,
-            height * 0.75,
-            height * 0.82,
-            height * 0.89
-        ];
-
-        this.newGameContainer = this.add.container(width / 2, positions[0]).setDepth(10);
-        const newGameButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-            .setInteractive()
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                window.gameStorage.saveProgress('story1', 'scene1', 0, 100, 0, this.registry);
-                this.scene.start('GameScene', {
-                    storyId: 'story1',
-                    sceneId: 'scene1',
-                    dialogueIndexInScene: 0,
-                    energy: 100,
-                    stars: 0
-                });
-            });
-        const newGameText = this.add.text(0, 0, 'Новая игра', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${buttonHeight * 0.45}px`,
-            color: '#fff',
-            textTransform: 'uppercase',
-            resolution: 4
-        }).setOrigin(0.5);
-        this.newGameContainer.add([newGameButton, newGameText]);
-
-        this.continueContainer = this.add.container(width / 2, positions[1]).setDepth(10);
-        const continueButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-            .setInteractive()
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                window.gameStorage.loadProgress('story1', this.registry, (progress) => {
-                    this.scene.start('GameScene', {
-                        storyId: 'story1',
-                        sceneId: progress.sceneId,
-                        dialogueIndexInScene: progress.dialogueIndex,
-                        energy: progress.energy || 0,
-                        stars: progress.stars || 0
-                    });
-                });
-            });
-        const continueText = this.add.text(0, 0, 'Продолжить', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${buttonHeight * 0.45}px`,
-            color: '#fff',
-            textTransform: 'uppercase',
-            resolution: 4
-        }).setOrigin(0.5);
-        this.continueContainer.add([continueButton, continueText]);
-
-        this.settingsContainer = this.add.container(width / 2, positions[2]).setDepth(10);
-        const settingsButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-            .setInteractive()
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                this.scene.launch('SettingsScene');
-            });
-        const settingsText = this.add.text(0, 0, 'Настройки', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${buttonHeight * 0.45}px`,
-            color: '#fff',
-            resolution: 4
-        }).setOrigin(0.5);
-        this.settingsContainer.add([settingsButton, settingsText]);
-
-        this.galleryContainer = this.add.container(width / 2, positions[3]).setDepth(20);
-        const galleryButton = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0.8)
-            .setInteractive()
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                console.log('Gallery TBD');
-            });
-        const galleryText = this.add.text(0, 0, 'Галерея', {
-            fontFamily: 'IBM Plex Sans',
-            fontSize: `${buttonHeight * 0.45}px`,
-            color: '#fff',
-            resolution: 4
-        }).setOrigin(0.5);
-        this.galleryContainer.add([galleryButton, galleryText]);
     }
 
     showStorySelection() {

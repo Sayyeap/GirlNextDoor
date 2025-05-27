@@ -138,26 +138,33 @@ class EnergyShopScene extends Phaser.Scene {
             });
     }
 
-    handlePurchase(energy, starsCost) {
-        this.sound.play('click');
-        window.gameStorage.loadProgress('story1', this.registry, (progress) => {
-            progress.energy += energy;
-            window.gameStorage.saveProgress(
-                'story1',
-                progress.sceneId,
-                progress.dialogueIndex,
-                progress.energy,
-                progress.stars,
-                this.registry
-            );
-            // Обновляем отображение энергии в MainMenu
-            const mainMenuScene = this.scene.get('MainMenu');
-            if (mainMenuScene && mainMenuScene.energyText) {
-                mainMenuScene.energyText.setText(`${progress.energy}`);
-            }
-            console.log(`Добавлено ${energy} энергии. Новый баланс: ${progress.energy} энергии, ${progress.stars} звезд`);
-        });
-    }
+   handlePurchase(energy, starsCost) {
+    this.sound.play('click');
+    window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+        progress.energy += energy;
+        // Обновляем registry, чтобы сработало событие changedata-energy
+        this.registry.set('energy', progress.energy);
+        window.gameStorage.saveProgress(
+            'story1',
+            progress.sceneId,
+            progress.dialogueIndex,
+            progress.energy,
+            progress.stars,
+            this.registry
+        );
+        // Обновляем MainMenu
+        const mainMenuScene = this.scene.get('MainMenu');
+        if (mainMenuScene && mainMenuScene.energyText) {
+            mainMenuScene.energyText.setText(`${progress.energy}`);
+        }
+        // Обновляем GameScene
+        const gameScene = this.scene.get('GameScene');
+        if (gameScene && gameScene.energyText) {
+            gameScene.energyText.setText(`${progress.energy}`);
+        }
+        console.log(`Добавлено ${energy} энергии. Новый баланс: ${progress.energy} энергии, ${progress.stars} звезд`);
+    });
+}
 
     showNotEnoughStars(width, height) {
         if (this.elements.notification) {

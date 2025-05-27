@@ -196,6 +196,7 @@ class GameScene extends Phaser.Scene {
     }
 
     async create() {
+        console.log('GameScene create: Starting, Initial registry energy:', this.registry.get('energy'));
         this.scale.setGameSize(window.innerWidth, window.innerHeight);
         this.scale.refresh();
 
@@ -243,23 +244,45 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
+        // Загружаем прогресс только один раз
+        await new Promise((resolve) => {
+            window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
+                this.energy = progress.energy || 0;
+                this.registry.set('energy', this.energy);
+                console.log('GameScene create: Loaded energy from progress:', this.energy);
+                resolve();
+            });
+        });
+
         // Слушаем обновления энергии
         this.registry.events.on('changedata-energy', (parent, value) => {
             this.energy = value;
             if (this.energyText) {
                 this.energyText.setText(`${this.energy}`);
             }
-            console.log('Energy updated in GameScene:', this.energy);
+            console.log('GameScene: Energy updated via changedata-energy:', value, 'Registry energy:', this.registry.get('energy'));
             this.saveProgress();
         });
 
-        // Слушаем закрытие EnergyShopScene
-        this.scene.get('EnergyShopScene').events.on('shutdown', () => {
+        // Обработчик закрытия EnergyShopScene
+        this.scene.get('EnergyShopScene').events.on('shutdown', async () => {
             console.log('EnergyShopScene closed, resuming GameScene');
             this.scene.resume();
             if (this.energyIcon) {
-                this.energyIcon.setInteractive(); // Восстанавливаем интерактивность
+                this.energyIcon.setInteractive();
             }
+            // Загружаем актуальное значение энергии из хранилища
+            await new Promise((resolve) => {
+                window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
+                    this.energy = progress.energy || 0;
+                    this.registry.set('energy', this.energy);
+                    if (this.energyText) {
+                        this.energyText.setText(`${this.energy}`);
+                    }
+                    console.log('GameScene: Energy after EnergyShopScene shutdown:', this.energy);
+                    resolve();
+                });
+            });
         });
 
         if (this.isLoaded) {
@@ -294,31 +317,44 @@ class GameScene extends Phaser.Scene {
             paused: true
         });
 
+        // Блок энергии, идентичный MainMenu
+        const bgWidth = width * 0.26;
+        const bgHeight = height * 0.04;
+        const borderRadius = 5;
+        const centerX = width / 2;
+        const centerY = height * 0.12;
+
         this.energyBg = this.add.graphics()
             .setDepth(10);
-        this.energyBg.fillStyle(0x000000, 0.3);
+        this.energyBg.fillStyle(0x000000, 0.9);
         this.energyBg.fillRoundedRect(
-            width * 0.15 - (width * 0.26) / 2,
-            height * 0.15 - (height * 0.04) / 2,
-            width * 0.26,
-            height * 0.04,
-            5
+            centerX - bgWidth / 2,
+            centerY - bgHeight / 2,
+            bgWidth,
+            bgHeight,
+            borderRadius
         );
 
-        this.energyText = this.add.text(width * 0.11, height * 0.135, `${this.energy}`, {
-            fontSize: `${height * 0.0258}px`,
-            color: '#bcff64',
-            fontFamily: 'Dela Gothic One'
-        }).setDepth(11);
+        // Создаем energyText один раз с текущим значением this.energy
+      if (this.energyText) {
+    this.energyText.destroy();
+}
 
-        this.energyIcon = this.add.image(width * 0.064, height * 0.15, 'energyIcon')
+// Создаем energyText один раз с текущим значением this.energy
+this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.registry.get('energy')}`, {
+    fontSize: `${height * 0.0258}px`,
+    color: '#57b9ff',
+    fontFamily: 'Dela Gothic One',
+}).setOrigin(0.5).setDepth(31);
+
+        this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
             .setDisplaySize(height * 0.037, height * 0.037)
             .setDepth(11)
             .setInteractive()
             .on('pointerdown', () => {
                 this.sound.play('click');
                 console.log('Energy icon clicked, launching EnergyShopScene');
-                this.scene.pause(); // Приостанавливаем GameScene
+                this.scene.pause();
                 this.scene.launch('EnergyShopScene');
             });
 
@@ -409,19 +445,39 @@ class GameScene extends Phaser.Scene {
         if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.7);
         if (this.speakerText) this.speakerText.setPosition(width * 0.05, height * 0.72).setFontSize(`${height * 0.022}px`);
         if (this.nameline) this.nameline.setPosition(width * 0, height * 0.755);
-        if (this.dialogueText) this.dialogueText.setPosition(width * 0.05, height * 0.766).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.8);
+        if (this.dialogueText) this.dialogueText.setPosition(width * 0.05, height * 0.766).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.9);
         if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 1.1, height * 0.92);
+
+        // Обновление блока энергии, идентичное MainMenu
+        const bgWidth = width * 0.26;
+        const bgHeight = height * 0.04;
+        const centerX = width / 2;
+        const centerY = height * 0.12;
+
         if (this.energyBg) {
             this.energyBg.clear();
-            this.energyBg.fillStyle(0x000000, 0.7);
-            this.energyBg.fillRoundedRect(width * 0.15 - (width * 0.26) / 2, height * 0.15 - (height * 0.04) / 2, width * 0.26, height * 0.04, 5);
+            this.energyBg.fillStyle(0x000000, 0.9);
+            this.energyBg.fillRoundedRect(
+                centerX - bgWidth / 2,
+                centerY - bgHeight / 2,
+                bgWidth,
+                bgHeight,
+                5
+            );
         }
-        if (this.energyText) this.energyText.setPosition(width * 0.11, height * 0.135).setFontSize(`${height * 0.0258}px`);
-        if (this.energyIcon) this.energyIcon.setPosition(width * 0.064, height * 0.15).setDisplaySize(height * 0.037, height * 0.037);
+        if (this.energyText) this.energyText.setPosition(centerX + bgWidth * 0.15, centerY).setFontSize(`${height * 0.0258}px`);
+        if (this.energyIcon) this.energyIcon.setPosition(centerX - bgWidth * 0.35, centerY).setDisplaySize(height * 0.037, height * 0.037);
+
         if (this.settingsButtonBg) {
             this.settingsButtonBg.clear();
-            this.settingsButtonBg.fillStyle(0x000000, 0.7);
-            this.settingsButtonBg.fillRoundedRect(width / 1.073 - (height * 0.04) / 2, height * 0.15 - (height * 0.04) / 2, height * 0.04, height * 0.04, 5);
+            this.settingsButtonBg.fillStyle(0x000000, 0.3);
+            this.settingsButtonBg.fillRoundedRect(
+                width / 1.073 - (height * 0.04) / 2,
+                height * 0.15 - (height * 0.04) / 2,
+                height * 0.04,
+                height * 0.04,
+                5
+            );
         }
         if (this.settingsButton) this.settingsButton.setPosition(width / 1.073, height * 0.15).setDisplaySize(height * 0.032, height * 0.032);
 
@@ -580,8 +636,6 @@ class GameScene extends Phaser.Scene {
         const height = this.scale.height;
         const textColor = '#ffffff';
 
-        this.energy += 100;
-        this.energyText.setText(this.energy);
         this.registry.set('energy', this.energy);
         await this.saveProgress();
 
@@ -695,7 +749,7 @@ class GameScene extends Phaser.Scene {
 
         choices.forEach((choice, index) => {
             const y = startY + index * (height * 0.08);
-            const container = this.add.container(width / 2, y).setDepth(5); // Понизили глубину
+            const container = this.add.container(width / 2, y).setDepth(5);
 
             const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7);
 
@@ -737,36 +791,33 @@ class GameScene extends Phaser.Scene {
                         }
 
                         console.log('After choice:', {
-                        currentScene: this.currentScene.id,
-                        dialogueIndex: this.dialogueIndexInScene
-                    });
+                            currentScene: this.currentScene.id,
+                            dialogueIndex: this.dialogueIndexInScene
+                        });
 
-                        // Восстанавливаем интерактивность energyIcon после выбора
                         if (this.energyIcon) {
                             this.energyIcon.setInteractive();
                             this.energyIcon.setDepth(11);
                         }
-
                     } else {
                         window.Telegram.WebApp.showAlert('Недостаточно энергии!');
                     }
                 });
 
-                const energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
-                    .setDisplaySize(height * 0.04, height * 0.04)
-                    .setOrigin(0.5);
+            const energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
+                .setDisplaySize(height * 0.04, height * 0.04)
+                .setOrigin(0.5);
 
-                const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
-                    fontSize: `${height * 0.0258}px`,
-                    color: accentColor,
-                    fontFamily: 'Dela Gothic One'
-                }).setOrigin(0.3, 0.5);
+            const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
+                fontSize: `${height * 0.0258}px`,
+                color: accentColor,
+                fontFamily: 'Dela Gothic One'
+            }).setOrigin(0.3, 0.5);
 
-                container.add([bg, choiceText, energyIcon, energyText]);
-                this.choicesGroup.add(container);
-            });
+            container.add([bg, choiceText, energyIcon, energyText]);
+            this.choicesGroup.add(container);
+        });
 
-        // Убедимся, что energyIcon остаётся над выборками
         if (this.energyIcon) {
             this.energyIcon.setDepth(11);
             this.energyIcon.setInteractive();
@@ -780,7 +831,6 @@ class GameScene extends Phaser.Scene {
         this.saveProgress();
         this.showDialogue();
 
-        // Восстанавливаем интерактивность energyIcon
         if (this.energyIcon) {
             this.energyIcon.setInteractive();
             this.energyIcon.setDepth(11);
@@ -795,8 +845,8 @@ class GameScene extends Phaser.Scene {
         }
 
         if (typeof this.currentScene.nextScene === 'object' && this.currentScene.nextScene.type === 'minigame') {
-            const params = { ...this.currentScene.nextScene.params, energy: this.energy };
-            console.log('Starting minigame:', this.currentScene.nextScene.key, params);
+            const params = { ...this.currentScene.nextScene.params };
+            console.log('Starting minigame:', this.currentScene.nextScene.key);
             this.scene.start(this.currentScene.nextScene.key, params);
         } else {
             this.currentScene = this.story.dialogues.find(scene => scene.id === this.currentScene.nextScene) || this.currentScene;
@@ -828,7 +878,6 @@ class GameScene extends Phaser.Scene {
                 sceneId: this.currentScene.id,
                 dialogueIndex: this.dialogueIndexInScene,
                 energy: this.energy,
-                stars: this.stars
             });
         } catch (error) {
             console.error('Error saving progress:', error);
@@ -836,51 +885,38 @@ class GameScene extends Phaser.Scene {
     }
 
     loadGame(data) {
-    console.log('Loading game with data:', data);
-    if (!data || !data?.sceneId) {
-        window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
-            this.currentScene = this.story.dialogues.find(
-                scene => scene.id === progress.sceneId
-            ) || this.story.dialogues[0];
-            this.dialogueIndexInScene = progress.dialogueIndex || 0;
-            this.energy = progress.energy || 0; // Загружаем из сохранённого прогресса
-            this.stars = progress.stars || 0;
-            this.minigameResults = progress.minigameResults || {};
-            this.registry.set('energy', this.energy);
-            console.log('Progress loaded:', progress);
-            if (this.energyText) {
-                this.energyText.setText(`${this.energy}`);
-            }
-        });
-    } else {
+        console.log('GameScene: Loading game with data:', data);
+
+        // Устанавливаем начальные значения из данных или дефолтные
         this.currentScene = this.story.dialogues.find(
-            scene => scene.id === data.sceneId
+            scene => scene.id === (data?.sceneId || 'scene1')
         ) || this.story.dialogues[0];
-        this.dialogueIndexInScene = data.dialogueIndexInScene || 0;
-        this.energy = data?.energy || 0; // Загружаем из переданных данных
+        this.dialogueIndexInScene = data?.dialogueIndexInScene || 0;
         this.stars = data?.stars || 0;
-        this.minigameResults = data.minigameResults || {};
-        this.registry.set('energy', this.energy);
-        console.log('Game loaded directly:', data);
+        this.minigameResults = data?.minigameResults || {};
+
+        // Энергия уже загружена в create, синхронизируем
+        this.energy = this.registry.get('energy') || 0;
+        console.log('GameScene loadGame: Energy from registry:', this.energy);
         if (this.energyText) {
             this.energyText.setText(`${this.energy}`);
         }
-    }
 
-    if (data?.success !== undefined && data.minigameId) {
-        const nextSceneId = data.success ? data.successSceneId : data.failSceneId;
-        this.currentScene = this.story.dialogues.find(scene => scene.id === nextSceneId) || this.currentScene;
-        this.dialogueIndexInScene = 0;
-        this.minigameResults[data.minigameId] = data.success;
-        this.saveProgress();
+        // Обрабатываем результаты миниигры, если они есть
+        if (data?.success !== undefined && data.minigameId) {
+            const nextSceneId = data.success ? data.successSceneId : data.failSceneId;
+            this.currentScene = this.story.dialogues.find(scene => scene.id === nextSceneId) || this.currentScene;
+            this.dialogueIndexInScene = 0;
+            this.minigameResults[data.minigameId] = data.success;
+            this.saveProgress();
+        }
     }
-}
 
     generateInviteLink() {
         if (!this.scene.isActive()) return;
         const userId = window.gameStorage.get('userId');
         const inviteLink = `https://t.me/YourBot?start=invite_${userId}`;
-        window.TelegramGameBotWebApp.showPopup({
+        window.TelegramGameBotWebApp.showModal({
             title: 'Пригласить друга',
             message: `Поделиться ссылкой: ${inviteLink}`,
             buttons: [{ type: 'share', text: 'Поделиться', url: inviteLink }]
