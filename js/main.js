@@ -4,10 +4,19 @@ const config = {
     height: window.innerHeight,
     parent: 'game-container',
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene, SpyGameScene , EnergyShopScene ],
-    scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+     scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        resolution: window.devicePixelRatio || 1 // Критически важно
     },
+    render: {
+        antialias: false,
+        pixelArt: false, // false для обычной графики
+        roundPixels: true,
+        transparent: false
+    },
+    canvasStyle: `display: block; width: 100%!important; height: 100%!important;`,
+
     audio: {
         disableWebAudio: false,  // Важно для точного контроля
     },
