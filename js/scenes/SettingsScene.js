@@ -23,7 +23,7 @@ class SettingsScene extends Phaser.Scene {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height*0.035}px`,
             color: '#ffffff',
-            resolution: 1
+            resolution: 2
         }).setOrigin(0.5);
 
         // Создаем элементы управления
@@ -48,7 +48,7 @@ class SettingsScene extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height*0.022}px`,
             color: '#ffffff',
-            resolution: 1
+            resolution: 2
         }).setOrigin(1, 0.5);
 
         this.elements.volumeIcon = this.add.image(textX + height*0.025, centerY, 'volume_icon')
@@ -90,7 +90,7 @@ class SettingsScene extends Phaser.Scene {
                 fontFamily: 'Dela Gothic One',
                 fontSize: `${height*0.025}px`,
                 color: '#61bdff', // Голубой цвет
-                resolution: 1
+                resolution: 2
             }
         ).setOrigin(0.5)
          .setInteractive()

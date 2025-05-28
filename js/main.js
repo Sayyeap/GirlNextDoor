@@ -7,7 +7,7 @@ const config = {
      scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        resolution: window.devicePixelRatio || 1 // Критически важно
+        resolution: window.devicePixelRatio || 2 // Критически важно
     },
     render: {
         
