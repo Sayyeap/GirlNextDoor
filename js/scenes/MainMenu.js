@@ -66,7 +66,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: "Dela Gothic One",
             fontSize: `${height * 0.043}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(10);
 
         const playMusic = () => {
@@ -160,7 +160,7 @@ class MainMenu extends Phaser.Scene {
                 fontSize: `${height * 0.0258}px`,
                 color: '#57b9ff',
                 fontFamily: 'Dela Gothic One',
-                resolution: 2
+                resolution: 1
             }).setOrigin(0.5).setDepth(31);
         });
 
@@ -201,7 +201,7 @@ class MainMenu extends Phaser.Scene {
             fontSize: `${height * 0.02}px`,
             color: '#ffffff',
             padding: { x: 20, y: 10 },
-            resolution: 2
+            resolution: 1
         })
         .setOrigin(0.5)
         .setDepth(1001);
@@ -310,7 +310,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.024}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(21);
 
         this.description1 = this.add.text(width / 2, height * 0.78, 'Готова глава 1', {
@@ -361,7 +361,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.03}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
         const buttonY = height * 0.9;
@@ -392,7 +392,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.012}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
         this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
@@ -409,7 +409,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.012}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
         this.closeButton = this.add.image(width / 2 + buttonSpacing, buttonY, 'close')
@@ -426,7 +426,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.012}px`,
             color: '#fff',
-           resolution: 2
+           resolution: 1
         }).setOrigin(0.5).setDepth(33);
     }
 
@@ -464,7 +464,7 @@ class MainMenu extends Phaser.Scene {
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
             textTransform: 'uppercase',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5);
         this.newGameContainer.add([newGameButton, newGameText]);
 
@@ -489,7 +489,7 @@ class MainMenu extends Phaser.Scene {
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
             textTransform: 'uppercase',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5);
         this.continueContainer.add([continueButton, continueText]);
 
@@ -505,7 +505,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5);
         this.settingsContainer.add([settingsButton, settingsText]);
 
@@ -521,7 +521,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${buttonHeight * 0.45}px`,
             color: '#fff',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5);
         this.galleryContainer.add([galleryButton, galleryText]);
     }
@@ -689,7 +689,7 @@ class MainMenu extends Phaser.Scene {
                 fontFamily: 'IBM Plex Sans',
                 fontSize: `${height * 0.024}px`,
                 color: '#fff',
-                resolution: 2
+                resolution: 1
             }).setOrigin(0.5).setDepth(21);
         }
 
@@ -724,7 +724,7 @@ class MainMenu extends Phaser.Scene {
                 fontFamily: 'IBM Plex Sans',
                 fontSize: `${height * 0.0258}px`,
                 color: '#fff',
-                resolution: 2
+                resolution: 1
             }).setOrigin(0.5);
             storyContainer.add([btn, storyText]);
             this.storyGroup.add(storyContainer);

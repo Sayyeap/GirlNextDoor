@@ -118,7 +118,7 @@ class GameScene extends Phaser.Scene {
             color: '#bcff64',
             align: 'left',
             fontFamily: 'IBM Plex Sans',
-            resolution: 2
+            resolution: 1
         }).setOrigin(0.5).setDepth(101);
 
         this.load.on('start', () => {
