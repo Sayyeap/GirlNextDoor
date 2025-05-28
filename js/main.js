@@ -11,8 +11,9 @@ const config = {
     },
     render: {
         
-        roundPixels: true,
-    
+        pixelArt: false,  // ← Важно! Должно быть false для smooth иконок
+    antialias: true,  // Включаем сглаживание для спрайтов
+    roundPixels: true // Четкие позиции, но без пикселизации
     },
     canvasStyle: `display: block; width: 100%!important; height: 100%!important;`,
 
