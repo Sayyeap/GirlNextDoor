@@ -10,10 +10,9 @@ const config = {
         resolution: window.devicePixelRatio || 1 // Критически важно
     },
     render: {
-        antialias: false,
-        pixelArt: false, // false для обычной графики
+        
         roundPixels: true,
-        transparent: false
+    
     },
     canvasStyle: `display: block; width: 100%!important; height: 100%!important;`,
 

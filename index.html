@@ -26,6 +26,12 @@
             transform: none !important;
             scale: 1 !important;
             will-change: transform;
+             image-rendering: optimizeQuality;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    transform: translateZ(0); /* Фикс для iOS */
+    backface-visibility: hidden;
         }
 
         /* Локальные шрифты */
