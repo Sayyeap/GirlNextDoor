@@ -27,6 +27,12 @@
             transform: none !important;
             scale: 1 !important;
             will-change: transform;
+             image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    width: 100%;
+    height: 100%;
+    display: block;
         }
 
         /* Локальные шрифты */
@@ -86,25 +92,14 @@
     <!-- Инициализация Phaser и аудиоменеджера -->
     <script>
         /* eslint-disable no-undef */
-       const config = {
-    type: Phaser.AUTO,
-    width: 1280, // Фиксированное логическое разрешение
-    height: 720,
-    scene: [MainMenu, GameScene, SettingsScene, progress, EnergyShopScene],
-    parent: 'game-container',
-    scale: {
-        mode: Phaser.Scale.NONE, // Отключаем автоматическое масштабирование
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
-    render: {
-        antialias: false, // Отключаем сглаживание
-        pixelArt: false, // Включите true если используете pixel-art
-        transparent: false,
-        clearBeforeRender: true,
-        powerPreference: "high-performance"
-    },
-    canvasStyle: `display: block; width: 100%; height: 100%`
-};
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+           
+            scene: [MainMenu, GameScene, SettingsScene, progress,EnergyShopScene],
+            parent: 'game-container'
+        };
 
         const game = new Phaser.Game(config);
 

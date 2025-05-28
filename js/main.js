@@ -6,7 +6,11 @@ const config = {
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene, SpyGameScene , EnergyShopScene ],
     scale: {
         mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+          antialias: false, // Отключает размытие
+        pixelArt: false,  // true если pixel-art стиль
+        roundPixels: true, // Чёткие пиксели
+        powerPreference: "high-performance"
     },
     audio: {
         disableWebAudio: false,  // Важно для точного контроля
@@ -21,6 +25,7 @@ const config = {
             debug: false
         }
     }
+    
 };
 
 const game = new Phaser.Game(config);
