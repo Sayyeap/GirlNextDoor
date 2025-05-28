@@ -1,14 +1,15 @@
 class SettingsScene extends Phaser.Scene {
     constructor() {
         super('SettingsScene');
-        this.sliderArea = { minX: 0, maxX: 0 };
         this.elements = {};
+        this.previousVolume = 1; // По умолчанию громкость 1 для включенного состояния
     }
 
     preload() {
         this.load.image('volume_icon', 'assets/common/images/volume_icon.png');
-        this.load.image('settings_box', 'assets/common/images/settings_box.png'); // Добавляем подложку
-        this.load.image('close', 'assets/common/images/close.png'); // Добавляем иконку закрытия
+        this.load.image('volume_icon_off', 'assets/common/images/volume_icon_off.png'); // Новая иконка для выключенного звука
+        this.load.image('settings_box', 'assets/common/images/settings_box.png');
+        this.load.image('close', 'assets/common/images/close.png');
         this.load.audio('click', 'assets/common/audio/click.wav');
     }
 
@@ -20,10 +21,7 @@ class SettingsScene extends Phaser.Scene {
         this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
             .setOrigin(0, 0)
             .setDepth(30)
-            .setInteractive()
-            .on('pointerdown', (e) => {
-                e.stopPropagation(); // Блокируем события под окном
-            });
+            .setInteractive();
 
         // Подложка окна
         const popupWidth = width * 0.8;
@@ -55,10 +53,9 @@ class SettingsScene extends Phaser.Scene {
     createVolumeControl(width, height) {
         const centerY = height * 0.45;
         const textX = width * 0.35;
-        const sliderX = width * 0.55;
-        const sliderWidth = width * 0.35;
-
-        this.sliderArea = { minX: sliderX, maxX: sliderX + sliderWidth };
+        const toggleX = width * 0.55;
+        const toggleWidth = width * 0.15; // Тумблер короче ползунка
+        const toggleHeight = height * 0.02; // Высота тумблера
 
         // Текст и иконка громкости
         this.elements.volumeText = this.add.text(textX, centerY, 'Громкость', {
@@ -68,36 +65,46 @@ class SettingsScene extends Phaser.Scene {
             resolution: 1
         }).setOrigin(1, 0.5).setDepth(33);
 
-        this.elements.volumeIcon = this.add.image(textX + height * 0.025, centerY, 'volume_icon')
+        // Выбираем иконку в зависимости от состояния звука
+        const isSoundOn = this.game.sound.volume > 0;
+        this.elements.volumeIcon = this.add.image(textX + height * 0.025, centerY, isSoundOn ? 'volume_icon' : 'volume_icon_off')
             .setDisplaySize(height * 0.025, height * 0.025)
             .setOrigin(0, 0.5)
             .setDepth(33);
 
-        // Ползунок громкости
-        this.elements.sliderBg = this.add.rectangle(sliderX, centerY, sliderWidth, height * 0.012, 0x666666)
-            .setOrigin(0, 0.5)
-            .setDepth(32);
+        // Фон тумблера (капсула через Graphics)
+        this.elements.toggleBg = this.add.graphics()
+            .fillStyle(0x666666, 1)
+            .fillRoundedRect(toggleX, centerY - toggleHeight / 2, toggleWidth, toggleHeight, toggleHeight / 2)
+            .setDepth(32)
+            .setInteractive(new Phaser.Geom.Rectangle(toggleX, centerY - toggleHeight / 2, toggleWidth, toggleHeight), Phaser.Geom.Rectangle.Contains);
 
-        this.elements.sliderFill = this.add.rectangle(
-            sliderX, centerY, 
-            sliderWidth * this.game.sound.volume, 
-            height * 0.012, 
+        // Кружок тумблера
+        this.elements.toggleHandle = this.add.circle(
+            toggleX + (isSoundOn ? toggleWidth : 0),
+            centerY,
+            toggleHeight * 0.6, // Радиус кружка
             0xffffff
-        ).setOrigin(0, 0.5).setDepth(32);
+        ).setDepth(33);
 
-        this.elements.sliderHandle = this.add.circle(
-            sliderX + (sliderWidth * this.game.sound.volume), 
-            centerY, 
-            height * 0.012,
-            0xffffff
-        ).setInteractive({ draggable: true })
-         .setDepth(33)
-         .on('drag', (pointer, x) => {
-             x = Phaser.Math.Clamp(x, this.sliderArea.minX, this.sliderArea.maxX);
-             this.elements.sliderHandle.x = x;
-             this.elements.sliderFill.width = x - this.sliderArea.minX;
-             this.game.sound.volume = (x - this.sliderArea.minX) / sliderWidth;
-         });
+        // Сохраняем громкость перед выключением
+        this.previousVolume = isSoundOn ? this.game.sound.volume : 1;
+
+        // Интерактивность тумблера
+        this.elements.toggleBg.on('pointerdown', () => {
+            const isOn = this.game.sound.volume > 0;
+            if (isOn) {
+                this.previousVolume = this.game.sound.volume; // Сохраняем текущую громкость
+                this.game.sound.volume = 0;
+                this.elements.toggleHandle.setPosition(toggleX, centerY); // Кружок слева
+                this.elements.volumeIcon.setTexture('volume_icon_off'); // Меняем иконку
+            } else {
+                this.game.sound.volume = this.previousVolume; // Восстанавливаем громкость
+                this.elements.toggleHandle.setPosition(toggleX + toggleWidth, centerY); // Кружок справа
+                this.elements.volumeIcon.setTexture('volume_icon'); // Меняем иконку
+            }
+            this.sound.play('click');
+        });
     }
 
     createCloseButton(width, height) {
@@ -118,11 +125,9 @@ class SettingsScene extends Phaser.Scene {
         const height = gameSize.height;
         const centerY = height * 0.45;
         const textX = width * 0.35;
-        const sliderX = width * 0.55;
-        const sliderWidth = width * 0.35;
-
-        // Обновляем границы
-        this.sliderArea = { minX: sliderX, maxX: sliderX + sliderWidth };
+        const toggleX = width * 0.55;
+        const toggleWidth = width * 0.15;
+        const toggleHeight = height * 0.02;
 
         // Фон
         this.elements.bgOverlay?.setDisplaySize(width, height);
@@ -145,20 +150,21 @@ class SettingsScene extends Phaser.Scene {
                                 .setFontSize(height * 0.022);
         
         this.elements.volumeIcon?.setPosition(textX + height * 0.025, centerY)
-                                .setDisplaySize(height * 0.025, height * 0.025);
+                                .setDisplaySize(height * 0.025, height * 0.025)
+                                .setTexture(this.game.sound.volume > 0 ? 'volume_icon' : 'volume_icon_off');
 
-        // Ползунок
-        if (this.elements.sliderBg && this.elements.sliderFill && this.elements.sliderHandle) {
-            const vol = this.game.sound.volume;
+        // Тумблер
+        if (this.elements.toggleBg && this.elements.toggleHandle) {
+            const isOn = this.game.sound.volume > 0;
             
-            this.elements.sliderBg.setPosition(sliderX, centerY)
-                                 .setSize(sliderWidth, height * 0.012);
+            // Обновляем фон тумблера
+            this.elements.toggleBg.clear()
+                .fillStyle(0x666666, 1)
+                .fillRoundedRect(toggleX, centerY - toggleHeight / 2, toggleWidth, toggleHeight, toggleHeight / 2)
+                .setInteractive(new Phaser.Geom.Rectangle(toggleX, centerY - toggleHeight / 2, toggleWidth, toggleHeight), Phaser.Geom.Rectangle.Contains);
             
-            this.elements.sliderFill.setPosition(sliderX, centerY)
-                                   .setSize(sliderWidth * vol, height * 0.012);
-            
-            this.elements.sliderHandle.setPosition(sliderX + (sliderWidth * vol), centerY)
-                                     .setRadius(height * 0.012);
+            this.elements.toggleHandle.setPosition(toggleX + (isOn ? toggleWidth : 0), centerY)
+                                     .setRadius(toggleHeight * temp_1);
         }
 
         // Кнопка закрытия
