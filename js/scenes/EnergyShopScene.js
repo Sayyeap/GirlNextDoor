@@ -44,7 +44,7 @@ class EnergyShopScene extends Phaser.Scene {
             fontFamily: 'Dela Gothic One',
             fontSize: `${height * 0.03}px`,
             color: '#ffffff',
-            resolution: 4
+            resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
         // Создаем блоки покупки энергии
@@ -99,7 +99,7 @@ class EnergyShopScene extends Phaser.Scene {
                 fontFamily: "Dela Gothic One",
                 fontSize: `${blockHeight * 0.13}px`,
                 color: '#ffffff',
-                resolution: 4
+                resolution: 1
             }).setOrigin(0.5).setDepth(33);
 
             // Кнопка покупки
@@ -120,7 +120,7 @@ class EnergyShopScene extends Phaser.Scene {
                 fontFamily: 'Dela Gothic One',
                 fontSize: `${blockHeight * 0.12}px`,
                 color: '#ffffff',
-                resolution: 4
+                resolution: 1
             }).setOrigin(0.5).setDepth(34);
 
             this.elements[`block${index}`] = { blockBg, largeIcon, smallIcon, energyText, button, starIcon, priceText };
@@ -178,7 +178,7 @@ class EnergyShopScene extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.02}px`,
             color: '#ffffff',
-            resolution: 4
+            resolution: 1
         }).setOrigin(0.5).setDepth(36);
 
         this.time.delayedCall(2000, () => {

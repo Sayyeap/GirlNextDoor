@@ -18,7 +18,7 @@
             height: 100vh;
             box-sizing: border-box;
             font-family: 'IBM Plex Sans', sans-serif;
-             -webkit-font-smoothing: antialiased;
+             
     text-rendering: optimizeLegibility;
         }
       
@@ -90,10 +90,7 @@
             type: Phaser.AUTO,
             width: window.innerWidth,
             height: window.innerHeight,
-            scale: {
-                mode: Phaser.Scale.RESIZE,
-                autoCenter: Phaser.Scale.CENTER_BOTH
-            },
+           
             scene: [MainMenu, GameScene, SettingsScene, progress,EnergyShopScene],
             parent: 'game-container'
         };
