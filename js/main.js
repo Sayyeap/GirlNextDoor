@@ -5,7 +5,7 @@ const config = {
     parent: 'game-container',
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene, SpyGameScene , EnergyShopScene ],
      scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         resolution: window.devicePixelRatio || 1 // Критически важно
     },
