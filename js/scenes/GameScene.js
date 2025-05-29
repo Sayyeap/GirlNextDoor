@@ -180,7 +180,9 @@ class GameScene extends Phaser.Scene {
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('next', 'assets/common/images/next.png');
         this.load.image('darkbg', 'assets/common/images/darkbg.png');
+        this.load.image('chose_block', 'assets/story1/images/backgrounds/chose_block.png');
         this.load.image('nameline', 'assets/common/images/nameline.png');
+
 
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
@@ -321,12 +323,12 @@ class GameScene extends Phaser.Scene {
         const bgWidth = width * 0.26;
         const bgHeight = height * 0.04;
         const borderRadius = 5;
-        const centerX = width / 2;
-        const centerY = height * 0.12;
+        const centerX = width / 5.5;
+        const centerY = height * 0.15;
 
         this.energyBg = this.add.graphics()
             .setDepth(10);
-        this.energyBg.fillStyle(0x000000, 0.9);
+        this.energyBg.fillStyle(0x000000, 0.4);
         this.energyBg.fillRoundedRect(
             centerX - bgWidth / 2,
             centerY - bgHeight / 2,
@@ -409,7 +411,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             .setDepth(10);
         this.settingsButtonBg.fillStyle(0x000000, 0.3);
         this.settingsButtonBg.fillRoundedRect(
-            width / 1.073 - (height * 0.04) / 2,
+            width / 1.1 - (height * 0.04) / 2,
             height * 0.15 - (height * 0.04) / 2,
             height * 0.04,
             height * 0.04,
@@ -418,7 +420,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
 
         this.clickSound = this.sound.add('click');
 
-        this.settingsButton = this.add.image(width / 1.073, height * 0.15, 'settings')
+        this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
             .setDisplaySize(height * 0.032, height * 0.032)
             .setOrigin(0.5)
             .setInteractive()
@@ -751,13 +753,15 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             const y = startY + index * (height * 0.08);
             const container = this.add.container(width / 2, y).setDepth(5);
 
-            const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7);
+             const bg = this.add.image(0, 0, 'chose_block')
+        .setDisplaySize(width, height * 0.06) // Подгоняем размер под оригинальный прямоугольник
+        .setOrigin(0.5, 0.5); // Центрируем изображение в контейнере
 
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
                 fontSize: `${height * 0.02}px`,
                 color: '#fff',
                 fontFamily: 'IBM Plex Sans',
-                padding: { x: 10, y: 5 }
+                padding: { x: 0, y: 5 }
             }).setOrigin(0, 0.5)
                 .setInteractive()
                 .on('pointerdown', async () => {
