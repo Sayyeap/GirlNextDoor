@@ -5,7 +5,7 @@ const config = {
     parent: 'game-container',
     scene: [MainMenu, GameScene, SettingsScene, FullscreenScene, InteractiveScene, SpyGameScene , EnergyShopScene ],
      scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         resolution: window.devicePixelRatio || 1 // Критически важно
     },
@@ -16,7 +16,7 @@ const config = {
     roundPixels: true // Четкие позиции, но без пикселизации
     },
    
- canvasStyle: `display: block; width: 100%!important; height: 100%!important;`,
+
     audio: {
         disableWebAudio: false,  // Важно для точного контроля
     },

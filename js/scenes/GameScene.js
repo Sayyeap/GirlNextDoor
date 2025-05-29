@@ -323,7 +323,7 @@ class GameScene extends Phaser.Scene {
         const bgWidth = width * 0.26;
         const bgHeight = height * 0.04;
         const borderRadius = 5;
-        const centerX = width / 5.5;
+        const centerX = width / 6.4;
         const centerY = height * 0.15;
 
         this.energyBg = this.add.graphics()
