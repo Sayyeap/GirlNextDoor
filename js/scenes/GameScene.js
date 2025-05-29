@@ -411,7 +411,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             .setDepth(10);
         this.settingsButtonBg.fillStyle(0x000000, 0.3);
         this.settingsButtonBg.fillRoundedRect(
-            width / 1.1 - (height * 0.04) / 2,
+            width / 1.073 - (height * 0.04) / 2,
             height * 0.15 - (height * 0.04) / 2,
             height * 0.04,
             height * 0.04,
@@ -420,7 +420,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
 
         this.clickSound = this.sound.add('click');
 
-        this.settingsButton = this.add.image(width / 1.1, height * 0.15, 'settings')
+        this.settingsButton = this.add.image(width / 1.073, height * 0.15, 'settings')
             .setDisplaySize(height * 0.032, height * 0.032)
             .setOrigin(0.5)
             .setInteractive()
