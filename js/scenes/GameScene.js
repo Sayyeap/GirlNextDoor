@@ -115,7 +115,7 @@ class GameScene extends Phaser.Scene {
         const loadingRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000).setDepth(100);
         this.loadingText = this.add.text(width / 2, height / 2, 'Загрузка ...', {
             fontSize: `${Math.min(height * 0.035, 24)}px`,
-            color: '#bcff64',
+            color: '#57b9ff',
             align: 'left',
             fontFamily: 'IBM Plex Sans',
             resolution: 1
@@ -303,7 +303,7 @@ class GameScene extends Phaser.Scene {
 
         this.char = this.add.image(width / 2, height, 'mia_tshirt_shy')
             .setScale(width * 0.97 / 600)
-            .setOrigin(0.5, 0.97)
+            .setOrigin(0.38, 1)
             .setAlpha(0)
             .setDepth(5);
 
@@ -359,25 +359,25 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             });
 
         this.dialogueBox = this.add.image(width / 2, height, 'darkbg')
-            .setDisplaySize(width, height * 0.7)
-            .setOrigin(0.5, 1)
-            .setDepth(10);
+            .setDisplaySize(width, height * 0.5)
+            .setOrigin(0.5, 1.23)
+            .setDepth(5);
 
-        this.speakerText = this.add.text(width * 0.05, height * 0.72, '', {
+        this.speakerText = this.add.text(width * 0.05, height * 0.52, '', {
             fontSize: `${height * 0.022}px`,
-            color: '#bcff64',
+            color: '#57b9ff',
             fontFamily: 'Dela Gothic One',
             stroke: '#000000',
             strokeThickness: 2
         }).setOrigin(0.0)
             .setDepth(10);
 
-        this.nameline = this.add.image(width * 0, height * 0.755, 'nameline')
+        this.nameline = this.add.image(width * 0, height * 0.555, 'nameline')
             .setOrigin(0, 0.5)
             .setDepth(11)
             .setVisible(false);
 
-        this.dialogueText = this.add.text(width * 0.05, height * 0.766, '', {
+        this.dialogueText = this.add.text(width * 0.05, height * 0.566, '', {
             fontSize: `${height * 0.020}px`,
             color: '#fff',
             fontFamily: 'IBM Plex Sans',
@@ -745,7 +745,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
         this.choicesGroup.clear(true, true);
 
         const totalHeight = choices.length * (height * 0.08);
-        const startY = (height - totalHeight) / 2;
+        const startY = (height - totalHeight) / 1.17;
 
         choices.forEach((choice, index) => {
             const y = startY + index * (height * 0.08);
@@ -754,7 +754,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             const bg = this.add.rectangle(0, 0, width, height * 0.06, 0x000000, 0.7);
 
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
-                fontSize: `${height * 0.0258}px`,
+                fontSize: `${height * 0.02}px`,
                 color: '#fff',
                 fontFamily: 'IBM Plex Sans',
                 padding: { x: 10, y: 5 }
@@ -804,15 +804,16 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
                     }
                 });
 
-            const energyIcon = this.add.image(width * 0.27, 0, 'energyIcon')
+            const energyIcon = this.add.image(width * 0.4, 0, 'energyIcon')
                 .setDisplaySize(height * 0.04, height * 0.04)
-                .setOrigin(0.5);
+                .setOrigin(0.55);
 
             const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
                 fontSize: `${height * 0.0258}px`,
-                color: accentColor,
-                fontFamily: 'Dela Gothic One'
-            }).setOrigin(0.3, 0.5);
+                color: '#57b9ff',
+                fontFamily: 'Dela Gothic One',
+               align: 'right',
+            }).setOrigin(1, 0.5);
 
             container.add([bg, choiceText, energyIcon, energyText]);
             this.choicesGroup.add(container);
