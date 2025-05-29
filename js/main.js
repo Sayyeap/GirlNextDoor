@@ -16,7 +16,7 @@ const config = {
     roundPixels: true // Четкие позиции, но без пикселизации
     },
    
-
+ canvasStyle: `display: block; width: 100%!important; height: 100%!important;`,
     audio: {
         disableWebAudio: false,  // Важно для точного контроля
     },
