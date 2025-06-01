@@ -26,7 +26,7 @@ class GameScene extends Phaser.Scene {
         this.speakerText = null;
         this.nameline = null;
         this.dialogueText = null;
-        this.nextButtonContainer = null;
+        this.tapZone = null;
         this.settingsButtonBg = null;
         this.settingsButton = null;
         this.clickSound = null;
@@ -80,7 +80,7 @@ class GameScene extends Phaser.Scene {
         safeDestroy(this.speakerText);
         safeDestroy(this.nameline);
         safeDestroy(this.dialogueText);
-        safeDestroy(this.nextButtonContainer);
+        safeDestroy(this.tapZone);
         safeDestroy(this.settingsButtonBg);
         safeDestroy(this.settingsButton);
         this.currentScene = null;
@@ -103,7 +103,7 @@ class GameScene extends Phaser.Scene {
         this.speakerText = null;
         this.nameline = null;
         this.dialogueText = null;
-        this.nextButtonContainer = null;
+        this.tapZone = null;
         this.settingsButtonBg = null;
         this.settingsButton = null;
         this.clickSound = null;
@@ -178,11 +178,9 @@ class GameScene extends Phaser.Scene {
 
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
         this.load.image('settings', 'assets/common/images/settings.png');
-        this.load.image('next', 'assets/common/images/next.png');
         this.load.image('darkbg', 'assets/common/images/darkbg.png');
         this.load.image('chose_block', 'assets/story1/images/backgrounds/chose_block.png');
         this.load.image('nameline', 'assets/common/images/nameline.png');
-
 
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
         this.load.audio('sad_night', 'assets/story1/audio/sad_night.mp3');
@@ -246,7 +244,6 @@ class GameScene extends Phaser.Scene {
             this.game.sound.volume = 1.0;
         }
 
-        // Загружаем прогресс только один раз
         await new Promise((resolve) => {
             window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
                 this.energy = progress.energy || 0;
@@ -256,7 +253,6 @@ class GameScene extends Phaser.Scene {
             });
         });
 
-        // Слушаем обновления энергии
         this.registry.events.on('changedata-energy', (parent, value) => {
             this.energy = value;
             if (this.energyText) {
@@ -266,14 +262,12 @@ class GameScene extends Phaser.Scene {
             this.saveProgress();
         });
 
-        // Обработчик закрытия EnergyShopScene
         this.scene.get('EnergyShopScene').events.on('shutdown', async () => {
             console.log('EnergyShopScene closed, resuming GameScene');
             this.scene.resume();
             if (this.energyIcon) {
                 this.energyIcon.setInteractive();
             }
-            // Загружаем актуальное значение энергии из хранилища
             await new Promise((resolve) => {
                 window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
                     this.energy = progress.energy || 0;
@@ -319,7 +313,6 @@ class GameScene extends Phaser.Scene {
             paused: true
         });
 
-        // Блок энергии, идентичный MainMenu
         const bgWidth = width * 0.26;
         const bgHeight = height * 0.04;
         const borderRadius = 5;
@@ -328,7 +321,7 @@ class GameScene extends Phaser.Scene {
 
         this.energyBg = this.add.graphics()
             .setDepth(10);
-        this.energyBg.fillStyle(0x000000, 0.4);
+        this.energyBg.fillStyle(0x000000, 0.15);
         this.energyBg.fillRoundedRect(
             centerX - bgWidth / 2,
             centerY - bgHeight / 2,
@@ -337,17 +330,15 @@ class GameScene extends Phaser.Scene {
             borderRadius
         );
 
-        // Создаем energyText один раз с текущим значением this.energy
-      if (this.energyText) {
-    this.energyText.destroy();
-}
+        if (this.energyText) {
+            this.energyText.destroy();
+        }
 
-// Создаем energyText один раз с текущим значением this.energy
-this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.registry.get('energy')}`, {
-    fontSize: `${height * 0.0258}px`,
-    color: '#57b9ff',
-    fontFamily: 'Dela Gothic One',
-}).setOrigin(0.5).setDepth(31);
+        this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.registry.get('energy')}`, {
+            fontSize: `${height * 0.0258}px`,
+            color: '#57b9ff',
+            fontFamily: 'Dela Gothic One',
+        }).setOrigin(0.5).setDepth(31);
 
         this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
             .setDisplaySize(height * 0.037, height * 0.037)
@@ -390,18 +381,19 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             .setOrigin(0.0)
             .setDepth(10);
 
-        this.nextButtonContainer = this.add.container(width / 1.1, height * 0.92).setDepth(10);
-        const rightArrow = this.add.image(0, 0, 'next')
-            .setDisplaySize(height * 0.032, height * 0.032)
-            .setOrigin(0.5);
-        this.nextButtonContainer.add(rightArrow);
-
-        rightArrow.setInteractive()
+        this.tapZone = this.add.rectangle(width / 2, height * 0.9, width, height * 0.2)
+            .setOrigin(0.5)
+            .setInteractive()
+            .setDepth(10)
             .on('pointerdown', () => {
                 this.sound.play('click');
                 if (this.isTyping) {
                     this.isTyping = false;
                     this.dialogueText.setText(this.currentDialogueText);
+                    if (this.typewriterTimer) {
+                        this.typewriterTimer.remove();
+                        this.typewriterTimer = null;
+                    }
                 } else {
                     this.showNextDialogue();
                 }
@@ -444,21 +436,23 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
 
         if (this.bg) this.bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
         if (this.char) this.char.setPosition(width / 2, height).setScale(width * 0.97 / 600);
-        if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.7);
-        if (this.speakerText) this.speakerText.setPosition(width * 0.05, height * 0.72).setFontSize(`${height * 0.022}px`);
-        if (this.nameline) this.nameline.setPosition(width * 0, height * 0.755);
-        if (this.dialogueText) this.dialogueText.setPosition(width * 0.05, height * 0.766).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.9);
-        if (this.nextButtonContainer) this.nextButtonContainer.setPosition(width / 1.1, height * 0.92);
+        if (this.dialogueBox) this.dialogueBox.setPosition(width / 2, height).setDisplaySize(width, height * 0.5);
+        if (this.speakerText) this.speakerText.setPosition(width * 0.05, height * 0.52).setFontSize(`${height * 0.022}px`);
+        if (this.nameline) this.nameline.setPosition(width * 0, height * 0.555);
+        if (this.dialogueText) this.dialogueText.setPosition(width * 0.05, height * 0.566).setFontSize(`${height * 0.020}px`).setWordWrapWidth(width * 0.9);
+        if (this.tapZone) {
+            this.tapZone.setPosition(width / 2, height * 0.9);
+            this.tapZone.setSize(width, height * 0.2);
+        }
 
-        // Обновление блока энергии, идентичное MainMenu
         const bgWidth = width * 0.26;
         const bgHeight = height * 0.04;
-        const centerX = width / 2;
-        const centerY = height * 0.12;
+        const centerX = width / 6.4;
+        const centerY = height * 0.15;
 
         if (this.energyBg) {
             this.energyBg.clear();
-            this.energyBg.fillStyle(0x000000, 0.9);
+            this.energyBg.fillStyle(0x000000, 0.4);
             this.energyBg.fillRoundedRect(
                 centerX - bgWidth / 2,
                 centerY - bgHeight / 2,
@@ -486,17 +480,23 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
         if (this.choicesGroup) {
             const choices = this.choicesGroup.getChildren();
             const totalHeight = choices.length * (height * 0.08);
-            const startY = (height - totalHeight) / 2;
+            const startY = (height - totalHeight) / 1.17;
             choices.forEach((container, index) => {
                 container.setPosition(width / 2, startY + index * (height * 0.08));
                 const bg = container.getAt(0);
                 const choiceText = container.getAt(1);
                 const energyIcon = container.getAt(2);
                 const energyText = container.getAt(3);
-                bg.setPosition(0, 0).setSize(width, height * 0.06);
-                choiceText.setPosition(-width * 0.45, 0).setFontSize(`${height * 0.0258}px`);
-                energyIcon.setPosition(width * 0.27, 0).setDisplaySize(height * 0.04, height * 0.04);
-                energyText.setPosition(width * 0.35, 0).setFontSize(`${height * 0.0258}px`);
+                bg.setPosition(0, 0).setDisplaySize(width, height * 0.06);
+                choiceText.setPosition(-width * 0.45, 0)
+            .setFontSize(`${height * 0.02}px`)
+            .setOrigin(0, 0.5);
+        energyIcon.setPosition(width * 0.4, 0)
+            .setDisplaySize(height * 0.04, height * 0.04)
+            .setOrigin(0.55);
+        energyText.setPosition(width * 0.35, 0)
+            .setFontSize(`${height * 0.0258}px`)
+            .setOrigin(1, 0.5);
             });
         }
     }
@@ -607,25 +607,24 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
 
                 this.isTyping = true;
                 this.typewriterEffect(this.currentDialogueText);
-                this.nextButtonContainer.setVisible(true);
+                this.tapZone.setVisible(true);
             } else {
                 this.dialogueBox.setVisible(false);
                 this.speakerText.setVisible(false).setText('');
                 this.nameline.setVisible(false);
                 this.dialogueText.setVisible(false).setText('');
-                this.nextButtonContainer.setVisible(true);
+                this.tapZone.setVisible(true);
             }
 
             if (dialogue.choices) {
                 this.showChoices(dialogue.choices);
-                this.nextButtonContainer.setVisible(false);
+                this.tapZone.setVisible(false);
             }
 
             if (!dialogue.choices) {
                 this.saveProgress();
             }
 
-            // Восстанавливаем интерактивность energyIcon
             if (this.energyIcon) {
                 this.energyIcon.setInteractive();
             }
@@ -644,7 +643,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
         this.dialogueBox.setVisible(false);
         this.speakerText.setVisible(false).setText('');
         this.dialogueText.setVisible(false).setText('');
-        this.nextButtonContainer.setVisible(false);
+        this.tapZone.setVisible(false);
         this.choicesGroup.clear(true, true);
         this.char.setAlpha(0);
         this.charBreathTween.pause();
@@ -753,9 +752,9 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
             const y = startY + index * (height * 0.08);
             const container = this.add.container(width / 2, y).setDepth(5);
 
-             const bg = this.add.image(0, 0, 'chose_block')
-        .setDisplaySize(width, height * 0.06) // Подгоняем размер под оригинальный прямоугольник
-        .setOrigin(0.5, 0.5); // Центрируем изображение в контейнере
+            const bg = this.add.image(0, 0, 'chose_block')
+                .setDisplaySize(width, height * 0.06)
+                .setOrigin(0.5, 0.5);
 
             const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
                 fontSize: `${height * 0.02}px`,
@@ -799,6 +798,7 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
                             dialogueIndex: this.dialogueIndexInScene
                         });
 
+                        ifbreakpoint
                         if (this.energyIcon) {
                             this.energyIcon.setInteractive();
                             this.energyIcon.setDepth(11);
@@ -816,12 +816,14 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
                 fontSize: `${height * 0.0258}px`,
                 color: '#57b9ff',
                 fontFamily: 'Dela Gothic One',
-               align: 'right',
+                align: 'right',
             }).setOrigin(1, 0.5);
 
             container.add([bg, choiceText, energyIcon, energyText]);
             this.choicesGroup.add(container);
         });
+
+        this.tapZone.setVisible(false);
 
         if (this.energyIcon) {
             this.energyIcon.setDepth(11);
@@ -892,7 +894,6 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
     loadGame(data) {
         console.log('GameScene: Loading game with data:', data);
 
-        // Устанавливаем начальные значения из данных или дефолтные
         this.currentScene = this.story.dialogues.find(
             scene => scene.id === (data?.sceneId || 'scene1')
         ) || this.story.dialogues[0];
@@ -900,14 +901,12 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
         this.stars = data?.stars || 0;
         this.minigameResults = data?.minigameResults || {};
 
-        // Энергия уже загружена в create, синхронизируем
         this.energy = this.registry.get('energy') || 0;
         console.log('GameScene loadGame: Energy from registry:', this.energy);
         if (this.energyText) {
             this.energyText.setText(`${this.energy}`);
         }
 
-        // Обрабатываем результаты миниигры, если они есть
         if (data?.success !== undefined && data.minigameId) {
             const nextSceneId = data.success ? data.successSceneId : data.failSceneId;
             this.currentScene = this.story.dialogues.find(scene => scene.id === nextSceneId) || this.currentScene;
@@ -923,6 +922,8 @@ this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${this.regis
         const inviteLink = `https://t.me/YourBot?start=invite_${userId}`;
         window.TelegramGameBotWebApp.showModal({
             title: 'Пригласить друга',
+	// Продолжение кода:
+
             message: `Поделиться ссылкой: ${inviteLink}`,
             buttons: [{ type: 'share', text: 'Поделиться', url: inviteLink }]
         });
