@@ -12,6 +12,7 @@ class GameScene extends Phaser.Scene {
         this.charBreathTween = null;
         this.isLoaded = false;
         this.isTyping = false;
+        this.isChoicesActive = false; // Новый флаг для блокировки tapZone
         this.currentDialogueText = '';
         this.typewriterTimer = null;
         this.loadingText = null;
@@ -88,6 +89,7 @@ class GameScene extends Phaser.Scene {
         this.currentMusic = null;
         this.isLoaded = false;
         this.isTyping = false;
+        this.isChoicesActive = false; // Сбрасываем флаг
         this.currentDialogueText = '';
         this.choicesGroup = null;
         this.charShakeTween = null;
@@ -386,6 +388,7 @@ class GameScene extends Phaser.Scene {
             .setInteractive()
             .setDepth(10)
             .on('pointerdown', () => {
+                if (this.isChoicesActive) return; // Игнорируем клики, если есть выбор
                 this.sound.play('click');
                 if (this.isTyping) {
                     this.isTyping = false;
@@ -489,14 +492,14 @@ class GameScene extends Phaser.Scene {
                 const energyText = container.getAt(3);
                 bg.setPosition(0, 0).setDisplaySize(width, height * 0.06);
                 choiceText.setPosition(-width * 0.45, 0)
-            .setFontSize(`${height * 0.02}px`)
-            .setOrigin(0, 0.5);
-        energyIcon.setPosition(width * 0.4, 0)
-            .setDisplaySize(height * 0.04, height * 0.04)
-            .setOrigin(0.55);
-        energyText.setPosition(width * 0.35, 0)
-            .setFontSize(`${height * 0.0258}px`)
-            .setOrigin(1, 0.5);
+                    .setFontSize(`${height * 0.02}px`)
+                    .setOrigin(0, 0.5);
+                energyIcon.setPosition(width * 0.4, 0)
+                    .setDisplaySize(height * 0.04, height * 0.04)
+                    .setOrigin(0.55);
+                energyText.setPosition(width * 0.35, 0)
+                    .setFontSize(`${height * 0.0258}px`)
+                    .setOrigin(1, 0.5);
             });
         }
     }
@@ -549,6 +552,7 @@ class GameScene extends Phaser.Scene {
             this.dialogueText.setText('');
             this.speakerText.setText('');
             this.isTyping = false;
+            this.isChoicesActive = false; // Сбрасываем флаг, если нет выбора
             if (this.typewriterTimer) {
                 this.typewriterTimer.remove();
                 this.typewriterTimer = null;
@@ -608,17 +612,18 @@ class GameScene extends Phaser.Scene {
                 this.isTyping = true;
                 this.typewriterEffect(this.currentDialogueText);
                 this.tapZone.setVisible(true);
+                this.tapZone.setInteractive();
             } else {
                 this.dialogueBox.setVisible(false);
                 this.speakerText.setVisible(false).setText('');
                 this.nameline.setVisible(false);
                 this.dialogueText.setVisible(false).setText('');
                 this.tapZone.setVisible(true);
+                this.tapZone.setInteractive();
             }
 
             if (dialogue.choices) {
                 this.showChoices(dialogue.choices);
-                this.tapZone.setVisible(false);
             }
 
             if (!dialogue.choices) {
@@ -645,6 +650,7 @@ class GameScene extends Phaser.Scene {
         this.dialogueText.setVisible(false).setText('');
         this.tapZone.setVisible(false);
         this.choicesGroup.clear(true, true);
+        this.isChoicesActive = false; // Сбрасываем флаг
         this.char.setAlpha(0);
         this.charBreathTween.pause();
         if (this.bg) this.bg.setVisible(false);
@@ -707,6 +713,7 @@ class GameScene extends Phaser.Scene {
         if (this.tweens) this.tweens.killAll();
         if (this.time) this.time.removeAllEvents();
         if (this.sound) this.sound.stop();
+        this.isChoicesActive = false; // Сбрасываем флаг
         console.log('GameScene: Shutdown completed');
     }
 
@@ -744,6 +751,7 @@ class GameScene extends Phaser.Scene {
         const height = this.scale.height;
         const accentColor = '#61bdff';
         this.choicesGroup.clear(true, true);
+        this.isChoicesActive = true; // Устанавливаем флаг
 
         const totalHeight = choices.length * (height * 0.08);
         const startY = (height - totalHeight) / 1.17;
@@ -770,6 +778,7 @@ class GameScene extends Phaser.Scene {
                         this.energyText.setText(`${this.energy}`);
                         this.registry.set('energy', this.energy);
                         this.choicesGroup.clear(true, true);
+                        this.isChoicesActive = false; // Сбрасываем флаг
                         this.sound.play('click');
 
                         console.log('Before choice:', {
@@ -798,7 +807,6 @@ class GameScene extends Phaser.Scene {
                             dialogueIndex: this.dialogueIndexInScene
                         });
 
-                        ifbreakpoint
                         if (this.energyIcon) {
                             this.energyIcon.setInteractive();
                             this.energyIcon.setDepth(11);
@@ -823,7 +831,9 @@ class GameScene extends Phaser.Scene {
             this.choicesGroup.add(container);
         });
 
-        this.tapZone.setVisible(false);
+        if (this.tapZone) {
+            this.tapZone.setVisible(false);
+        }
 
         if (this.energyIcon) {
             this.energyIcon.setDepth(11);
@@ -834,6 +844,7 @@ class GameScene extends Phaser.Scene {
     showNextDialogue() {
         if (!this.scene.isActive()) return;
         this.choicesGroup.clear(true, true);
+        this.isChoicesActive = false; // Сбрасываем флаг
         this.dialogueIndexInScene++;
         this.saveProgress();
         this.showDialogue();
@@ -922,8 +933,6 @@ class GameScene extends Phaser.Scene {
         const inviteLink = `https://t.me/YourBot?start=invite_${userId}`;
         window.TelegramGameBotWebApp.showModal({
             title: 'Пригласить друга',
-	// Продолжение кода:
-
             message: `Поделиться ссылкой: ${inviteLink}`,
             buttons: [{ type: 'share', text: 'Поделиться', url: inviteLink }]
         });
