@@ -9,15 +9,13 @@ class SpyGameScene extends Phaser.Scene {
         this.minigameId = data.minigameId || 'spygame1';
         this.successSceneId = data.successSceneId || 'scene3';
         this.failSceneId = data.failSceneId || 'scene4';
-        this.storyId = data.storyId || 'story1'; // Добавляем storyId
+        this.storyId = data.storyId || 'story1';
         this.zoneConfig = data.zoneConfig || {
             zoneY: 0.42,
             zoneHeight: 230,
             zoneWidth: 1.0
         };
         console.log('SpyGameScene init:', data);
-        
-       
     }
 
     preload() {
@@ -28,14 +26,23 @@ class SpyGameScene extends Phaser.Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
 
+        // Загрузка изображений
         this.load.image('image1', 'assets/images/spy_image1.jpg');
         this.load.image('image2', 'assets/images/spy_image2.jpg');
         this.load.image('office_pc_photo_game', 'assets/story1/images/backgrounds/office_pc_photo_game.jpg');
-        this.load.image('cameraButton', 'assets/common/images/cameraButton.png');
-        this.load.image('photophokus', 'assets/common/images/photophokus.png');
-        this.load.image('photophokusred', 'assets/common/images/photophokusred.png');
-        this.load.image('trophy', 'assets/images/trophy.png');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
+        this.load.image('trophy', 'assets/images/trophy.png');
+        this.load.image('voyeurism', 'assets/images/voyeurism.png');
+
+        // Загрузка спрайт-листов
+        this.load.spritesheet('cameraButton', 'assets/common/images/cameraButton.png', {
+            frameWidth: 200, // 800 / 4 кадра = 200 пикселей на кадр
+            frameHeight: 200
+        });
+        this.load.spritesheet('photophokus', 'assets/common/images/photophokus.png', {
+            frameWidth: 200, // 1000 / 5 кадров = 200 пикселей на кадр
+            frameHeight: 200
+        });
 
         this.load.on('filecomplete', (key) => console.log(`SpyGameScene: File loaded: ${key}`));
         this.load.on('fileerror', (file) => console.error(`SpyGameScene: File failed to load: ${file.key} (${file.src})`));
@@ -58,6 +65,22 @@ class SpyGameScene extends Phaser.Scene {
 
         this.updateScene();
 
+        // Создание анимации для cameraButton (кадры 1–3, т.е. 2–4-й кадры)
+        this.anims.create({
+            key: 'cameraButtonClick',
+            frames: this.anims.generateFrameNumbers('cameraButton', { start: 1, end: 3 }),
+            frameRate: 10,
+            repeat: 0 // Анимация проигрывается один раз
+        });
+
+        // Создание анимации для photophokus (кадры 0–3, т.е. 1–4-й кадры)
+        this.anims.create({
+            key: 'photophokusOutOfFocus',
+            frames: this.anims.generateFrameNumbers('photophokus', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1 // Зацикленная анимация
+        });
+
         this.focusZone = this.add.rectangle(
             this.cameras.main.centerX,
             this.focusZoneY,
@@ -67,11 +90,13 @@ class SpyGameScene extends Phaser.Scene {
             0.0
         ).setDepth(0);
 
-        this.focusIcon = this.add.image(this.cameras.main.centerX, this.focusIconY, 'photophokus','photophokusred')
+        // Используем кадр 4 (нумерация с 0, поэтому 4 = 5-й кадр) для photophokus
+        this.focusIcon = this.add.sprite(this.cameras.main.centerX, this.focusIconY, 'photophokus', 4)
             .setScale(0.5)
             .setDepth(1);
 
-        this.cameraButton = this.add.image(this.cameras.main.centerX, this.cameras.main.height - 70, 'cameraButton')
+        // cameraButton с первым кадром по умолчанию (frame 0)
+        this.cameraButton = this.add.sprite(this.cameras.main.centerX, this.cameras.main.height - 70, 'cameraButton', 0)
             .setInteractive({ useHandCursor: true })
             .setDepth(2)
             .setScale(0.5)
@@ -79,12 +104,11 @@ class SpyGameScene extends Phaser.Scene {
                 if (!this.isGameOver) {
                     console.log('Camera button clicked');
                     this.focusVelocity = -450;
-                    this.tweens.add({
-                        targets: this.cameraButton,
-                        scale: 0.8,
-                        duration: 100,
-                        yoyo: true
-                    });
+                    this.cameraButton.play('cameraButtonClick'); // Проигрываем анимацию при нажатии
+                    // Возвращаем первый кадр после завершения анимации
+                    this.cameraButton.on('animationcomplete', () => {
+                        this.cameraButton.setFrame(0);
+                    }, this);
                 }
             })
             .on('pointerover', () => console.log('Pointer over cameraButton'))
@@ -129,47 +153,50 @@ class SpyGameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-    if (!this.isGameOver) {
-        this.focusVelocity += this.gravity * (delta / 1000);
-        this.focusIconY += this.focusVelocity * (delta / 1000);
+        if (!this.isGameOver) {
+            this.focusVelocity += this.gravity * (delta / 1000);
+            this.focusIconY += this.focusVelocity * (delta / 1000);
 
-        // Добавляем отступы (20% сверху, 10% снизу)
-        const topMargin = this.cameras.main.height * 0.2;
-        const bottomMargin = this.cameras.main.height * 0.17;
-        this.focusIconY = Phaser.Math.Clamp(
-            this.focusIconY,
-            topMargin,
-            this.cameras.main.height - bottomMargin
-        );
+            // Добавляем отступы (20% сверху, 10% снизу)
+            const topMargin = this.cameras.main.height * 0.2;
+            const bottomMargin = this.cameras.main.height * 0.17;
+            this.focusIconY = Phaser.Math.Clamp(
+                this.focusIconY,
+                topMargin,
+                this.cameras.main.height - bottomMargin
+            );
 
-        this.focusIcon.y = this.focusIconY;
+            this.focusIcon.y = this.focusIconY;
 
-        // Проверка нахождения в зоне и смена текстуры
-        const isInZone = (
-            this.focusIcon.y >= this.focusZoneY - this.focusZoneHeight / 2 &&
-            this.focusIcon.y <= this.focusZoneY + this.focusZoneHeight / 2
-        );
+            // Проверка нахождения в зоне и смена кадра/анимации
+            const isInZone = (
+                this.focusIcon.y >= this.focusZoneY - this.focusZoneHeight / 2 &&
+                this.focusIcon.y <= this.focusZoneY + this.focusZoneHeight / 2
+            );
 
-        if (isInZone) {
-            if (this.focusIcon.texture.key !== 'photophokus') {
-                this.focusIcon.setTexture('photophokus');
+            if (isInZone) {
+                if (this.focusIcon.anims.isPlaying) {
+                    this.focusIcon.stop(); // Останавливаем анимацию
+                    this.focusIcon.setFrame(4); // 5-й кадр (фокус)
+                } else if (this.focusIcon.frame.name !== 4) {
+                    this.focusIcon.setFrame(4); // 5-й кадр (фокус)
+                }
+                this.progress += 0.2;
+                if (this.progress >= 100) {
+                    this.gameOver(true);
+                }
+            } else {
+                if (!this.focusIcon.anims.isPlaying) {
+                    this.focusIcon.play('photophokusOutOfFocus'); // Проигрываем анимацию (кадры 0–3)
+                }
             }
-            this.progress += 0.2;
-            if (this.progress >= 100) {
-                this.gameOver(true);
-            }
-        } else {
-            if (this.focusIcon.texture.key !== 'photophokusred') {
-                this.focusIcon.setTexture('photophokusred');
-            }
+
+            this.progressBar.width = (this.progress / 100) * (this.cameras.main.width - 60);
         }
-
-        this.progressBar.width = (this.progress / 100) * (this.cameras.main.width - 60);
     }
-}
 
     updateScene() {
-        const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game','sexphoto_office'];
+        const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game', 'sexphoto_office'];
         const bgKey = validBackgrounds.includes(this.imageKey) ? this.imageKey : 'image1';
         console.log('SpyGameScene: Setting background to:', bgKey);
 
@@ -184,127 +211,118 @@ class SpyGameScene extends Phaser.Scene {
     }
 
     gameOver(success) {
-    this.isGameOver = true;
-    this.time.paused = true;
+        this.isGameOver = true;
+        this.time.paused = true;
 
-    this.registry.set(`minigame_${this.minigameId}_result`, success);
+        this.registry.set(`minigame_${this.minigameId}_result`, success);
 
-    if (success) {
-        // Удаляем все игровые элементы
-        this.children.each(child => {
-            if (!(child instanceof Phaser.GameObjects.Rectangle) && 
-                !(child instanceof Phaser.GameObjects.Text)) {
-                child.destroy();
+        if (success) {
+            this.children.each(child => {
+                if (!(child instanceof Phaser.GameObjects.Rectangle) &&
+                    !(child instanceof Phaser.GameObjects.Text)) {
+                    child.destroy();
+                }
+            });
+
+            let victoryImage;
+            switch (this.minigameId) {
+                case 'spygame1':
+                    victoryImage = 'sexphoto_office';
+                    break;
+                case 'spygame2':
+                    victoryImage = 'image2';
+                    break;
+                default:
+                    victoryImage = 'office_pc_photo_game';
             }
-        });
 
-        // Определяем какое изображение показывать в зависимости от minigameId
-        let victoryImage;
-        switch(this.minigameId) {
-            case 'spygame1':
-                victoryImage = 'sexphoto_office';
-                break;
-            case 'spygame2':
-                victoryImage = 'image2'; // Замените на нужное изображение
-                break;
-            default:
-                victoryImage = 'office_pc_photo_game';
-        }
+            this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, victoryImage)
+                .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+                .setDepth(0);
 
-        // Показываем полноэкранное изображение победы
-        this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, victoryImage)
-            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-            .setDepth(0);
+            const nextButton = this.add.text(
+                this.cameras.main.centerX,
+                this.cameras.main.height - 100,
+                'Далее',
+                {
+                    fontSize: '32px',
+                    color: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 20, y: 10 }
+                }
+            )
+                .setInteractive({ useHandCursor: true })
+                .setOrigin(0.5)
+                .setDepth(3);
 
-        // Добавляем кнопку "Далее"
-        const nextButton = this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.height - 100,
-            'Далее',
-            { 
-                fontSize: '32px', 
-                color: '#ffffff',
-                backgroundColor: '#000000',
-                padding: { x: 20, y: 10 }
-            }
-        )
-        .setInteractive({ useHandCursor: true })
-        .setOrigin(0.5)
-        .setDepth(3);
+            nextButton.on('pointerdown', () => {
+                const params = {
+                    storyId: this.storyId,
+                    energy: this.energy,
+                    minigameId: this.minigameId,
+                    success: true,
+                    successSceneId: this.successSceneId,
+                    failSceneId: this.failSceneId
+                };
+                this.scene.start('GameScene', params);
+            });
+        } else {
+            const resultWindow = this.add.rectangle(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY,
+                300,
+                200,
+                0x000000,
+                0.8
+            ).setDepth(3);
 
-        nextButton.on('pointerdown', () => {
-            const params = {
-                storyId: this.storyId,
-                energy: this.energy,
-                minigameId: this.minigameId,
-                success: true,
-                successSceneId: this.successSceneId,
-                failSceneId: this.failSceneId
-            };
-            this.scene.start('GameScene', params);
-        });
+            this.add.text(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY - 50,
+                'Провал!',
+                { fontSize: '24px', color: '#ffffff' }
+            ).setOrigin(0.5).setDepth(3);
 
-        // Можно добавить звуковой эффект
-        // this.sound.play('victory_sound');
-
-    } else {
-        // Старый код для проигрыша
-        const resultWindow = this.add.rectangle(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            300,
-            200,
-            0x000000,
-            0.8
-        ).setDepth(3);
-
-        this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 50,
-            'Провал!',
-            { fontSize: '24px', color: '#ffffff' }
-        ).setOrigin(0.5).setDepth(3);
-
-        const continueButton = this.add.text(
-            this.cameras.main.centerX - 100,
-            this.cameras.main.centerY + 50,
-            'Продолжить',
-            { fontSize: '20px', color: '#ffffff' }
-        ).setInteractive({ useHandCursor: true }).setOrigin(0.5).setDepth(3);
-
-        continueButton.on('pointerdown', () => {
-            const params = {
-                storyId: this.storyId,
-                energy: this.energy,
-                minigameId: this.minigameId,
-                success: false,
-                successSceneId: this.successSceneId,
-                failSceneId: this.failSceneId
-            };
-            this.scene.start('GameScene', params);
-        });
-
-        if (this.energy > 0) {
-            const retryButton = this.add.text(
-                this.cameras.main.centerX + 100,
+            const continueButton = this.add.text(
+                this.cameras.main.centerX - 100,
                 this.cameras.main.centerY + 50,
-                `Переиграть (-1 энергия)`,
+                'Продолжить',
                 { fontSize: '20px', color: '#ffffff' }
             ).setInteractive({ useHandCursor: true }).setOrigin(0.5).setDepth(3);
 
-            retryButton.on('pointerdown', () => {
+            continueButton.on('pointerdown', () => {
                 const params = {
                     storyId: this.storyId,
-                    energy: this.energy - 1,
-                    imageKey: this.imageKey,
+                    energy: this.energy,
                     minigameId: this.minigameId,
+                    success: false,
                     successSceneId: this.successSceneId,
-                    failSceneId: this.failSceneId,
-                    zoneConfig: this.zoneConfig
+                    failSceneId: this.failSceneId
                 };
-                this.scene.start('SpyGameScene', params);
+                this.scene.start('GameScene', params);
             });
+
+            if (this.energy > 0) {
+                const retryButton = this.add.text(
+                    this.cameras.main.centerX + 100,
+                    this.cameras.main.centerY + 50,
+                    `Переиграть (-1 энергия)`,
+                    { fontSize: '20px', color: '#ffffff' }
+                ).setInteractive({ useHandCursor: true }).setOrigin(0.5).setDepth(3);
+
+                retryButton.on('pointerdown', () => {
+                    const params = {
+                        storyId: this.storyId,
+                        energy: this.energy - 1,
+                        imageKey: this.imageKey,
+                        minigameId: this.minigameId,
+                        successSceneId: this.successSceneId,
+                        failSceneId: this.failSceneId,
+                        zoneConfig: this.zoneConfig
+                    };
+                    this.scene.start('SpyGameScene', params);
+                });
+            }
         }
     }
-}
 }

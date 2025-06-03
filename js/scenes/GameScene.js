@@ -323,7 +323,7 @@ class GameScene extends Phaser.Scene {
 
         this.energyBg = this.add.graphics()
             .setDepth(10);
-        this.energyBg.fillStyle(0x000000, 0.15);
+        this.energyBg.fillStyle(0x000000, 0.3);
         this.energyBg.fillRoundedRect(
             centerX - bgWidth / 2,
             centerY - bgHeight / 2,
@@ -455,7 +455,7 @@ class GameScene extends Phaser.Scene {
 
         if (this.energyBg) {
             this.energyBg.clear();
-            this.energyBg.fillStyle(0x000000, 0.4);
+            this.energyBg.fillStyle(0x000000, 0.3);
             this.energyBg.fillRoundedRect(
                 centerX - bgWidth / 2,
                 centerY - bgHeight / 2,
