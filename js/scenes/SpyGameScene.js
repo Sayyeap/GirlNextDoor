@@ -33,6 +33,8 @@ class SpyGameScene extends Phaser.Scene {
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
         this.load.image('voyeurism', 'assets/story1/images/backgrounds/voyeurism.png');
         this.load.image('Button', 'assets/common/images/Button.png');
+        this.load.image('settings_box', 'assets/common/images/settings_box.png');
+        this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
 
         // Загрузка спрайт-листов
         this.load.spritesheet('cameraButton', 'assets/common/images/cameraButton.png', {
@@ -313,62 +315,109 @@ class SpyGameScene extends Phaser.Scene {
                 this.scene.start('GameScene', params);
             });
         } else {
-            const resultWindow = this.add.rectangle(
-                this.cameras.main.centerX,
-                this.cameras.main.centerY,
-                300,
-                200,
-                0x000000,
-                0.8
-            ).setDepth(3);
+        // Settings box as background
+        const resultWindow = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'settings_box'
+        )
+            .setDisplaySize(300, 300) // Adjust size to fit content
+            .setDepth(3);
 
-            this.add.text(
-                this.cameras.main.centerX,
-                this.cameras.main.centerY - 50,
-                'Провал!',
-                { fontSize: '24px', color: '#ffffff' }
-            ).setOrigin(0.5).setDepth(3);
+        // Title text
+        const failText = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 80,
+            'Провал!',
+            { fontSize: '24px', color: '#ffffff' }
+        )
+            .setOrigin(0.5)
+            .setDepth(4);
 
-            const continueButton = this.add.text(
-                this.cameras.main.centerX - 100,
-                this.cameras.main.centerY + 50,
-                'Продолжить',
+        // Continue button
+        const continueButton = this.add.sprite(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 20,
+            'Button'
+        )
+            .setInteractive({ useHandCursor: true })
+            .setScale(0.5)
+            .setDepth(4);
+
+        const continueText = this.add.text(
+            continueButton.x,
+            continueButton.y,
+            'Продолжить',
+            { fontSize: '20px', color: '#ffffff' }
+        )
+            .setOrigin(0.5)
+            .setDepth(5);
+
+        continueButton.on('pointerdown', () => {
+            const params = {
+                storyId: this.storyId,
+                energy: this.energy,
+                minigameId: this.minigameId,
+                success: false,
+                successSceneId: this.successSceneId,
+                failSceneId: this.failSceneId
+            };
+            this.scene.start('GameScene', params);
+        });
+
+        if (this.energy > 0) {
+            // Retry button
+            const retryButton = this.add.sprite(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY + 60,
+                'Button'
+            )
+                .setInteractive({ useHandCursor: true })
+                .setScale(0.5)
+                .setDepth(4);
+
+            // Retry text
+            const retryText = this.add.text(
+                retryButton.x - 30,
+                retryButton.y,
+                'Переиграть',
                 { fontSize: '20px', color: '#ffffff' }
-            ).setInteractive({ useHandCursor: true }).setOrigin(0.5).setDepth(3);
+            )
+                .setOrigin(0.5)
+                .setDepth(5);
 
-            continueButton.on('pointerdown', () => {
+            // Energy icon
+            const energyIcon = this.add.image(
+                retryButton.x + 30,
+                retryButton.y,
+                'energyIcon'
+            )
+                .setScale(0.2) // Adjust scale as needed
+                .setDepth(5);
+
+            // Energy cost text
+            const energyText = this.add.text(
+                energyIcon.x + 20,
+                retryButton.y,
+                '-1',
+                { fontSize: '20px', color: '#ffffff' }
+            )
+                .setOrigin(0.5)
+                .setDepth(5);
+
+            retryButton.on('pointerdown', () => {
                 const params = {
                     storyId: this.storyId,
-                    energy: this.energy,
+                    energy: this.energy - 1,
+                    imageKey: this.imageKey,
                     minigameId: this.minigameId,
-                    success: false,
                     successSceneId: this.successSceneId,
-                    failSceneId: this.failSceneId
+                    failSceneId: this.failSceneId,
+                    zoneConfig: this.zoneConfig
                 };
-                this.scene.start('GameScene', params);
+                this.scene.start('SpyGameScene', params);
             });
-
-            if (this.energy > 0) {
-                const retryButton = this.add.text(
-                    this.cameras.main.centerX + 100,
-                    this.cameras.main.centerY + 50,
-                    `Переиграть (-1 энергия)`,
-                    { fontSize: '20px', color: '#ffffff' }
-                ).setInteractive({ useHandCursor: true }).setOrigin(0.5).setDepth(3);
-
-                retryButton.on('pointerdown', () => {
-                    const params = {
-                        storyId: this.storyId,
-                        energy: this.energy - 1,
-                        imageKey: this.imageKey,
-                        minigameId: this.minigameId,
-                        successSceneId: this.successSceneId,
-                        failSceneId: this.failSceneId,
-                        zoneConfig: this.zoneConfig
-                    };
-                    this.scene.start('SpyGameScene', params);
-                });
-            }
         }
     }
+}
 }
