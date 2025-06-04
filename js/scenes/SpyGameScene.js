@@ -32,6 +32,7 @@ class SpyGameScene extends Phaser.Scene {
         this.load.image('office_pc_photo_game', 'assets/story1/images/backgrounds/office_pc_photo_game.jpg');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
         this.load.image('voyeurism', 'assets/story1/images/backgrounds/voyeurism.png');
+        this.load.image('Button', 'assets/common/images/Button.png');
 
         // Загрузка спрайт-листов
         this.load.spritesheet('cameraButton', 'assets/common/images/cameraButton.png', {
@@ -274,23 +275,31 @@ class SpyGameScene extends Phaser.Scene {
             }
 
             this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, victoryImage)
-                .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-                .setDepth(0);
+            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+            .setDepth(40);
 
-            const nextButton = this.add.text(
-                this.cameras.main.centerX,
-                this.cameras.main.height - 100,
-                'Далее',
-                {
-                    fontSize: '32px',
-                    color: '#ffffff',
-                    backgroundColor: '#000000',
-                    padding: { x: 20, y: 10 }
-                }
-            )
-                .setInteractive({ useHandCursor: true })
-                .setOrigin(0.5)
-                .setDepth(3);
+        const nextButton = this.add.sprite(
+            this.cameras.main.centerX,
+            this.cameras.main.height - 100,
+            'Button'
+        )
+            .setInteractive({ useHandCursor: true })
+            .setScale(0.5)
+            .setDepth(43);
+
+        // Добавляем текст поверх кнопки
+        const buttonText = this.add.text(
+            nextButton.x,
+            nextButton.y,
+            'Далее',
+            {
+                fontSize: '32px',
+                color: '#ffffff',
+                padding: { x: 20, y: 10 }
+            }
+        )
+            .setOrigin(0.5)
+            .setDepth(44);
 
             nextButton.on('pointerdown', () => {
                 const params = {
