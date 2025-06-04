@@ -32,7 +32,7 @@ class SpyGameScene extends Phaser.Scene {
         this.load.image('office_pc_photo_game', 'assets/story1/images/backgrounds/office_pc_photo_game.jpg');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
         this.load.image('trophy', 'assets/images/trophy.png');
-        this.load.image('voyeurism', 'assets/images/voyeurism.png');
+        this.load.image('voyeurism', 'assets/story1/images/backgrounds/voyeurism.png');
 
         // Загрузка спрайт-листов
         this.load.spritesheet('cameraButton', 'assets/common/images/cameraButton.png', {
@@ -114,30 +114,46 @@ class SpyGameScene extends Phaser.Scene {
             .on('pointerover', () => console.log('Pointer over cameraButton'))
             .on('pointerout', () => console.log('Pointer out cameraButton'));
 
+     
+
+    // UI элементы в горизонтальной полосе, смещенные на 20% от верха
+        const uiY = this.cameras.main.height * 0.15; // 20% от верхнего края
+
+        // Оверлей voyeurism.png на всю ширину с отступами 5% и уменьшенной высотой
+        const voyeurismWidth = this.cameras.main.width * 0.9; // 90% ширины экрана (5% отступы с каждой стороны)
+        const margin = this.cameras.main.width * 0.05; // Отступы 5%
+        const voyeurismHeight = 75 * 0.45; // Высота уменьшена на 30% (52.5 пикселей)
+        this.progressOverlay = this.add.image(
+            this.cameras.main.centerX, // Центр экрана
+            uiY,
+            'voyeurism'
+        )
+            .setDisplaySize(voyeurismWidth, voyeurismHeight) // Ширина с отступами, высота 52.5 пикселей
+            .setOrigin(0.5, 0.5)
+            .setDepth(10); // Низкая глубина, чтобы быть под таймером и полоской
+
+        // Полоска прогресса под voyeurism (100–386 пикселей, ширина 286 пикселей)
         this.progressBar = this.add.rectangle(
-            10,
-            50,
-            0,
-            20,
-            0x00ff00,
+            110, // Начало полоски
+            uiY,
+            0, // Начальная ширина
+            30, // Высота полоски
+            0x57b9ff, // Цвет голубой
             1
-        ).setOrigin(0).setDepth(1);
+        ).setOrigin(0, 0.5).setDepth(1);
 
-        this.trophyIcon = this.add.image(this.cameras.main.width - 30, 50, 'trophy')
-            .setOrigin(0.5)
-            .setDepth(1);
-
-        this.timerText = this.add.text(10, 10, `Время: ${this.timer}`, {
+        // Таймер в формате mm:ss, смещен левее
+        this.timerText = this.add.text(10, uiY, this.formatTimer(this.timer), {
             fontSize: '20px',
-            color: '#ffffff'
-        }).setDepth(1);
+            color: '#00ff78'
+        }).setDepth(2).setOrigin(-0.4, 0.5);
 
         this.time.addEvent({
             delay: 1000,
             callback: () => {
                 if (!this.isGameOver) {
                     this.timer--;
-                    this.timerText.setText(`Время: ${this.timer}`);
+                    this.timerText.setText(this.formatTimer(this.timer));
                     if (this.timer <= 0) {
                         this.gameOver(false);
                     }
@@ -151,6 +167,14 @@ class SpyGameScene extends Phaser.Scene {
             console.log('Screen clicked at:', pointer.x, pointer.y);
         });
     }
+
+    // Форматирование таймера в mm:ss
+    formatTimer(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
 
     update(time, delta) {
         if (!this.isGameOver) {
@@ -191,7 +215,8 @@ class SpyGameScene extends Phaser.Scene {
                 }
             }
 
-            this.progressBar.width = (this.progress / 100) * (this.cameras.main.width - 60);
+            // Обновление ширины полоски прогресса (286 пикселей максимум)
+            this.progressBar.width = (this.progress / 100) * (386 - 100);
         }
     }
 
