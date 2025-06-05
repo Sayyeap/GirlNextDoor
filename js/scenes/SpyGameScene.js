@@ -62,7 +62,7 @@ class SpyGameScene extends Phaser.Scene {
         this.focusVelocity = 0;
         this.gravity = 700;
         this.progress = 0;
-        this.timer = 60;
+        this.timer = 30;
         this.isGameOver = false;
 
         this.updateScene();
@@ -250,46 +250,79 @@ class SpyGameScene extends Phaser.Scene {
         }
     }
 
-    gameOver(success) {
-        this.isGameOver = true;
-        this.time.paused = true;
+   gameOver(success) {
+    this.isGameOver = true;
+    // Удаляем паузу таймера, чтобы delayedCall работал
+    // this.time.paused = true; // Закомментировано, так как может блокировать анимации
 
-        this.registry.set(`minigame_${this.minigameId}_result`, success);
+    this.registry.set(`minigame_${this.minigameId}_result`, success);
 
-        if (success) {
-            this.children.each(child => {
-                if (!(child instanceof Phaser.GameObjects.Rectangle) &&
-                    !(child instanceof Phaser.GameObjects.Text)) {
-                    child.destroy();
-                }
-            });
-
-            let victoryImage;
-            switch (this.minigameId) {
-                case 'spygame1':
-                    victoryImage = 'sexphoto_office';
-                    break;
-                case 'spygame2':
-                    victoryImage = 'image2';
-                    break;
-                default:
-                    victoryImage = 'office_pc_photo_game';
+    if (success) {
+        // Уничтожаем все объекты, кроме прямоугольников и текста
+        this.children.each(child => {
+            if (!(child instanceof Phaser.GameObjects.Rectangle) &&
+                !(child instanceof Phaser.GameObjects.Text)) {
+                child.destroy();
             }
+        });
 
-            this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, victoryImage)
-            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+        let victoryImage;
+        switch (this.minigameId) {
+            case 'spygame1':
+                victoryImage = 'sexphoto_office';
+                break;
+            case 'spygame2':
+                victoryImage = 'image2';
+                break;
+            default:
+                victoryImage = 'office_pc_photo_game';
+        }
+
+        // Создаем изображение с начальным масштабом 0.5 и прозрачностью 0
+        const finalImage = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            victoryImage
+        )
+            .setScale(0.5)
+            .setAlpha(0)
             .setDepth(40);
 
+        // Анимация для изображения
+        this.tweens.chain({
+            targets: finalImage,
+            tweens: [
+                {
+                    scale: 1.2,
+                    alpha: 1,
+                    duration: 500,
+                    ease: 'Power2'
+                },
+                {
+                    scale: 1,
+                    duration: 1000,
+                    ease: 'Sine.easeOut'
+                },
+                {
+                    scaleX: this.cameras.main.width / finalImage.width,
+                    scaleY: this.cameras.main.height / finalImage.height,
+                    duration: 500,
+                    ease: 'Power1'
+                }
+            ]
+        });
+
+        // Создаем кнопку "Далее" с начальной прозрачностью 0
         const nextButton = this.add.sprite(
             this.cameras.main.centerX,
-            this.cameras.main.height - 100,
+            this.cameras.main.height * 0.9,
             'Button'
         )
             .setInteractive({ useHandCursor: true })
             .setScale(0.5)
+            .setAlpha(0)
             .setDepth(43);
 
-        // Добавляем текст поверх кнопки
         const buttonText = this.add.text(
             nextButton.x,
             nextButton.y,
@@ -301,30 +334,47 @@ class SpyGameScene extends Phaser.Scene {
             }
         )
             .setOrigin(0.5)
+            .setAlpha(0)
             .setDepth(44);
 
-            nextButton.on('pointerdown', () => {
-                const params = {
-                    storyId: this.storyId,
-                    energy: this.energy,
-                    minigameId: this.minigameId,
-                    success: true,
-                    successSceneId: this.successSceneId,
-                    failSceneId: this.failSceneId
-                };
-                this.scene.start('GameScene', params);
-            });
-        } else {
-        // Settings box as background
+        // Анимация появления кнопки через 2 секунды
+        this.tweens.add({
+            targets: [nextButton, buttonText],
+            alpha: 1,
+            duration: 500,
+            delay: 2000, // Задержка 2 секунды
+            ease: 'Linear',
+            onStart: () => {
+                console.log('Button animation started');
+            },
+            onComplete: () => {
+                console.log('Button animation completed');
+            }
+        });
+
+        // Обработчик нажатия кнопки
+        nextButton.on('pointerdown', () => {
+            console.log('Next button clicked');
+            const params = {
+                storyId: this.storyId,
+                energy: this.energy,
+                minigameId: this.minigameId,
+                success: true,
+                successSceneId: this.successSceneId,
+                failSceneId: this.failSceneId
+            };
+            this.scene.start('GameScene', params);
+        });
+    } else {
+        // Код для случая провала остается без изменений
         const resultWindow = this.add.image(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
             'settings_box'
         )
-            .setDisplaySize(300, 300) // Adjust size to fit content
+            .setDisplaySize(300, 300)
             .setDepth(3);
 
-        // Title text
         const failText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 80,
@@ -334,7 +384,6 @@ class SpyGameScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(4);
 
-        // Continue button
         const continueButton = this.add.sprite(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 20,
@@ -366,7 +415,6 @@ class SpyGameScene extends Phaser.Scene {
         });
 
         if (this.energy > 0) {
-            // Retry button
             const retryButton = this.add.sprite(
                 this.cameras.main.centerX,
                 this.cameras.main.centerY + 60,
@@ -376,7 +424,6 @@ class SpyGameScene extends Phaser.Scene {
                 .setScale(0.5)
                 .setDepth(4);
 
-            // Retry text
             const retryText = this.add.text(
                 retryButton.x - 30,
                 retryButton.y,
@@ -386,16 +433,14 @@ class SpyGameScene extends Phaser.Scene {
                 .setOrigin(0.5)
                 .setDepth(5);
 
-            // Energy icon
             const energyIcon = this.add.image(
                 retryButton.x + 30,
                 retryButton.y,
                 'energyIcon'
             )
-                .setScale(0.2) // Adjust scale as needed
+                .setScale(0.3)
                 .setDepth(5);
 
-            // Energy cost text
             const energyText = this.add.text(
                 energyIcon.x + 20,
                 retryButton.y,
