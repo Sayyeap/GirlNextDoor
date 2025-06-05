@@ -3,20 +3,21 @@ class SpyGameScene extends Phaser.Scene {
         super({ key: 'SpyGameScene' });
     }
 
-    init(data) {
-        this.energy = data.energy || 10;
-        this.imageKey = data.imageKey || 'image1';
-        this.minigameId = data.minigameId || 'spygame1';
-        this.successSceneId = data.successSceneId || 'scene3';
-        this.failSceneId = data.failSceneId || 'scene4';
-        this.storyId = data.storyId || 'story1';
-        this.zoneConfig = data.zoneConfig || {
-            zoneY: 0.42,
-            zoneHeight: 230,
-            zoneWidth: 1.0
-        };
-        console.log('SpyGameScene init:', data);
-    }
+  init(data) {
+    this.energy = data.energy || 10;
+    this.imageKey = data.imageKey || 'office_pc_photo_game';
+    this.minigameId = data.minigameId || 'spygame1';
+    this.successSceneId = data.successSceneId || 'scene3';
+    this.failSceneId = data.failSceneId || 'scene4';
+    this.storyId = data.storyId || 'story1';
+    this.zoneConfig = data.zoneConfig || {
+        zoneY: 0.42,
+        zoneHeight: 230,
+        zoneWidth: 1.0
+    };
+    this.background = null; // Сбрасываем this.background
+    console.log('SpyGameScene init:', data);
+}
 
     preload() {
         const width = this.scale.width;
@@ -28,8 +29,7 @@ class SpyGameScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Загрузка изображений
-        this.load.image('image1', 'assets/images/spy_image1.jpg');
-        this.load.image('image2', 'assets/images/spy_image2.jpg');
+   
         this.load.image('office_pc_photo_game', 'assets/story1/images/backgrounds/office_pc_photo_game.jpg');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
         this.load.image('voyeurism', 'assets/story1/images/backgrounds/voyeurism.png');
@@ -239,27 +239,31 @@ class SpyGameScene extends Phaser.Scene {
     }
 
     updateScene() {
-        const validBackgrounds = ['image1', 'image2', 'office_pc_photo_game', 'sexphoto_office'];
-        const bgKey = validBackgrounds.includes(this.imageKey) ? this.imageKey : 'image1';
-        console.log('SpyGameScene: Setting background to:', bgKey);
+    const validBackgrounds = ['office_pc_photo_game', 'sexphoto_office'];
+    const bgKey = validBackgrounds.includes(this.imageKey) ? this.imageKey : 'office_pc_photo_game';
+    console.log('SpyGameScene: Setting background to:', bgKey);
 
-        if (!this.background) {
-            this.background = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, bgKey)
-                .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-                .setAlpha(1)
-                .setDepth(0);
-        } else {
-            this.background.setTexture(bgKey);
-        }
-    }
+    // Проверяем, существует ли this.background и активен ли он
+   if (!this.background || !this.background.active) {
+    this.background = this.add.image(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        bgKey
+    )
+        .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+        .setAlpha(1)
+        .setDepth(0);
+} else {
+    this.background.setTexture(bgKey);
+}
+}
 
    gameOver(success) {
     this.isGameOver = true;
-    // Удаляем паузу таймера, чтобы delayedCall работал
-    // this.time.paused = true; // Закомментировано, так как может блокировать анимации
+
+  
 
     this.registry.set(`minigame_${this.minigameId}_result`, success);
-
     if (success) {
         // Уничтожаем все объекты, кроме прямоугольников и текста
         this.children.each(child => {
@@ -454,18 +458,18 @@ class SpyGameScene extends Phaser.Scene {
                 .setOrigin(0.5)
                 .setDepth(5);
 
-            retryButton.on('pointerdown', () => {
-                const params = {
-                    storyId: this.storyId,
-                    energy: this.energy - 1,
-                    imageKey: this.imageKey,
-                    minigameId: this.minigameId,
-                    successSceneId: this.successSceneId,
-                    failSceneId: this.failSceneId,
-                    zoneConfig: this.zoneConfig
-                };
-                this.scene.start('SpyGameScene', params);
-            });
+           retryButton.on('pointerdown', () => {
+    const params = {
+        storyId: this.storyId,
+        energy: this.energy - 1,
+        imageKey: this.imageKey,
+        minigameId: this.minigameId,
+        successSceneId: this.successSceneId,
+        failSceneId: this.failSceneId,
+        zoneConfig: this.zoneConfig
+    };
+    this.scene.restart(params); // Перезапускаем сцену с новыми параметрами
+});
         }
     }
 }
