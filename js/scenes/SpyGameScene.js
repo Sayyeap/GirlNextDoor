@@ -428,10 +428,14 @@ class SpyGameScene extends Phaser.Scene {
                     this.cameras.main.centerX,
                     this.cameras.main.centerY + 60,
                     'Button'
+                    
                 )
+                
                     .setInteractive({ useHandCursor: true })
                     .setScale(0.5)
                     .setDepth(4);
+
+                    
 
                 const retryText = this.add.text(
                     retryButton.x - 30,
@@ -459,18 +463,56 @@ class SpyGameScene extends Phaser.Scene {
                     .setOrigin(0.5)
                     .setDepth(5);
 
-                retryButton.on('pointerdown', () => {
-                    const params = {
-                        storyId: this.storyId,
-                        energy: this.energy - 1,
-                        imageKey: this.imageKey,
-                        minigameId: this.minigameId,
-                        successSceneId: this.successSceneId,
-                        failSceneId: this.failSceneId,
-                        zoneConfig: this.zoneConfig
-                    };
-                    this.scene.restart(params); // Перезапускаем сцену с новыми параметрами
-                });
+               retryButton.on('pointerdown', () => {
+    if (this.energy <= 0) {
+        window.Telegram.WebApp.showAlert('Недостаточно энергии!');
+        return;
+    }
+
+    this.energy -= 1;
+
+    // Обновляем отображение энергии
+    if (this.energyText) {
+        this.energyText.setText(`${this.energy}`);
+    }
+
+    // Параметры для перезапуска
+    const params = {
+        storyId: this.storyId,
+        energy: this.energy,
+        minigameId: this.minigameId,
+        successSceneId: this.successSceneId,
+        failSceneId: this.failSceneId
+    };
+
+    // Проверяем, поддерживает ли saveProgress Promise
+    const saveResult = window.gameStorage.saveProgress(
+        this.storyId,
+        null,
+        0,
+        this.energy,
+        0,
+        this.registry,
+        { minigameResults: {} }
+    );
+
+    if (saveResult && typeof saveResult.then === 'function') {
+        // Если saveProgress возвращает Promise, ждём завершения
+        saveResult
+            .then(() => this.scene.restart(params))
+            .catch(error => {
+                console.error('Ошибка сохранения:', error);
+                this.energy += 1; // Откатываем энергию
+                if (this.energyText) this.energyText.setText(`${this.energy}`);
+                window.Telegram.WebApp.showAlert('Ошибка сохранения. Попробуйте ещё раз.');
+            });
+    } else {
+        // Если saveProgress синхронный, просто перезапускаем
+        console.warn('saveProgress не вернул Promise, сохраняем без ожидания');
+        this.scene.restart(params);
+    }
+});
+
             }
         }
     }
