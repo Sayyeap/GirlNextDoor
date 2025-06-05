@@ -259,218 +259,263 @@ class SpyGameScene extends Phaser.Scene {
 }
 
    gameOver(success) {
-    this.isGameOver = true;
+        this.isGameOver = true;
 
-  
-
-    this.registry.set(`minigame_${this.minigameId}_result`, success);
-    if (success) {
-        // Уничтожаем все объекты, кроме прямоугольников и текста
-        this.children.each(child => {
-            if (!(child instanceof Phaser.GameObjects.Rectangle) &&
-                !(child instanceof Phaser.GameObjects.Text)) {
-                child.destroy();
-            }
-        });
-
-        let victoryImage;
-        switch (this.minigameId) {
-            case 'spygame1':
-                victoryImage = 'sexphoto_office';
-                break;
-            case 'spygame2':
-                victoryImage = 'image2';
-                break;
-            default:
-                victoryImage = 'office_pc_photo_game';
-        }
-
-        // Создаем изображение с начальным масштабом 0.5 и прозрачностью 0
-        const finalImage = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            victoryImage
-        )
-            .setScale(0.5)
-            .setAlpha(0)
-            .setDepth(40);
-
-        // Анимация для изображения
-        this.tweens.chain({
-            targets: finalImage,
-            tweens: [
-                {
-                    scale: 1.2,
-                    alpha: 1,
-                    duration: 500,
-                    ease: 'Power2'
-                },
-                {
-                    scale: 1,
-                    duration: 1000,
-                    ease: 'Sine.easeOut'
-                },
-                {
-                    scaleX: this.cameras.main.width / finalImage.width,
-                    scaleY: this.cameras.main.height / finalImage.height,
-                    duration: 500,
-                    ease: 'Power1'
+        this.registry.set(`minigame_${this.minigameId}_result`, success);
+        if (success) {
+            // Уничтожаем все объекты, кроме прямоугольников и текста
+            this.children.each(child => {
+                if (!(child instanceof Phaser.GameObjects.Rectangle) &&
+                    !(child instanceof Phaser.GameObjects.Text)) {
+                    child.destroy();
                 }
-            ]
-        });
+            });
 
-        // Создаем кнопку "Далее" с начальной прозрачностью 0
-        const nextButton = this.add.sprite(
-            this.cameras.main.centerX,
-            this.cameras.main.height * 0.9,
-            'Button'
-        )
-            .setInteractive({ useHandCursor: true })
-            .setScale(0.5)
-            .setAlpha(0)
-            .setDepth(43);
-
-        const buttonText = this.add.text(
-            nextButton.x,
-            nextButton.y,
-            'Далее',
-            {
-                fontSize: '32px',
-                color: '#ffffff',
-                 fontFamily: "Dela Gothic One",
-                padding: { x: 20, y: 10 }
+            let victoryImage;
+            switch (this.minigameId) {
+                case 'spygame1':
+                    victoryImage = 'sexphoto_office';
+                    break;
+                case 'spygame2':
+                    victoryImage = 'image2';
+                    break;
+                default:
+                    victoryImage = 'office_pc_photo_game';
             }
-        )
-            .setOrigin(0.5)
-            .setAlpha(0)
-            .setDepth(44);
 
-        // Анимация появления кнопки через 2 секунды
-        this.tweens.add({
-            targets: [nextButton, buttonText],
-            alpha: 1,
-            duration: 500,
-            delay: 2000, // Задержка 2 секунды
-            ease: 'Linear',
-            onStart: () => {
-                console.log('Button animation started');
-            },
-            onComplete: () => {
-                console.log('Button animation completed');
-            }
-        });
-
-        // Обработчик нажатия кнопки
-        nextButton.on('pointerdown', () => {
-            console.log('Next button clicked');
-            const params = {
-                storyId: this.storyId,
-                energy: this.energy,
-                minigameId: this.minigameId,
-                success: true,
-                successSceneId: this.successSceneId,
-                failSceneId: this.failSceneId
-            };
-            this.scene.start('GameScene', params);
-        });
-    } else {
-        // Код для случая провала остается без изменений
-        const resultWindow = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'settings_box'
-        )
-            .setDisplaySize(300, 300)
-            .setDepth(3);
-
-        const failText = this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 80,
-            'Провал!',
-            { fontSize: '24px', color: '#ffffff', fontFamily: "Dela Gothic One", }
-        )
-            .setOrigin(0.5)
-            .setDepth(4);
-
-        const continueButton = this.add.sprite(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 20,
-            'Button'
-        )
-            .setInteractive({ useHandCursor: true })
-            .setScale(0.5)
-            .setDepth(4);
-
-        const continueText = this.add.text(
-            continueButton.x,
-            continueButton.y,
-            'Продолжить',
-            { fontSize: '20px', color: '#ffffff' , fontFamily: "Dela Gothic One",}
-        )
-            .setOrigin(0.5)
-            .setDepth(5);
-
-        continueButton.on('pointerdown', () => {
-            const params = {
-                storyId: this.storyId,
-                energy: this.energy,
-                minigameId: this.minigameId,
-                success: false,
-                successSceneId: this.successSceneId,
-                failSceneId: this.failSceneId
-            };
-            this.scene.start('GameScene', params);
-        });
-
-        if (this.energy > 0) {
-            const retryButton = this.add.sprite(
+            // Создаем изображение с начальным масштабом 0.5 и прозрачностью 0
+            const finalImage = this.add.image(
                 this.cameras.main.centerX,
-                this.cameras.main.centerY + 60,
+                this.cameras.main.centerY,
+                victoryImage
+            )
+                .setScale(0.5)
+                .setAlpha(0)
+                .setDepth(40);
+
+            // Анимация для изображения
+            this.tweens.chain({
+                targets: finalImage,
+                tweens: [
+                    {
+                        scale: 1.2,
+                        alpha: 1,
+                        duration: 500,
+                        ease: 'Power2'
+                    },
+                    {
+                        scale: 1,
+                        duration: 1000,
+                        ease: 'Sine.easeOut'
+                    },
+                    {
+                        scaleX: this.cameras.main.width / finalImage.width,
+                        scaleY: this.cameras.main.height / finalImage.height,
+                        duration: 500,
+                        ease: 'Power1'
+                    }
+                ]
+            });
+
+            // Создаем кнопку "Далее" с начальной прозрачностью 0
+            const nextButton = this.add.sprite(
+                this.cameras.main.centerX,
+                this.cameras.main.height * 0.9,
+                'Button'
+            )
+                .setInteractive({ useHandCursor: true })
+                .setScale(0.5)
+                .setAlpha(0)
+                .setDepth(43);
+
+            const buttonText = this.add.text(
+                nextButton.x,
+                nextButton.y,
+                'Далее',
+                {
+                    fontSize: '32px',
+                    color: '#ffffff',
+                    fontFamily: "Dela Gothic One",
+                    padding: { x: 20, y: 10 }
+                }
+            )
+                .setOrigin(0.5)
+                .setAlpha(0)
+                .setDepth(44);
+
+            // Анимация появления кнопки через 2 секунды
+            this.tweens.add({
+                targets: [nextButton, buttonText],
+                alpha: 1,
+                duration: 500,
+                delay: 2000, // Задержка 2 секунды
+                ease: 'Linear',
+                onStart: () => {
+                    console.log('Button animation started');
+                },
+                onComplete: () => {
+                    console.log('Button animation completed');
+                }
+            });
+
+            // Обработчик нажатия кнопки
+            nextButton.on('pointerdown', () => {
+                console.log('Next button clicked');
+                const params = {
+                    storyId: this.storyId,
+                    energy: this.energy,
+                    minigameId: this.minigameId,
+                    success: true,
+                    successSceneId: this.successSceneId,
+                    failSceneId: this.failSceneId
+                };
+                this.scene.start('GameScene', params);
+            });
+        } else {
+            // Добавляем блок отображения энергии
+            this.createEnergyDisplay(this.cameras.main.width, this.cameras.main.height);
+
+            // Код для случая провала
+            const resultWindow = this.add.image(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY,
+                'settings_box'
+            )
+                .setDisplaySize(300, 300)
+                .setDepth(3);
+
+            const failText = this.add.text(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY - 80,
+                'Провал!',
+                { fontSize: '24px', color: '#ffffff', fontFamily: "Dela Gothic One" }
+            )
+                .setOrigin(0.5)
+                .setDepth(4);
+
+            const continueButton = this.add.sprite(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY - 20,
                 'Button'
             )
                 .setInteractive({ useHandCursor: true })
                 .setScale(0.5)
                 .setDepth(4);
 
-            const retryText = this.add.text(
-                retryButton.x - 30,
-                retryButton.y,
-                'Переиграть',
-                { fontSize: '20px', color: '#ffffff', fontFamily: "Dela Gothic One", }
+            const continueText = this.add.text(
+                continueButton.x,
+                continueButton.y,
+                'Продолжить',
+                { fontSize: '20px', color: '#ffffff', fontFamily: "Dela Gothic One" }
             )
                 .setOrigin(0.5)
                 .setDepth(5);
 
-            const energyIcon = this.add.image(
-                retryButton.x + 80,
-                retryButton.y,
-                'energyIcon'
-            )
-                .setScale(0.16)
-                .setDepth(5);
+            continueButton.on('pointerdown', () => {
+                const params = {
+                    storyId: this.storyId,
+                    energy: this.energy,
+                    minigameId: this.minigameId,
+                    success: false,
+                    successSceneId: this.successSceneId,
+                    failSceneId: this.failSceneId
+                };
+                this.scene.start('GameScene', params);
+            });
 
-            const energyText = this.add.text(
-                energyIcon.x - 30,
-                retryButton.y,
-                '-1',
-                { fontSize: '20px', color: '#57b9ff', fontFamily: "Dela Gothic One", }
-            )
-                .setOrigin(0.5)
-                .setDepth(5);
+            if (this.energy > 0) {
+                const retryButton = this.add.sprite(
+                    this.cameras.main.centerX,
+                    this.cameras.main.centerY + 60,
+                    'Button'
+                )
+                    .setInteractive({ useHandCursor: true })
+                    .setScale(0.5)
+                    .setDepth(4);
 
-           retryButton.on('pointerdown', () => {
-    const params = {
-        storyId: this.storyId,
-        energy: this.energy - 1,
-        imageKey: this.imageKey,
-        minigameId: this.minigameId,
-        successSceneId: this.successSceneId,
-        failSceneId: this.failSceneId,
-        zoneConfig: this.zoneConfig
-    };
-    this.scene.restart(params); // Перезапускаем сцену с новыми параметрами
-});
+                const retryText = this.add.text(
+                    retryButton.x - 30,
+                    retryButton.y,
+                    'Переиграть',
+                    { fontSize: '20px', color: '#ffffff', fontFamily: "Dela Gothic One" }
+                )
+                    .setOrigin(0.5)
+                    .setDepth(5);
+
+                const energyIcon = this.add.image(
+                    retryButton.x + 80,
+                    retryButton.y,
+                    'energyIcon'
+                )
+                    .setScale(0.16)
+                    .setDepth(5);
+
+                const energyText = this.add.text(
+                    energyIcon.x - 30,
+                    retryButton.y,
+                    '-1',
+                    { fontSize: '20px', color: '#57b9ff', fontFamily: "Dela Gothic One" }
+                )
+                    .setOrigin(0.5)
+                    .setDepth(5);
+
+                retryButton.on('pointerdown', () => {
+                    const params = {
+                        storyId: this.storyId,
+                        energy: this.energy - 1,
+                        imageKey: this.imageKey,
+                        minigameId: this.minigameId,
+                        successSceneId: this.successSceneId,
+                        failSceneId: this.failSceneId,
+                        zoneConfig: this.zoneConfig
+                    };
+                    this.scene.restart(params); // Перезапускаем сцену с новыми параметрами
+                });
+            }
         }
     }
-}
+
+    createEnergyDisplay(width, height) {
+        // Размеры элементов
+        const bgWidth = width * 0.26;
+        const bgHeight = height * 0.04;
+        const borderRadius = 5;
+        
+        // Центральные координаты
+        const centerX = width / 2;
+        const centerY = height * 0.375;
+
+        // Фон для энергии
+        this.energyBg = this.add.graphics()
+            .setDepth(10);
+        this.energyBg.fillStyle(0x000000, 0.5);
+        this.energyBg.fillRoundedRect(
+            centerX - bgWidth / 2,
+            centerY - bgHeight / 2,
+            bgWidth,
+            bgHeight,
+            borderRadius
+        );
+
+        // Загружаем текущую энергию
+        window.gameStorage.loadProgress('story1', this.registry, (progress) => {
+            this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${progress.energy || 0}`, {
+                fontSize: `${height * 0.0258}px`,
+                color: '#57b9ff',
+                fontFamily: 'Dela Gothic One',
+                resolution: 1
+            }).setOrigin(0.5).setDepth(31);
+        });
+
+        // Иконка энергии
+        this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
+            .setDisplaySize(height * 0.037, height * 0.037)
+            .setDepth(11)
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.sound.play('click');
+                console.log('EnergyShop button clicked');
+                this.scene.launch('EnergyShopScene');
+  });
+    }
 }
