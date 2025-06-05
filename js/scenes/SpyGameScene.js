@@ -23,7 +23,8 @@ class SpyGameScene extends Phaser.Scene {
         const height = this.scale.height;
         const loadingText = this.add.text(width / 2, height / 2, 'Загрузка...', {
             fontSize: '24px',
-            color: '#ffffff'
+            color: '#ffffff',
+             fontFamily: "Dela Gothic One",
         }).setOrigin(0.5);
 
         // Загрузка изображений
@@ -145,13 +146,15 @@ class SpyGameScene extends Phaser.Scene {
         // Таймер в формате mm:ss
         this.timerText = this.add.text(10, uiY, this.formatTimer(this.timer), {
             fontSize: '20px',
-            color: '#00ff78'
+            color: '#00ff78',
+             fontFamily: "Dela Gothic One",
         }).setDepth(2).setOrigin(-0.4, 0.5);
 
         // Статичный текст "00:00" под таймером
         this.timerStaticText = this.add.text(10, uiY , '00:00', {
             fontSize: '20px',
-            color: '#073c0c'
+            color: '#073c0c',
+             fontFamily: "Dela Gothic One",
         }).setDepth(1).setOrigin(-0.4, 0.5);
 
         // Оверлей voyeurism.png на самом верхнем слое
@@ -330,6 +333,7 @@ class SpyGameScene extends Phaser.Scene {
             {
                 fontSize: '32px',
                 color: '#ffffff',
+                 fontFamily: "Dela Gothic One",
                 padding: { x: 20, y: 10 }
             }
         )
@@ -379,7 +383,7 @@ class SpyGameScene extends Phaser.Scene {
             this.cameras.main.centerX,
             this.cameras.main.centerY - 80,
             'Провал!',
-            { fontSize: '24px', color: '#ffffff' }
+            { fontSize: '24px', color: '#ffffff', fontFamily: "Dela Gothic One", }
         )
             .setOrigin(0.5)
             .setDepth(4);
@@ -397,7 +401,7 @@ class SpyGameScene extends Phaser.Scene {
             continueButton.x,
             continueButton.y,
             'Продолжить',
-            { fontSize: '20px', color: '#ffffff' }
+            { fontSize: '20px', color: '#ffffff' , fontFamily: "Dela Gothic One",}
         )
             .setOrigin(0.5)
             .setDepth(5);
@@ -428,24 +432,24 @@ class SpyGameScene extends Phaser.Scene {
                 retryButton.x - 30,
                 retryButton.y,
                 'Переиграть',
-                { fontSize: '20px', color: '#ffffff' }
+                { fontSize: '20px', color: '#ffffff', fontFamily: "Dela Gothic One", }
             )
                 .setOrigin(0.5)
                 .setDepth(5);
 
             const energyIcon = this.add.image(
-                retryButton.x + 30,
+                retryButton.x + 80,
                 retryButton.y,
                 'energyIcon'
             )
-                .setScale(0.3)
+                .setScale(0.16)
                 .setDepth(5);
 
             const energyText = this.add.text(
-                energyIcon.x + 20,
+                energyIcon.x - 30,
                 retryButton.y,
                 '-1',
-                { fontSize: '20px', color: '#ffffff' }
+                { fontSize: '20px', color: '#57b9ff', fontFamily: "Dela Gothic One", }
             )
                 .setOrigin(0.5)
                 .setDepth(5);
