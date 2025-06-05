@@ -395,15 +395,16 @@ class MainMenu extends Phaser.Scene {
             resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
-        this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
-            .setDisplaySize(width * 0.1, width * 0.1)
-            .setDepth(32)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => {
-                playMusic();
-                this.sound.play('click');
-                console.log('Gallery opened');
-            });
+       this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
+    .setDisplaySize(width * 0.1, width * 0.1)
+    .setDepth(32)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerdown', () => {
+        playMusic();
+        this.sound.play('click');
+        console.log('Gallery opened');
+        this.scene.launch('GalleryScene', { storyId: this.stories[this.currentStoryIndex].id });
+    });
 
         this.galleryText = this.add.text(width / 2, buttonY + height * 0.04, 'Галерея', {
             fontFamily: 'IBM Plex Sans',
