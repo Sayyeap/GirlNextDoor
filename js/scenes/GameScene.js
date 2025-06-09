@@ -853,6 +853,9 @@ class GameScene extends Phaser.Scene {
             this.energyIcon.setInteractive();
             this.energyIcon.setDepth(11);
         }
+         if (currentDialogue.unlockArt) {
+        window.gameStorage.unlockArt(currentStoryId, currentDialogue.unlockArt, this.registry);
+    }
     }
 
     handleNextScene() {

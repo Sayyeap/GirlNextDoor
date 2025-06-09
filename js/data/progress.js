@@ -1,11 +1,12 @@
 (function() {
-    function saveProgress(storyId, sceneId, dialogueIndex, energy, stars, registry) {
+    function saveProgress(storyId, sceneId, dialogueIndex, energy, stars, registry, unlockedArts) {
         const progress = {
             storyId: storyId,
             sceneId: sceneId,
             dialogueIndex: dialogueIndex,
             energy: energy,
             stars: stars || 0,
+            unlockedArts: unlockedArts || [], // Добавляем массив открытых артов
             timestamp: Date.now()
         };
 
@@ -101,8 +102,30 @@
         }
     }
 
-    window.gameStorage = {
-        saveProgress: saveProgress,
-        loadProgress: loadProgress
-    };
+  window.gameStorage = {
+    saveProgress: saveProgress,
+    loadProgress: loadProgress,
+    
+    // Новый метод для разблокировки артов
+    unlockArt: function(storyId, artId, registry) {
+        this.loadProgress(storyId, registry, function(progress) {
+            if (!progress.unlockedArts) {
+                progress.unlockedArts = [];
+            }
+            
+            if (!progress.unlockedArts.includes(artId)) {
+                progress.unlockedArts.push(artId);
+                gameStorage.saveProgress(
+                    storyId, 
+                    progress.sceneId, 
+                    progress.dialogueIndex, 
+                    progress.energy, 
+                    progress.stars, 
+                    registry,
+                    progress.unlockedArts
+                );
+            }
+        });
+    }
+};
 })();

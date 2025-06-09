@@ -39,7 +39,8 @@ const story1Dialogues = [
                 charSprite: null,
                 shake: null,
                 sfx: null,
-                choices: null
+                choices: null,
+                
             },
              {
                  speaker: " ",
@@ -89,7 +90,8 @@ const story1Dialogues = [
                 charSprite: null,
                 shake: null,
                 sfx: null,
-                choices: null
+                choices: null,
+                unlockArt: 1, // Добавляем ID арта, который откроется после этого диалога
             },
               {
                 speaker: " ",
