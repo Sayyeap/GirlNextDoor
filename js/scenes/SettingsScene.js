@@ -18,7 +18,7 @@ class SettingsScene extends Phaser.Scene {
         const height = this.scale.height;
 
         // Полупрозрачный черный фон с блокировкой
-        this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
+        this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8)
             .setOrigin(0, 0)
             .setDepth(30)
             .setInteractive();

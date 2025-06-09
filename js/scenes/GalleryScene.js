@@ -13,6 +13,7 @@ class GalleryScene extends Phaser.Scene {
         this.load.image('close', 'assets/common/images/close.png');
         this.load.image('lockphoto', 'assets/story1/images/backgrounds/lockphoto.jpg');
         this.load.audio('click', 'assets/common/audio/click.wav');
+        this.load.image('gallerybg', 'assets/common/images/gallerybg.png');
         for (let i = 1; i <= 30; i++) {
             this.load.image(`art${i}`, `assets/common/images/arts/art${i}.png`);
         }
@@ -31,8 +32,16 @@ class GalleryScene extends Phaser.Scene {
             return;
         }
 
+
+        // Добавляем фоновое изображение gallerybg
+    this.add.image(0, 0, 'gallerybg')
+        .setOrigin(0, 0)
+        .setDisplaySize(width, height * 0.2) // 20% высоты экрана
+        .setDepth(35);
+
+
         // Полупрозрачный фон
-        this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
+        this.elements.bgOverlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8)
             .setOrigin(0, 0)
             .setDepth(30)
             .setInteractive();
@@ -43,9 +52,7 @@ class GalleryScene extends Phaser.Scene {
         const popupX = width / 2;
         const popupY = height / 2;
 
-        this.elements.popupBg = this.add.image(popupX, popupY, 'settings_box')
-            .setDisplaySize(popupWidth, popupHeight)
-            .setDepth(31);
+        
 
         // Заголовок
         this.elements.titleText = this.add.text(popupX, popupY - popupHeight / 2 + height * 0.03, 'ГАЛЕРЕЯ', {
@@ -53,7 +60,7 @@ class GalleryScene extends Phaser.Scene {
             fontSize: `${height * 0.03}px`,
             color: '#ffffff',
             resolution: 1
-        }).setOrigin(0.5).setDepth(33);
+        }).setOrigin(0.5).setDepth(36);
 
         // Кнопка закрытия
         this.createCloseButton(width, height);
@@ -95,8 +102,8 @@ class GalleryScene extends Phaser.Scene {
         const artWidth = width * 0.25;
         const artHeight = height * 0.25;
         const spacingX = width * 0.3;
-        const spacingY = height * 0.35;
-        const startY = height * 0.2; // Начальная позиция сетки
+        const spacingY = height * 0.31;
+        const startY = height * 0.31; // Начальная позиция сетки
 
         console.log('createGridWithMockData: startY=', startY); // Отладка
 
@@ -195,7 +202,7 @@ class GalleryScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(41);
 
         // Кнопка закрытия
-        const closeButton = this.add.image(width * 0.85, height * 0.25, 'close')
+        const closeButton = this.add.image(width * 0.85, height * 0.131, 'close')
             .setDisplaySize(height * 0.02, height * 0.02)
             .setDepth(42)
             .setInteractive({ useHandCursor: true })
@@ -209,9 +216,9 @@ class GalleryScene extends Phaser.Scene {
     }
 
     createCloseButton(width, height) {
-        this.elements.closeButton = this.add.image(width * 0.85, height * 0.25, 'close')
+        this.elements.closeButton = this.add.image(width * 0.85, height * 0.131, 'close')
             .setDisplaySize(height * 0.02, height * 0.02)
-            .setDepth(33)
+            .setDepth(38)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
                 this.sound.play('click');
@@ -233,6 +240,11 @@ class GalleryScene extends Phaser.Scene {
         const popupHeight = height * 0.8;
         const popupX = width / 2;
         const popupY = height / 2;
+
+         const bgImage = this.children.getChildren().find(child => child.texture && child.texture.key === 'gallerybg');
+    if (bgImage) {
+        bgImage.setDisplaySize(width, height * 0.2);
+    }
 
         this.elements.popupBg?.setPosition(popupX, popupY)
                              .setDisplaySize(popupWidth, popupHeight);
