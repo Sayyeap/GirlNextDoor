@@ -13,6 +13,7 @@ class GalleryScene extends Phaser.Scene {
         this.load.image('close', 'assets/common/images/close.png');
         this.load.image('lockphoto', 'assets/story1/images/backgrounds/lockphoto.jpg');
         this.load.audio('click', 'assets/common/audio/click.wav');
+        
         this.load.image('gallerybg', 'assets/common/images/gallerybg.png');
         for (let i = 1; i <= 30; i++) {
             this.load.image(`art${i}`, `assets/common/images/arts/art${i}.png`);

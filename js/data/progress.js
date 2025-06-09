@@ -73,34 +73,34 @@
     }
 
     function loadFromLocalStorage(storyId, registry, callback) {
-        try {
-            const data = localStorage.getItem('save_' + storyId);
-            if (data) {
-                console.log('Loaded from localStorage');
-                callback(JSON.parse(data));
-            } else {
-                console.log('No saved data, using default');
-                // Используем текущее значение энергии из registry, если доступно
-                const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
-                callback({
-                    sceneId: 'scene1',
-                    dialogueIndex: 0,
-                    energy: currentEnergy,
-                    stars: 0
-                });
-            }
-        } catch (error) {
-            console.error('LocalStorage load failed:', error);
-            // Используем текущее значение энергии из registry, если доступно
-            const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
+    try {
+        const data = localStorage.getItem('save_' + storyId);
+        if (data) {
+            console.log('Loaded from localStorage');
+            callback(JSON.parse(data));
+        } else {
+            console.log('No saved data, using default');
+            const currentEnergy = registry ? (registry.get('energy') || 0 ): 0;
             callback({
                 sceneId: 'scene1',
                 dialogueIndex: 0,
                 energy: currentEnergy,
-                stars: 0
+                stars: 0,
+                unlockedArts: [] // Добавлено
             });
         }
+    } catch (error) {
+        console.error('LocalStorage load failed:', error);
+        const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
+        callback({
+            sceneId: 'scene1',
+            dialogueIndex: 0,
+            energy: currentEnergy,
+            stars: 0,
+            unlockedArts: [] // Добавлено
+        });
     }
+}
 
   window.gameStorage = {
     saveProgress: saveProgress,
