@@ -1,12 +1,13 @@
 (function() {
-    function saveProgress(storyId, sceneId, dialogueIndex, energy, stars, registry, unlockedArts) {
+    function saveProgress(storyId, sceneId, dialogueIndex, energy, stars, registry, additionalData) {
         const progress = {
             storyId: storyId,
             sceneId: sceneId,
             dialogueIndex: dialogueIndex,
             energy: energy,
             stars: stars || 0,
-            unlockedArts: unlockedArts || [], // Добавляем массив открытых артов
+            unlockedArts: additionalData?.unlockedArts || [], // Массив открытых артов
+            markers: additionalData?.markers || { Friend: 0, Stalker: 0, Lover: 0 }, // Очки маркеров
             timestamp: Date.now()
         };
 
@@ -73,59 +74,64 @@
     }
 
     function loadFromLocalStorage(storyId, registry, callback) {
-    try {
-        const data = localStorage.getItem('save_' + storyId);
-        if (data) {
-            console.log('Loaded from localStorage');
-            callback(JSON.parse(data));
-        } else {
-            console.log('No saved data, using default');
-            const currentEnergy = registry ? (registry.get('energy') || 0 ): 0;
+        try {
+            const data = localStorage.getItem('save_' + storyId);
+            if (data) {
+                console.log('Loaded from localStorage');
+                callback(JSON.parse(data));
+            } else {
+                console.log('No saved data, using default');
+                const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
+                callback({
+                    sceneId: 'scene1',
+                    dialogueIndex: 0,
+                    energy: currentEnergy,
+                    stars: 0,
+                    unlockedArts: [],
+                    markers: { Friend: 0, Stalker: 0, Lover: 0 } // Дефолтные значения маркеров
+                });
+            }
+        } catch (error) {
+            console.error('LocalStorage load failed:', error);
+            const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
             callback({
                 sceneId: 'scene1',
                 dialogueIndex: 0,
                 energy: currentEnergy,
                 stars: 0,
-                unlockedArts: [] // Добавлено
+                unlockedArts: [],
+                markers: { Friend: 0, Stalker: 0, Lover: 0 } // Дефолтные значения маркеров
             });
         }
-    } catch (error) {
-        console.error('LocalStorage load failed:', error);
-        const currentEnergy = registry ? (registry.get('energy') || 0) : 0;
-        callback({
-            sceneId: 'scene1',
-            dialogueIndex: 0,
-            energy: currentEnergy,
-            stars: 0,
-            unlockedArts: [] // Добавлено
-        });
     }
-}
 
-  window.gameStorage = {
-    saveProgress: saveProgress,
-    loadProgress: loadProgress,
-    
-    // Новый метод для разблокировки артов
-    unlockArt: function(storyId, artId, registry) {
-        this.loadProgress(storyId, registry, function(progress) {
-            if (!progress.unlockedArts) {
-                progress.unlockedArts = [];
-            }
-            
-            if (!progress.unlockedArts.includes(artId)) {
-                progress.unlockedArts.push(artId);
-                gameStorage.saveProgress(
-                    storyId, 
-                    progress.sceneId, 
-                    progress.dialogueIndex, 
-                    progress.energy, 
-                    progress.stars, 
-                    registry,
-                    progress.unlockedArts
-                );
-            }
-        });
-    }
-};
+    window.gameStorage = {
+        saveProgress: saveProgress,
+        loadProgress: loadProgress,
+        
+        // Метод для разблокировки артов
+        unlockArt: function(storyId, artId, registry) {
+            this.loadProgress(storyId, registry, function(progress) {
+                if (!progress.unlockedArts) {
+                    progress.unlockedArts = [];
+                }
+                
+                if (!progress.unlockedArts.includes(artId)) {
+                    progress.unlockedArts.push(artId);
+                    gameStorage.saveProgress(
+                        storyId, 
+                        progress.sceneId, 
+                        progress.dialogueIndex, 
+                        progress.energy, 
+                        progress.stars, 
+                        registry,
+                        {
+                            unlockedArts: progress.unlockedArts,
+                            markers: progress.markers || { Friend: 0, Stalker: 0, Lover: 0 } // Сохраняем маркеры
+                        }
+                    );
+                }
+            });
+        }
+    };
 })();

@@ -52,8 +52,8 @@ class SettingsScene extends Phaser.Scene {
 
     createVolumeControl(width, height) {
         const centerY = height * 0.45;
-        const textX = width * 0.35;
-        const toggleX = width * 0.55;
+        const textX = width * 0.45;
+        const toggleX = width * 0.65;
         const toggleWidth = width * 0.15; // Тумблер короче ползунка
         const toggleHeight = height * 0.02; // Высота тумблера
 
@@ -68,7 +68,7 @@ class SettingsScene extends Phaser.Scene {
         // Выбираем иконку в зависимости от состояния звука
         const isSoundOn = this.game.sound.volume > 0;
         this.elements.volumeIcon = this.add.image(textX + height * 0.025, centerY, isSoundOn ? 'volume_icon' : 'volume_icon_off')
-            .setDisplaySize(height * 0.025, height * 0.025)
+            .setDisplaySize(height * 0.045, height * 0.045)
             .setOrigin(0, 0.5)
             .setDepth(33);
 

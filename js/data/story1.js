@@ -12,19 +12,38 @@ const story1Dialogues = [
                 shake: null,
                 sfx: null,
                 choices: [
-                             {
-                         text: "Запустить шпионскую камеру",
-                         energyCost: 5,
-                         nextScene: {
-                         type: "minigame",
-                         key: "SpyGameScene",
-               params: {
-                        imageKey: "office_pc_photo_game",
-                        minigameId: "spygame1",
-                        successSceneId: "scene3",
-                        failSceneId: "scene4"
-                       }
-            }
+                    {
+                        text: "Запустить шпионскую камеру",
+                        energyCost: 5,
+                        isFree: false,
+                        marker: "Stalker",
+                        points: 2,
+                        nextScene: {
+                            type: "minigame",
+                            key: "SpyGameScene",
+                            params: {
+                                imageKey: "office_pc_photo_game",
+                                minigameId: "spygame1",
+                                successSceneId: "scene3",
+                                failSceneId: "scene4"
+                            }
+                        }
+                    },
+                    {
+                        text: "Поговорить с ней",
+                        energyCost: 3,
+                        isFree: false,
+                        marker: "Friend",
+                        points: 3,
+                        nextScene: "scene5"
+                    },
+                    {
+                        text: "Просто уйти",
+                        energyCost: 0,
+                        isFree: true,
+                        marker: "Lover",
+                        points: 1,
+                        nextScene: "scene6"
     },
     {
       text: "Пропустить",

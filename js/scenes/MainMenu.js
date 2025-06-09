@@ -17,15 +17,17 @@ class MainMenu extends Phaser.Scene {
         this.load.image('Button_wide', 'assets/common/images/Button_wide.png');
         this.load.image('story1', 'assets/common/images/story1.jpg');
         this.load.image('story2', 'assets/common/images/story2.jpg');
-        this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
-        this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
-        this.load.audio('click', 'assets/common/audio/click.wav');
         this.load.image('energyIcon', 'assets/common/images/energyIcon.png');
         this.load.image('manyicons', 'assets/common/images/manyicons.png');
         this.load.image('aloticons', 'assets/common/images/aloticons.png');
         this.load.image('fullofIcon', 'assets/common/images/fullofIcon.png');
         this.load.image('tgstars', 'assets/common/images/tgstars.png');
-        
+        this.load.image('love', 'assets/common/images/love.png');
+        this.load.image('stalker', 'assets/common/images/stalker.png');
+        this.load.image('friend', 'assets/common/images/friend.png');
+        this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
+        this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
+        this.load.audio('click', 'assets/common/audio/click.wav');
         this.createFontPreload();
     }
 
@@ -83,10 +85,8 @@ class MainMenu extends Phaser.Scene {
         ];
         this.createStoryInterface(width, height, playMusic);
 
-        // Добавляем блок энергии
         this.createEnergyDisplay(width, height);
 
-        // Добавляем кнопку настроек
         this.createSettingsButton(width, height);
 
         this.input.on('pointerdown', (pointer) => this.startSwipe = { x: pointer.x, y: pointer.y });
@@ -133,16 +133,12 @@ class MainMenu extends Phaser.Scene {
     }
 
     createEnergyDisplay(width, height) {
-        // Размеры элементов
         const bgWidth = width * 0.26;
         const bgHeight = height * 0.04;
         const borderRadius = 5;
-        
-        // Центральные координаты
         const centerX = width / 2;
         const centerY = height * 0.12;
 
-        // Фон для энергии
         this.energyBg = this.add.graphics()
             .setDepth(10);
         this.energyBg.fillStyle(0x000000, 0.9);
@@ -154,7 +150,6 @@ class MainMenu extends Phaser.Scene {
             borderRadius
         );
 
-        // Загружаем текущую энергию
         window.gameStorage.loadProgress('story1', this.registry, (progress) => {
             this.energyText = this.add.text(centerX + bgWidth * 0.15, centerY, `${progress.energy || 0}`, {
                 fontSize: `${height * 0.0258}px`,
@@ -164,7 +159,6 @@ class MainMenu extends Phaser.Scene {
             }).setOrigin(0.5).setDepth(31);
         });
 
-        // Иконка энергии
         this.energyIcon = this.add.image(centerX - bgWidth * 0.35, centerY, 'energyIcon')
             .setDisplaySize(height * 0.037, height * 0.037)
             .setDepth(11)
@@ -202,9 +196,7 @@ class MainMenu extends Phaser.Scene {
             color: '#ffffff',
             padding: { x: 20, y: 10 },
             resolution: 1
-        })
-        .setOrigin(0.5)
-        .setDepth(1001);
+        }).setOrigin(0.5).setDepth(1001);
 
         this.splashBg.on('pointerdown', () => {
             this.clickSound.play();
@@ -218,7 +210,6 @@ class MainMenu extends Phaser.Scene {
     }
 
     initMainMenu(width, height) {
-        // Дополнительные инициализации, если нужны
     }
 
     createLavaEffect(width, height) {
@@ -364,6 +355,38 @@ class MainMenu extends Phaser.Scene {
             resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
+        window.gameStorage.loadProgress(this.stories[this.currentStoryIndex].id, this.registry, (progress) => {
+            const markers = progress.markers || { Friend: 0, Stalker: 0, Lover: 0 };
+            const markerIcons = [
+                { key: 'love', marker: 'Lover' },
+                { key: 'stalker', marker: 'Stalker' },
+                { key: 'friend', marker: 'Friend' }
+            ];
+
+            const iconSize = height * 0.035;
+            const textSize = height * 0.028;
+            const spacing = width * 0.17;
+            const startX = -8 - spacing;
+            const y = height * 0.81;
+
+            this.markersContainer = this.add.container(width / 2, y).setDepth(32);
+
+            markerIcons.forEach((item, index) => {
+                const xOffset = startX + index * spacing;
+                const icon = this.add.image(xOffset, 0, item.key)
+                    .setDisplaySize(iconSize, iconSize)
+                    .setOrigin(0.5);
+                const text = this.add.text(xOffset + iconSize * 0.6, 0, `${markers[item.marker]}`, {
+                    fontFamily: 'Dela Gothic One',
+                    fontSize: `${textSize}px`,
+                    color: '#fff',
+                    resolution: 1
+                }).setOrigin(0, 0.5);
+
+                this.markersContainer.add([icon, text]);
+            });
+        });
+
         const buttonY = height * 0.9;
         const buttonSpacing = width * 0.15;
 
@@ -395,16 +418,16 @@ class MainMenu extends Phaser.Scene {
             resolution: 1
         }).setOrigin(0.5).setDepth(33);
 
-       this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
-    .setDisplaySize(width * 0.1, width * 0.1)
-    .setDepth(32)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerdown', () => {
-        playMusic();
-        this.sound.play('click');
-        console.log('Gallery opened');
-        this.scene.launch('GalleryScene', { storyId: this.stories[this.currentStoryIndex].id });
-    });
+        this.galleryButton = this.add.image(width / 2, buttonY, 'gallery')
+            .setDisplaySize(width * 0.1, width * 0.1)
+            .setDepth(32)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                playMusic();
+                this.sound.play('click');
+                console.log('Gallery opened');
+                this.scene.launch('GalleryScene', { storyId: this.stories[this.currentStoryIndex].id });
+            });
 
         this.galleryText = this.add.text(width / 2, buttonY + height * 0.04, 'Галерея', {
             fontFamily: 'IBM Plex Sans',
@@ -427,7 +450,7 @@ class MainMenu extends Phaser.Scene {
             fontFamily: 'IBM Plex Sans',
             fontSize: `${height * 0.012}px`,
             color: '#fff',
-           resolution: 1
+            resolution: 1
         }).setOrigin(0.5).setDepth(33);
     }
 
@@ -531,7 +554,7 @@ class MainMenu extends Phaser.Scene {
         const elements = [
             this.overlay, this.popupImage, this.startButton, this.startButtonText,
             this.resetButton, this.resetText, this.galleryButton, this.galleryText,
-            this.closeButton, this.closeText
+            this.closeButton, this.closeText, this.markersContainer
         ];
 
         elements.forEach(element => {

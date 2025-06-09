@@ -7,12 +7,13 @@ class GameScene extends Phaser.Scene {
         this.currentMusic = null;
         this.energy = 0;
         this.stars = 0;
+        this.markers = { Friend: 0, Stalker: 0, Lover: 0 }; // Инициализация маркеров
         this.choicesGroup = null;
         this.charShakeTween = null;
         this.charBreathTween = null;
         this.isLoaded = false;
         this.isTyping = false;
-        this.isChoicesActive = false; // Новый флаг для блокировки tapZone
+        this.isChoicesActive = false;
         this.currentDialogueText = '';
         this.typewriterTimer = null;
         this.loadingText = null;
@@ -89,7 +90,7 @@ class GameScene extends Phaser.Scene {
         this.currentMusic = null;
         this.isLoaded = false;
         this.isTyping = false;
-        this.isChoicesActive = false; // Сбрасываем флаг
+        this.isChoicesActive = false;
         this.currentDialogueText = '';
         this.choicesGroup = null;
         this.charShakeTween = null;
@@ -182,6 +183,10 @@ class GameScene extends Phaser.Scene {
         this.load.image('settings', 'assets/common/images/settings.png');
         this.load.image('darkbg', 'assets/common/images/darkbg.png');
         this.load.image('chose_block', 'assets/story1/images/backgrounds/chose_block.png');
+        this.load.image('free_chose_block', 'assets/story1/images/backgrounds/free_chose_block.png');
+        this.load.image('love', 'assets/common/images/love.png');
+        this.load.image('friend', 'assets/common/images/friend.png');
+        this.load.image('stalker', 'assets/common/images/stalker.png');
         this.load.image('nameline', 'assets/common/images/nameline.png');
 
         this.load.audio('stalker_terror', 'assets/story1/audio/stalker_terror.mp3');
@@ -249,8 +254,9 @@ class GameScene extends Phaser.Scene {
         await new Promise((resolve) => {
             window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
                 this.energy = progress.energy || 0;
+                this.markers = progress.markers || { Friend: 0, Stalker: 0, Lover: 0 }; // Загружаем маркеры
                 this.registry.set('energy', this.energy);
-                console.log('GameScene create: Loaded energy from progress:', this.energy);
+                console.log('GameScene create: Loaded energy and markers from progress:', this.energy, this.markers);
                 resolve();
             });
         });
@@ -273,11 +279,12 @@ class GameScene extends Phaser.Scene {
             await new Promise((resolve) => {
                 window.gameStorage.loadProgress(this.storyId, this.registry, (progress) => {
                     this.energy = progress.energy || 0;
+                    this.markers = progress.markers || { Friend: 0, Stalker: 0, Lover: 0 }; // Загружаем маркеры
                     this.registry.set('energy', this.energy);
                     if (this.energyText) {
                         this.energyText.setText(`${this.energy}`);
                     }
-                    console.log('GameScene: Energy after EnergyShopScene shutdown:', this.energy);
+                    console.log('GameScene: Energy and markers after EnergyShopScene shutdown:', this.energy, this.markers);
                     resolve();
                 });
             });
@@ -386,9 +393,8 @@ class GameScene extends Phaser.Scene {
         this.tapZone = this.add.rectangle(width / 2, height * 0.9, width, height * 0.2)
             .setOrigin(0.5)
             .setInteractive()
-            .setDepth(10)
             .on('pointerdown', () => {
-                if (this.isChoicesActive) return; // Игнорируем клики, если есть выбор
+                if (this.isChoicesActive) return;
                 this.sound.play('click');
                 if (this.isTyping) {
                     this.isTyping = false;
@@ -488,18 +494,28 @@ class GameScene extends Phaser.Scene {
                 container.setPosition(width / 2, startY + index * (height * 0.08));
                 const bg = container.getAt(0);
                 const choiceText = container.getAt(1);
-                const energyIcon = container.getAt(2);
-                const energyText = container.getAt(3);
+                const markerIcon = container.getAt(2);
+                const energyIcon = container.getAt(3);
+                const energyText = container.getAt(4);
                 bg.setPosition(0, 0).setDisplaySize(width, height * 0.06);
-                choiceText.setPosition(-width * 0.45, 0)
+                choiceText.setPosition(markerIcon ? -width * 0.40 : -width * 0.45, 0)
                     .setFontSize(`${height * 0.02}px`)
                     .setOrigin(0, 0.5);
-                energyIcon.setPosition(width * 0.4, 0)
-                    .setDisplaySize(height * 0.04, height * 0.04)
-                    .setOrigin(0.55);
-                energyText.setPosition(width * 0.35, 0)
-                    .setFontSize(`${height * 0.0258}px`)
-                    .setOrigin(1, 0.5);
+                if (markerIcon) {
+                    markerIcon.setPosition(-width * 0.45, 0)
+                        .setDisplaySize(height * 0.04, height * 0.04)
+                        .setOrigin(0.5);
+                }
+                if (energyIcon) {
+                    energyIcon.setPosition(width * 0.4, 0)
+                        .setDisplaySize(height * 0.04, height * 0.04)
+                        .setOrigin(0.55);
+                }
+                if (energyText) {
+                    energyText.setPosition(width * 0.35, 0)
+                        .setFontSize(`${height * 0.0258}px`)
+                        .setOrigin(1, 0.5);
+                }
             });
         }
     }
@@ -552,7 +568,7 @@ class GameScene extends Phaser.Scene {
             this.dialogueText.setText('');
             this.speakerText.setText('');
             this.isTyping = false;
-            this.isChoicesActive = false; // Сбрасываем флаг, если нет выбора
+            this.isChoicesActive = false;
             if (this.typewriterTimer) {
                 this.typewriterTimer.remove();
                 this.typewriterTimer = null;
@@ -633,6 +649,10 @@ class GameScene extends Phaser.Scene {
             if (this.energyIcon) {
                 this.energyIcon.setInteractive();
             }
+
+            if (dialogue.unlockArt) {
+                window.gameStorage.unlockArt(this.storyId, dialogue.unlockArt, this.registry);
+            }
         }
     }
 
@@ -650,7 +670,7 @@ class GameScene extends Phaser.Scene {
         this.dialogueText.setVisible(false).setText('');
         this.tapZone.setVisible(false);
         this.choicesGroup.clear(true, true);
-        this.isChoicesActive = false; // Сбрасываем флаг
+        this.isChoicesActive = false;
         this.char.setAlpha(0);
         this.charBreathTween.pause();
         if (this.bg) this.bg.setVisible(false);
@@ -713,7 +733,7 @@ class GameScene extends Phaser.Scene {
         if (this.tweens) this.tweens.killAll();
         if (this.time) this.time.removeAllEvents();
         if (this.sound) this.sound.stop();
-        this.isChoicesActive = false; // Сбрасываем флаг
+        this.isChoicesActive = false;
         console.log('GameScene: Shutdown completed');
     }
 
@@ -749,22 +769,40 @@ class GameScene extends Phaser.Scene {
         if (!this.scene.isActive()) return;
         const width = this.scale.width;
         const height = this.scale.height;
-        const accentColor = '#61bdff';
         this.choicesGroup.clear(true, true);
-        this.isChoicesActive = true; // Устанавливаем флаг
+        this.isChoicesActive = true;
 
-        const totalHeight = choices.length * (height * 0.08);
-        const startY = (height - totalHeight) / 1.17;
+        // Ограничиваем до 3 выборов
+        const limitedChoices = choices.slice(0, 3);
+        const totalHeight = limitedChoices.length * (height * 0.08);
+        const startY = (height - totalHeight) / 1.01;
 
-        choices.forEach((choice, index) => {
-            const y = startY + index * (height * 0.08);
+        limitedChoices.forEach((choice, index) => {
+            const y = startY + index * (height * 0.07);
             const container = this.add.container(width / 2, y).setDepth(5);
 
-            const bg = this.add.image(0, 0, 'chose_block')
+            // Используем free_chose_block для бесплатных выборов
+            const bgKey = choice.isFree ? 'free_chose_block' : 'chose_block';
+            const bg = this.add.image(0, 0, bgKey)
                 .setDisplaySize(width, height * 0.06)
                 .setOrigin(0.5, 0.5);
 
-            const choiceText = this.add.text(-width * 0.45, 0, choice.text, {
+            // Иконка маркера
+            let markerIcon = null;
+            if (choice.marker) {
+                const markerIcons = {
+                    Friend: 'friend',
+                    Stalker: 'stalker',
+                    Lover: 'love'
+                };
+                markerIcon = this.add.image(-width * 0.45, 0, markerIcons[choice.marker])
+                    .setDisplaySize(height * 0.04, height * 0.04)
+                    .setOrigin(0.5);
+            }
+
+            // Текст выбора
+            const textX = markerIcon ? -width * 0.40 : -width * 0.45;
+            const choiceText = this.add.text(textX, 0, choice.text, {
                 fontSize: `${height * 0.02}px`,
                 color: '#fff',
                 fontFamily: 'IBM Plex Sans',
@@ -773,17 +811,26 @@ class GameScene extends Phaser.Scene {
                 .setInteractive()
                 .on('pointerdown', async () => {
                     if (!this.scene.isActive()) return;
-                    if (this.energy >= choice.energyCost) {
-                        this.energy -= choice.energyCost;
-                        this.energyText.setText(`${this.energy}`);
-                        this.registry.set('energy', this.energy);
+                    if (choice.isFree || this.energy >= choice.energyCost) {
+                        if (!choice.isFree) {
+                            this.energy -= choice.energyCost;
+                            this.energyText.setText(`${this.energy}`);
+                            this.registry.set('energy', this.energy);
+                        }
+
+                        if (choice.marker && choice.points) {
+                            this.markers[choice.marker] = (this.markers[choice.marker] || 0) + choice.points;
+                            console.log(`Начислено ${choice.points} очков для ${choice.marker}: ${this.markers[choice.marker]}`);
+                        }
+
                         this.choicesGroup.clear(true, true);
-                        this.isChoicesActive = false; // Сбрасываем флаг
+                        this.isChoicesActive = false;
                         this.sound.play('click');
 
                         console.log('Before choice:', {
                             currentScene: this.currentScene.id,
-                            dialogueIndex: this.dialogueIndexInScene
+                            dialogueIndex: this.dialogueIndexInScene,
+                            markers: this.markers
                         });
 
                         if (choice.nextScene) {
@@ -804,7 +851,8 @@ class GameScene extends Phaser.Scene {
 
                         console.log('After choice:', {
                             currentScene: this.currentScene.id,
-                            dialogueIndex: this.dialogueIndexInScene
+                            dialogueIndex: this.dialogueIndexInScene,
+                            markers: this.markers
                         });
 
                         if (this.energyIcon) {
@@ -816,18 +864,26 @@ class GameScene extends Phaser.Scene {
                     }
                 });
 
-            const energyIcon = this.add.image(width * 0.4, 0, 'energyIcon')
-                .setDisplaySize(height * 0.04, height * 0.04)
-                .setOrigin(0.55);
+            // Энергия (только для платных)
+            let energyIcon = null;
+            let energyText = null;
+            if (!choice.isFree && choice.energyCost > 0) {
+                energyIcon = this.add.image(width * 0.4, 0, 'energyIcon')
+                    .setDisplaySize(height * 0.04, height * 0.04)
+                    .setOrigin(0.55);
+                energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
+                    fontSize: `${height * 0.0258}px`,
+                    color: '#57b9ff',
+                    fontFamily: 'Dela Gothic One',
+                    align: 'right'
+                }).setOrigin(1, 0.5);
+            }
 
-            const energyText = this.add.text(width * 0.35, 0, `-${choice.energyCost}`, {
-                fontSize: `${height * 0.0258}px`,
-                color: '#57b9ff',
-                fontFamily: 'Dela Gothic One',
-                align: 'right',
-            }).setOrigin(1, 0.5);
-
-            container.add([bg, choiceText, energyIcon, energyText]);
+            const containerItems = [bg, choiceText];
+            if (markerIcon) containerItems.push(markerIcon);
+            if (energyIcon) containerItems.push(energyIcon);
+            if (energyText) containerItems.push(energyText);
+            container.add(containerItems);
             this.choicesGroup.add(container);
         });
 
@@ -844,7 +900,7 @@ class GameScene extends Phaser.Scene {
     showNextDialogue() {
         if (!this.scene.isActive()) return;
         this.choicesGroup.clear(true, true);
-        this.isChoicesActive = false; // Сбрасываем флаг
+        this.isChoicesActive = false;
         this.dialogueIndexInScene++;
         this.saveProgress();
         this.showDialogue();
@@ -853,19 +909,32 @@ class GameScene extends Phaser.Scene {
             this.energyIcon.setInteractive();
             this.energyIcon.setDepth(11);
         }
-         if (currentDialogue.unlockArt) {
-        window.gameStorage.unlockArt(currentStoryId, currentDialogue.unlockArt, this.registry);
-    }
     }
 
     handleNextScene() {
-        if (!this.currentScene.nextScene) {
+        if (!this.currentScene.nextScene && !this.currentScene.conditionalNextScenes) {
             console.log('End of story, showing ending');
             this.showEnding();
             return;
         }
 
-        if (typeof this.currentScene.nextScene === 'object' && this.currentScene.nextScene.type === 'minigame') {
+        if (this.currentScene.conditionalNextScenes) {
+            // Проверяем условия для перехода
+            let nextSceneId = null;
+            for (const condition of this.currentScene.conditionalNextScenes) {
+                if (this.markers[condition.marker] >= condition.points) {
+                    nextSceneId = condition.nextScene;
+                    break;
+                }
+            }
+            // Если ни одно условие не выполнено, используем defaultScene или обычный nextScene
+            nextSceneId = nextSceneId || this.currentScene.defaultScene || this.currentScene.nextScene || this.currentScene.id;
+            this.currentScene = this.story.dialogues.find(scene => scene.id === nextSceneId) || this.currentScene;
+            this.dialogueIndexInScene = 0;
+            this.saveProgress();
+            this.updateScene();
+            this.showDialogue();
+        } else if (typeof this.currentScene.nextScene === 'object' && this.currentScene.nextScene.type === 'minigame') {
             const params = { ...this.currentScene.nextScene.params };
             console.log('Starting minigame:', this.currentScene.nextScene.key);
             this.scene.start(this.currentScene.nextScene.key, params);
@@ -892,13 +961,17 @@ class GameScene extends Phaser.Scene {
                 this.energy,
                 this.stars,
                 this.registry,
-                { minigameResults: this.minigameResults }
+                {
+                    minigameResults: this.minigameResults,
+                    markers: this.markers
+                }
             );
             console.log('Progress saved:', {
                 storyId: this.storyId,
                 sceneId: this.currentScene.id,
                 dialogueIndex: this.dialogueIndexInScene,
                 energy: this.energy,
+                markers: this.markers
             });
         } catch (error) {
             console.error('Error saving progress:', error);
@@ -914,9 +987,10 @@ class GameScene extends Phaser.Scene {
         this.dialogueIndexInScene = data?.dialogueIndexInScene || 0;
         this.stars = data?.stars || 0;
         this.minigameResults = data?.minigameResults || {};
+        this.markers = data?.markers || { Friend: 0, Stalker: 0, Lover: 0 }; // Загружаем маркеры
 
         this.energy = this.registry.get('energy') || 0;
-        console.log('GameScene loadGame: Energy from registry:', this.energy);
+        console.log('GameScene loadGame: Energy from registry:', this.energy, 'Markers:', this.markers);
         if (this.energyText) {
             this.energyText.setText(`${this.energy}`);
         }
