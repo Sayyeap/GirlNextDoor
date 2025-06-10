@@ -163,7 +163,10 @@ class GameScene extends Phaser.Scene {
         this.load.image('mia_appart', 'assets/story1/images/backgrounds/mia_appart.png');
         this.load.image('miaRoom_new', 'assets/story1/images/backgrounds/miaRoom_new.png');
         this.load.image('morning_scene', 'assets/story1/images/backgrounds/morning_scene.jpg');
+        this.load.image('morning_scene2', 'assets/story1/images/backgrounds/morning_scene2.jpg');
+        this.load.image('morning_scene3', 'assets/story1/images/backgrounds/morning_scene3.jpg');
         this.load.image('ggroom', 'assets/story1/images/backgrounds/ggroom.jpg');
+         this.load.image('ggroom_phone', 'assets/story1/images/backgrounds/ggroom_phone.jpg');
         this.load.image('office', 'assets/story1/images/backgrounds/office.jpg');
         this.load.image('office_pc', 'assets/story1/images/backgrounds/office_pc.jpg');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
@@ -197,6 +200,7 @@ class GameScene extends Phaser.Scene {
         this.load.audio('pixel_dreaming', 'assets/story1/audio/pixel_dreaming.mp3');
         this.load.audio('click', 'assets/common/audio/click.wav');
         this.load.audio('menu_music', 'assets/common/audio/menu_music.mp3');
+        this.load.audio('alarm_sound', 'assets/common/audio/alarm_sound.wav');
 
         this.load.on('filecomplete', (key) => console.log('File loaded:', key));
         this.load.on('fileerror', (file) => console.error('File failed to load:', file.key, file.src));
@@ -523,7 +527,7 @@ class GameScene extends Phaser.Scene {
     updateScene() {
         if (!this.currentScene) return;
         const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street', 'sexphoto_office', 'phone_hand', 'sexphoto_metro',
-            'home_hall_box', 'metro_enter', 'metro_people', 'metro_people_station', 'mia_appart', 'miaRoom_new', 'morning_scene', 'ggroom', 'office', 'office_pc'];
+            'home_hall_box', 'metro_enter', 'metro_people', 'metro_people_station', 'mia_appart', 'miaRoom_new', 'morning_scene','morning_scene2','morning_scene3', 'ggroom','ggroom_phone', 'office', 'office_pc'];
         const bgKey = validBackgrounds.includes(this.currentScene.bg) ? this.currentScene.bg : 'home';
         console.log('Setting background to:', bgKey);
         this.bg.setTexture(bgKey);
