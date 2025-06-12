@@ -166,12 +166,16 @@ class GameScene extends Phaser.Scene {
         this.load.image('morning_scene2', 'assets/story1/images/backgrounds/morning_scene2.jpg');
         this.load.image('morning_scene3', 'assets/story1/images/backgrounds/morning_scene3.jpg');
         this.load.image('ggroom', 'assets/story1/images/backgrounds/ggroom.jpg');
-         this.load.image('ggroom_phone', 'assets/story1/images/backgrounds/ggroom_phone.jpg');
+        this.load.image('ggroom_phone', 'assets/story1/images/backgrounds/ggroom_phone.jpg');
         this.load.image('office', 'assets/story1/images/backgrounds/office.jpg');
         this.load.image('office_pc', 'assets/story1/images/backgrounds/office_pc.jpg');
         this.load.image('sexphoto_office', 'assets/story1/images/backgrounds/sexphoto_office.jpg');
         this.load.image('phone_hand', 'assets/story1/images/backgrounds/phone_hand.jpg');
         this.load.image('sexphoto_metro', 'assets/story1/images/backgrounds/sexphoto_metro.jpg');
+        this.load.image('ggroom_hall', 'assets/story1/images/backgrounds/ggroom_hall.jpg');
+        this.load.image('sexphoto_metro_game', 'assets/story1/images/backgrounds/sexphoto_metro_game.jpg');
+        this.load.image('office_outdoor', 'assets/story1/images/backgrounds/office_outdoor.jpg');
+        this.load.image('sexphoto_metro_game', 'assets/story1/images/backgrounds/sexphoto_metro_game.jpg');
 
         this.load.image('mia_tshirt_shy', 'assets/story1/images/characters/mia_tshirt_shy.png');
         this.load.image('mia_tshirt_angry', 'assets/story1/images/characters/mia_tshirt_angry.png');
@@ -526,7 +530,7 @@ class GameScene extends Phaser.Scene {
 
     updateScene() {
         if (!this.currentScene) return;
-        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street', 'sexphoto_office', 'phone_hand', 'sexphoto_metro',
+        const validBackgrounds = ['elevator', 'home', 'miapc', 'miaroom', 'assshot', 'loch', 'girl_with_phone', 'Home_enter', 'city_street', 'sexphoto_office', 'phone_hand', 'sexphoto_metro','ggroom_hall', 'sexphoto_metro_game',
             'home_hall_box', 'metro_enter', 'metro_people', 'metro_people_station', 'mia_appart', 'miaRoom_new', 'morning_scene','morning_scene2','morning_scene3', 'ggroom','ggroom_phone', 'office', 'office_pc'];
         const bgKey = validBackgrounds.includes(this.currentScene.bg) ? this.currentScene.bg : 'home';
         console.log('Setting background to:', bgKey);
