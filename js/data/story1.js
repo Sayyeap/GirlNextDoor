@@ -688,7 +688,7 @@ const story1Dialogues = [
     },
     {
         id: "scene12",
-        bg: "ggroom",
+        bg: "mia_appart",
         music: "moonlight",
         nextScene: "scene13",
         dialogues: [
@@ -742,7 +742,7 @@ const story1Dialogues = [
     },
      {
         id: "scene13",
-        bg: "ggroom",
+        bg: "mia_appart",
         music: "moonlight",
         nextScene: "scene14",
         dialogues: [
@@ -818,7 +818,7 @@ const story1Dialogues = [
     },
      {
         id: "scene14",
-        bg: "ggroom",
+        bg: "city_street",
         music: "moonlight",
         nextScene: "scene15",
         dialogues: [
@@ -898,7 +898,7 @@ const story1Dialogues = [
     },
      {
         id: "scene16",
-        bg: "ggroom",
+        bg: "office_outdoor",
         music: "moonlight",
         nextScene: "scene17",
         dialogues: [
@@ -1078,7 +1078,7 @@ const story1Dialogues = [
     },
      {
         id: "scene17",
-        bg: "ggroom",
+        bg: "office2",
         music: "moonlight",
         nextScene: "scene18",
         dialogues: [
@@ -2022,7 +2022,7 @@ const story1Dialogues = [
                         isFree: false,
                         marker: "Stalker",
                         points: 2,
-                       nextScene: "scene6"
+                       nextScene: "scene27"
                     },
                  
                     {
@@ -2031,7 +2031,7 @@ const story1Dialogues = [
                         isFree: true,
                         marker: null,
                         points: 1,
-                        nextScene: "scene6"
+                        nextScene: "scene28"
                      },
    
                       ]
@@ -2041,6 +2041,158 @@ const story1Dialogues = [
         ]
     },
 
+     {
+        id: "scene25",
+        bg: "ggroom",
+        music: "moonlight",
+        nextScene: "scene27",
+        dialogues: [
+            {
+                speaker: null,
+                text: null,
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+            {
+                speaker: " ",
+                text: "Ты переключаешь телефон на мобильный интернет, отключая Wi-Fi — на всякий случай, офисная сеть под колпаком",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+               {
+                speaker: " ",
+                text: "В голове крутится мысль: если VuTelegrafix следит за тобой, как они это делают? Ты открываешь браузер в режиме инкогнито и находишь анонимный форум, где айтишники и любители тёмных уголков интернета обсуждают трекеры, логи и шпионские программы",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+              
+               {
+                speaker: " ",
+                text: "Заголовки тем манят: “Как компании следят за сотрудниками”, “Анализ трафика: что видят админы”, “Тор и VPN — мифы и правда”",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+              
+               {
+                speaker: " ",
+                text: "Ты листаешь посты, сердце слегка ускоряет ритм. Один юзер, с ником ShadowByte, пишет: “Любой клик в корпоративной сети — это лог. Они видят всё: сайты, время, даже поисковые запросы. Хотите скрыться? Используйте Tor, но не палитесь на рабочих девайсах.”",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+              
+               {
+                speaker: " ",
+                text: "Другой, DataGhost, добавляет: “Слежка — это не только софт. Камеры, кейлоггеры, даже твой телефон может сдать. Проверяйте, что качаете.”",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+              
+               {
+                speaker: " ",
+                text: "Ты читаешь дальше, и в груди шевельнулось что-то новое — не страх, а странное возбуждение. Это как заглянуть за кулисы: мир, где каждый шаг отслеживается, но где можно научиться прятаться",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+              
+               {
+                speaker: " ",
+                text: "Или... следить самому. Ты находишь тему про то, как хакеры перехватывают данные: кто-то хвастается, как взломал соседский Wi-Fi, кто-то делится туториалом по анализу трафика. Это не твой уровень — ты просто айтишник, а не киберпанк из фильмов, — но информация затягивает, как детекти",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+               {
+                speaker: " ",
+                text: "Ты оглядываешься: офис гудит, коллеги заняты своими экранами, никто не смотрит. Но ладони всё равно холодеют, и ты прячешь телефон в карман, когда мимо проходит тимлид. Это не паранойя, просто... осторожность",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+               {
+                speaker: " ",
+                text: "Ты не готов лезть в тёмные дебри интернета, не сейчас, но мысль о том, что можно узнать чужие секреты — или спрятать свои, — оседает в голове, как песок на дне реки",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+               {
+                speaker: " ",
+                text: "Ты не готов действовать, но любопытство — как семя, которое уже пустило корни. Ты представляешь, как листаешь чьи-то чаты, видишь их фото, их тайны, и это будоражит",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+                 {
+                speaker: " ",
+                text: "Но тревога шепчет: один неверный шаг, и ты сам под прицелом. Офис кажется тем же, но теперь ты видишь его иначе — как сеть, где каждый оставляет следы, и ты можешь научиться их читать",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+            
+              
+              
+      
+        ]
+         },
+         {
+        id: "scene26",
+        bg: "ggroom",
+        music: "moonlight",
+        nextScene: "scene27",
+        dialogues: [
+            {
+                speaker: null,
+                text: null,
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+            {
+                speaker: " ",
+                text: "Ты погружаешься в работу, и остаток дня имитируешь бурную деятельность, что юбы тебя не уволили по крайней мере не сегодня",
+                charSprite: null,
+                shake: null,
+                sfx: null,
+                choices: null,
+                
+            },
+      
+        ]
+    },
 
 
              
